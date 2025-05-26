@@ -67,7 +67,13 @@ export function useMemories() {
         return;
       }
 
-      setMemories(data || []);
+      // Type assertion to ensure correct typing
+      const typedMemories = (data || []).map(memory => ({
+        ...memory,
+        type: memory.type as 'fact' | 'preference' | 'decision' | 'note'
+      })) as Memory[];
+
+      setMemories(typedMemories);
     } catch (error) {
       console.error('Error in fetchMemories:', error);
       toast({
@@ -107,7 +113,13 @@ export function useMemories() {
         return false;
       }
 
-      setMemories(prev => [data, ...prev]);
+      // Type assertion for the new memory
+      const typedMemory = {
+        ...data,
+        type: data.type as 'fact' | 'preference' | 'decision' | 'note'
+      } as Memory;
+
+      setMemories(prev => [typedMemory, ...prev]);
       toast({
         title: "Memória criada com sucesso",
         description: `A memória foi salva.`,
