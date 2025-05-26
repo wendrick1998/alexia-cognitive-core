@@ -22,34 +22,52 @@ interface ChunkData {
 }
 
 async function extractTextFromFile(url: string, type: string): Promise<string> {
-  console.log(`Extracting text from ${type} file: ${url}`);
+  console.log(`Starting text extraction from ${type} file: ${url}`);
   
   try {
-    const response = await fetch(url);
+    // Add timeout to fetch request
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Alex-IA-Document-Processor/1.0'
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      throw new Error(`Failed to fetch file: ${response.statusText}`);
+      throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
     }
 
+    console.log(`File fetched successfully, size: ${response.headers.get('content-length') || 'unknown'} bytes`);
+
     if (type === 'txt' || type === 'md') {
-      return await response.text();
+      const text = await response.text();
+      console.log(`Extracted ${text.length} characters from ${type} file`);
+      return text;
     } else if (type === 'pdf') {
       // For PDF, we'll use a simple approach for now
-      // In production, you might want to use a more robust PDF parser
       const arrayBuffer = await response.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
       
+      console.log(`Processing PDF with ${uint8Array.length} bytes`);
+      
       // Simple text extraction attempt - this is basic and may not work for all PDFs
-      // For production use, consider using pdf-parse or similar library
-      const text = new TextDecoder().decode(uint8Array);
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
       
       // Extract readable text (basic approach)
       const cleanText = text
-        .replace(/[^\x20-\x7E\n]/g, ' ') // Remove non-printable characters
+        .replace(/[^\x20-\x7E\n\r\t]/g, ' ') // Keep printable ASCII, newlines, and tabs
         .replace(/\s+/g, ' ') // Normalize whitespace
         .trim();
       
-      if (cleanText.length < 50) {
-        throw new Error('Unable to extract meaningful text from PDF');
+      console.log(`Extracted ${cleanText.length} characters from PDF`);
+      
+      if (cleanText.length < 10) {
+        throw new Error('Unable to extract meaningful text from PDF. Consider using a different PDF or converting to text format.');
       }
       
       return cleanText;
@@ -58,29 +76,37 @@ async function extractTextFromFile(url: string, type: string): Promise<string> {
     }
   } catch (error) {
     console.error(`Error extracting text from ${type}:`, error);
+    if (error.name === 'AbortError') {
+      throw new Error(`Timeout while fetching file: ${url}`);
+    }
     throw error;
   }
 }
 
-function createChunks(text: string, chunkSize: number = 1000, overlap: number = 200): ChunkData[] {
-  console.log(`Creating chunks from text of length: ${text.length}`);
+function createChunks(text: string, chunkSize: number = 800, overlap: number = 150): ChunkData[] {
+  console.log(`Creating chunks from text of length: ${text.length} characters`);
+  
+  if (text.length === 0) {
+    throw new Error('Cannot create chunks from empty text');
+  }
   
   const chunks: ChunkData[] = [];
   let startIndex = 0;
   let chunkIndex = 0;
 
-  while (startIndex < text.length) {
+  while (startIndex < text.length && chunkIndex < 100) { // Limit to 100 chunks per document
     const endIndex = Math.min(startIndex + chunkSize, text.length);
     const content = text.slice(startIndex, endIndex).trim();
     
-    if (content.length > 0) {
+    if (content.length > 10) { // Only create chunks with meaningful content
       chunks.push({
         content,
         chunk_index: chunkIndex,
         metadata: {
           start_index: startIndex,
           end_index: endIndex,
-          chunk_size: content.length
+          chunk_size: content.length,
+          created_at: new Date().toISOString()
         }
       });
       chunkIndex++;
@@ -95,41 +121,81 @@ function createChunks(text: string, chunkSize: number = 1000, overlap: number = 
     }
   }
 
-  console.log(`Created ${chunks.length} chunks`);
+  console.log(`Created ${chunks.length} chunks successfully`);
   return chunks;
 }
 
-async function generateEmbedding(text: string): Promise<number[]> {
-  console.log(`Generating embedding for text of length: ${text.length}`);
+async function generateEmbedding(text: string, retries: number = 3): Promise<number[]> {
+  console.log(`Generating embedding for text of length: ${text.length} characters`);
   
-  try {
-    const response = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'text-embedding-ada-002',
-        input: text.substring(0, 8191), // OpenAI has a token limit
-      }),
-    });
+  // Truncate text to fit OpenAI's token limit (approximately 8191 tokens)
+  const truncatedText = text.substring(0, 6000); // Conservative limit
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`OpenAI API call attempt ${attempt}/${retries}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
+      const response = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-ada-002',
+          input: truncatedText,
+        }),
+        signal: controller.signal
+      });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`OpenAI API error: ${response.statusText} - ${error}`);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`OpenAI API error (attempt ${attempt}): ${response.status} ${response.statusText} - ${errorText}`);
+        
+        // Don't retry on certain errors
+        if (response.status === 401 || response.status === 429) {
+          throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        
+        if (attempt === retries) {
+          throw new Error(`OpenAI API error after ${retries} attempts: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        continue;
+      }
+
+      const data = await response.json();
+      console.log(`Successfully generated embedding with ${data.data[0].embedding.length} dimensions`);
+      return data.data[0].embedding;
+      
+    } catch (error) {
+      console.error(`Error generating embedding (attempt ${attempt}):`, error);
+      
+      if (error.name === 'AbortError') {
+        console.error('OpenAI API request timed out');
+      }
+      
+      if (attempt === retries) {
+        throw new Error(`Failed to generate embedding after ${retries} attempts: ${error.message}`);
+      }
+      
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
     }
-
-    const data = await response.json();
-    return data.data[0].embedding;
-  } catch (error) {
-    console.error('Error generating embedding:', error);
-    throw error;
   }
+  
+  throw new Error('Unexpected error in embedding generation');
 }
 
 async function saveChunkWithEmbedding(documentId: string, chunk: ChunkData, embedding: number[]) {
-  console.log(`Saving chunk ${chunk.chunk_index} for document ${documentId}`);
+  console.log(`Saving chunk ${chunk.chunk_index} for document ${documentId} (${chunk.content.length} chars)`);
   
   try {
     const { error } = await supabase
@@ -138,15 +204,18 @@ async function saveChunkWithEmbedding(documentId: string, chunk: ChunkData, embe
         document_id: documentId,
         chunk_index: chunk.chunk_index,
         content: chunk.content,
-        embedding: `[${embedding.join(',')}]`,
+        embedding: JSON.stringify(embedding), // Use JSON.stringify instead of manual array join
         metadata: chunk.metadata
       });
 
     if (error) {
+      console.error(`Database error saving chunk ${chunk.chunk_index}:`, error);
       throw error;
     }
+    
+    console.log(`Successfully saved chunk ${chunk.chunk_index}`);
   } catch (error) {
-    console.error('Error saving chunk:', error);
+    console.error(`Error saving chunk ${chunk.chunk_index}:`, error);
     throw error;
   }
 }
@@ -154,29 +223,52 @@ async function saveChunkWithEmbedding(documentId: string, chunk: ChunkData, embe
 async function updateDocumentStatus(documentId: string, status: string, errorMessage?: string) {
   console.log(`Updating document ${documentId} status to: ${status}`);
   
-  const updateData: any = { status_processing: status };
+  const updateData: any = { 
+    status_processing: status,
+    updated_at: new Date().toISOString()
+  };
+  
   if (errorMessage) {
-    updateData.metadata = { error: errorMessage };
+    updateData.metadata = { error: errorMessage, error_timestamp: new Date().toISOString() };
   }
 
-  const { error } = await supabase
-    .from('documents')
-    .update(updateData)
-    .eq('id', documentId);
+  try {
+    const { error } = await supabase
+      .from('documents')
+      .update(updateData)
+      .eq('id', documentId);
 
-  if (error) {
-    console.error('Error updating document status:', error);
+    if (error) {
+      console.error('Error updating document status:', error);
+      throw error;
+    }
+    
+    console.log(`Successfully updated document status to ${status}`);
+  } catch (error) {
+    console.error('Failed to update document status:', error);
+    // Don't throw here to avoid masking the original error
   }
 }
 
 serve(async (req) => {
+  const startTime = Date.now();
+  console.log(`=== Processing document request started at ${new Date().toISOString()} ===`);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let documentId: string | undefined;
+  
   try {
-    const { documentId } = await req.json();
+    // Validate environment variables
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+    
+    const requestBody = await req.json();
+    documentId = requestBody.documentId;
     
     if (!documentId) {
       return new Response(
@@ -190,7 +282,8 @@ serve(async (req) => {
     // Update status to processing
     await updateDocumentStatus(documentId, 'processing');
 
-    // Get document details
+    // Get document details with timeout
+    console.log('Fetching document details from database...');
     const { data: document, error: docError } = await supabase
       .from('documents')
       .select('*')
@@ -198,65 +291,103 @@ serve(async (req) => {
       .single();
 
     if (docError || !document) {
-      throw new Error(`Document not found: ${docError?.message}`);
+      const errorMsg = `Document not found: ${docError?.message || 'Unknown error'}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
 
-    console.log(`Found document: ${document.name} (${document.type})`);
+    console.log(`Found document: ${document.name} (${document.type}) - URL: ${document.url}`);
+
+    // Validate document URL
+    if (!document.url) {
+      throw new Error('Document URL is missing');
+    }
 
     // Extract text from file
+    console.log('Starting text extraction...');
     const text = await extractTextFromFile(document.url, document.type);
     
     if (!text || text.length < 10) {
       throw new Error('No meaningful text extracted from document');
     }
 
+    console.log(`Successfully extracted ${text.length} characters of text`);
+
     // Create chunks
+    console.log('Creating text chunks...');
     const chunks = createChunks(text);
     
     if (chunks.length === 0) {
       throw new Error('No chunks created from document text');
     }
 
-    // Process each chunk: generate embedding and save
-    for (const chunk of chunks) {
-      try {
-        const embedding = await generateEmbedding(chunk.content);
-        await saveChunkWithEmbedding(documentId, chunk, embedding);
-      } catch (chunkError) {
-        console.error(`Error processing chunk ${chunk.chunk_index}:`, chunkError);
-        // Continue with other chunks even if one fails
+    console.log(`Created ${chunks.length} chunks, processing embeddings...`);
+
+    // Process chunks with progress tracking
+    let processedChunks = 0;
+    const maxConcurrentRequests = 2; // Limit concurrent OpenAI requests
+    
+    for (let i = 0; i < chunks.length; i += maxConcurrentRequests) {
+      const batch = chunks.slice(i, i + maxConcurrentRequests);
+      
+      console.log(`Processing batch ${Math.floor(i / maxConcurrentRequests) + 1}/${Math.ceil(chunks.length / maxConcurrentRequests)} (chunks ${i + 1}-${i + batch.length})`);
+      
+      const batchPromises = batch.map(async (chunk) => {
+        try {
+          const embedding = await generateEmbedding(chunk.content);
+          await saveChunkWithEmbedding(documentId!, chunk, embedding);
+          processedChunks++;
+          console.log(`Progress: ${processedChunks}/${chunks.length} chunks processed`);
+        } catch (chunkError) {
+          console.error(`Error processing chunk ${chunk.chunk_index}:`, chunkError);
+          throw chunkError; // Fail fast if any chunk fails
+        }
+      });
+      
+      await Promise.all(batchPromises);
+      
+      // Small delay between batches to avoid rate limits
+      if (i + maxConcurrentRequests < chunks.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
     // Update status to completed
     await updateDocumentStatus(documentId, 'completed');
 
-    console.log(`Successfully processed document ${documentId} with ${chunks.length} chunks`);
+    const processingTime = Date.now() - startTime;
+    console.log(`=== Successfully processed document ${documentId} in ${processingTime}ms with ${chunks.length} chunks ===`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: `Document processed successfully with ${chunks.length} chunks`,
-        chunksCreated: chunks.length
+        chunksCreated: chunks.length,
+        processingTimeMs: processingTime
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in process-document function:', error);
+    const processingTime = Date.now() - startTime;
+    console.error(`=== Error processing document after ${processingTime}ms ===`);
+    console.error('Error details:', error);
     
-    // Try to update document status to failed if we have documentId
-    try {
-      const { documentId } = await req.json();
-      if (documentId) {
+    // Update document status to failed if we have documentId
+    if (documentId) {
+      try {
         await updateDocumentStatus(documentId, 'failed', error.message);
+      } catch (statusError) {
+        console.error('Error updating status to failed:', statusError);
       }
-    } catch (statusError) {
-      console.error('Error updating status to failed:', statusError);
     }
 
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        processingTimeMs: processingTime,
+        timestamp: new Date().toISOString()
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
