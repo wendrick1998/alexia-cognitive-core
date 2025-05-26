@@ -37,7 +37,7 @@ const menuItems = [
   },
   {
     id: "projects",
-    label: "Histórico de Projetos",
+    label: "Meus Projetos",
     icon: FolderOpen,
   },
   {

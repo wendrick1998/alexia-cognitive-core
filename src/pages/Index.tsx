@@ -3,6 +3,7 @@ import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import Chat from "../components/Chat";
+import ProjectsManager from "../components/ProjectsManager";
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState("chat");
@@ -39,14 +40,7 @@ const Index = () => {
           </div>
         );
       case "projects":
-        return (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-2">Histórico de Projetos</h2>
-              <p className="text-gray-600">Esta seção será desenvolvida em breve</p>
-            </div>
-          </div>
-        );
+        return <ProjectsManager />;
       case "settings":
         return (
           <div className="flex-1 flex items-center justify-center">
