@@ -73,7 +73,11 @@ serve(async (req) => {
     console.log(`Processing chat message for user: ${user_id}, message: "${user_message.substring(0, 100)}..."`);
 
     // Passo 1: Recuperação de Contexto via busca semântica
-    console.log('Calling semantic-search function...');
+    console.log('=== SEMANTIC SEARCH DEBUG ===');
+    console.log(`Calling semantic-search function with query: "${user_message}"`);
+    console.log(`Project ID: ${project_id || 'none'}`);
+    console.log(`User ID: ${user_id}`);
+    
     const { data: searchData, error: searchError } = await supabase.functions.invoke('semantic-search', {
       body: { 
         query_text: user_message,
@@ -84,11 +88,30 @@ serve(async (req) => {
     });
 
     if (searchError) {
-      console.error('Error calling semantic-search:', searchError);
+      console.error('ERROR in semantic-search function:', searchError);
+      console.log('Search error details:', JSON.stringify(searchError, null, 2));
+    } else {
+      console.log('Semantic search completed successfully');
     }
 
     const searchResults = searchData?.results || [];
-    console.log(`Found ${searchResults.length} relevant chunks`);
+    console.log(`=== SEARCH RESULTS (${searchResults.length} chunks found) ===`);
+    
+    if (searchResults.length === 0) {
+      console.log(`⚠️  NENHUM CHUNK ENCONTRADO pela busca semântica para a query: "${user_message}"`);
+      console.log('Search data received:', JSON.stringify(searchData, null, 2));
+    } else {
+      console.log('📄 CHUNKS RECUPERADOS:');
+      searchResults.forEach((result: any, index: number) => {
+        console.log(`--- CHUNK ${index + 1} ---`);
+        console.log(`Documento: "${result.document_name || 'N/A'}"`);
+        console.log(`Pontuação de similaridade: ${result.similarity_score || 'N/A'}`);
+        console.log(`Índice do chunk: ${result.chunk_index || 'N/A'}`);
+        console.log(`Conteúdo (${result.content?.length || 0} caracteres):`);
+        console.log(`"${result.content?.substring(0, 300) || 'N/A'}${result.content?.length > 300 ? '...' : ''}"`);
+        console.log('--- FIM CHUNK ---');
+      });
+    }
 
     // Passo 2: Construção do Prompt para o LLM
     let contextText = '';
@@ -104,11 +127,20 @@ serve(async (req) => {
 
     const fullPrompt = `${contextText}Pergunta do Usuário: ${user_message}\n\nResposta de Alex iA:`;
 
+    console.log('=== PROMPT COMPLETO PARA LLM ===');
+    console.log('Tamanho total do prompt:', fullPrompt.length, 'caracteres');
+    console.log('--- INÍCIO DO PROMPT ---');
+    console.log(fullPrompt);
+    console.log('--- FIM DO PROMPT ---');
+
     // Passo 3: Chamada ao LLM
-    console.log('Calling OpenAI...');
+    console.log('=== CHAMANDO OPENAI ===');
+    console.log('Enviando prompt para OpenAI...');
     const aiResponse = await callOpenAI(fullPrompt);
     
-    console.log('AI response generated successfully');
+    console.log('=== RESPOSTA DO LLM ===');
+    console.log(`Resposta recebida (${aiResponse.length} caracteres):`);
+    console.log(`"${aiResponse.substring(0, 200)}${aiResponse.length > 200 ? '...' : ''}"`);
 
     // Passo 4: Salvar mensagens no banco de dados
     if (conversation_id) {
@@ -140,6 +172,9 @@ serve(async (req) => {
       }
     }
 
+    console.log('=== PROCESSO CONCLUÍDO ===');
+    console.log('Retornando resposta para o cliente');
+
     return new Response(
       JSON.stringify({ 
         response: aiResponse,
@@ -150,7 +185,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
+    console.error('=== ERRO NA FUNÇÃO ===');
     console.error('Error in process-chat-message function:', error);
+    console.error('Error stack:', error.stack);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
