@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -73,10 +72,15 @@ export function useDocuments() {
         return;
       }
 
-      // Type the data properly with source field
+      // Type the data properly with source field and metadata
       const typedDocuments: Document[] = (data || []).map(doc => ({
         ...doc,
-        source: doc.source as 'upload' | 'notion' | 'drive' | 'github'
+        source: doc.source as 'upload' | 'notion' | 'drive' | 'github',
+        metadata: (doc.metadata as Record<string, any>) || {},
+        project_id: doc.project_id || undefined,
+        url: doc.url || undefined,
+        summary: doc.summary || undefined,
+        file_size: doc.file_size || undefined
       }));
 
       setDocuments(typedDocuments);
@@ -158,10 +162,15 @@ export function useDocuments() {
         return false;
       }
 
-      // Type the returned data properly
+      // Type the returned data properly with metadata casting
       const typedDocument: Document = {
         ...data,
-        source: data.source as 'upload' | 'notion' | 'drive' | 'github'
+        source: data.source as 'upload' | 'notion' | 'drive' | 'github',
+        metadata: (data.metadata as Record<string, any>) || {},
+        project_id: data.project_id || undefined,
+        url: data.url || undefined,
+        summary: data.summary || undefined,
+        file_size: data.file_size || undefined
       };
 
       setDocuments(prev => [typedDocument, ...prev]);
