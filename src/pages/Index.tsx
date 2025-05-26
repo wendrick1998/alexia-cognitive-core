@@ -4,6 +4,7 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import Chat from "../components/Chat";
 import ProjectsManager from "../components/ProjectsManager";
+import MemoryManager from "../components/MemoryManager";
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState("chat");
@@ -13,14 +14,7 @@ const Index = () => {
       case "chat":
         return <Chat />;
       case "memory":
-        return (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-2">Gerenciar Memória</h2>
-              <p className="text-gray-600">Esta seção será desenvolvida em breve</p>
-            </div>
-          </div>
-        );
+        return <MemoryManager />;
       case "documents":
         return (
           <div className="flex-1 flex items-center justify-center">
