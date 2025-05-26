@@ -73,7 +73,13 @@ export function useDocuments() {
         return;
       }
 
-      setDocuments(data || []);
+      // Type the data properly with source field
+      const typedDocuments: Document[] = (data || []).map(doc => ({
+        ...doc,
+        source: doc.source as 'upload' | 'notion' | 'drive' | 'github'
+      }));
+
+      setDocuments(typedDocuments);
     } catch (error) {
       console.error('Error in fetchDocuments:', error);
       toast({
@@ -152,7 +158,13 @@ export function useDocuments() {
         return false;
       }
 
-      setDocuments(prev => [data, ...prev]);
+      // Type the returned data properly
+      const typedDocument: Document = {
+        ...data,
+        source: data.source as 'upload' | 'notion' | 'drive' | 'github'
+      };
+
+      setDocuments(prev => [typedDocument, ...prev]);
       toast({
         title: "Documento enviado com sucesso",
         description: `O arquivo ${file.name} foi carregado.`,
