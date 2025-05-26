@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import Chat from "../components/Chat";
 import ProjectsManager from "../components/ProjectsManager";
 import MemoryManager from "../components/MemoryManager";
+import DocumentsManager from "../components/DocumentsManager";
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState("chat");
@@ -16,14 +17,7 @@ const Index = () => {
       case "memory":
         return <MemoryManager />;
       case "documents":
-        return (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-2">Documentos Conectados</h2>
-              <p className="text-gray-600">Esta seção será desenvolvida em breve</p>
-            </div>
-          </div>
-        );
+        return <DocumentsManager />;
       case "preferences":
         return (
           <div className="flex-1 flex items-center justify-center">
