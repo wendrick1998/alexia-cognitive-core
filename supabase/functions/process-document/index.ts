@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
@@ -21,66 +20,106 @@ interface ChunkData {
   metadata: Record<string, any>;
 }
 
-// Memory-optimized PDF text extraction
+// Improved PDF text extraction using pdf-parse library
 async function extractTextFromPDF(arrayBuffer: ArrayBuffer): Promise<string> {
   console.log(`Processing PDF with ${arrayBuffer.byteLength} bytes`);
   
   try {
-    // Convert to Uint8Array for more efficient processing
+    // Import pdf-parse library dynamically
+    const pdfParse = await import('https://esm.sh/pdf-parse@1.1.1');
+    
+    // Convert ArrayBuffer to Buffer for pdf-parse
+    const buffer = new Uint8Array(arrayBuffer);
+    
+    console.log('Starting PDF parsing with pdf-parse library...');
+    
+    // Parse PDF with pdf-parse
+    const pdfData = await pdfParse.default(buffer, {
+      // Limit to reasonable number of pages to manage memory
+      max: 50,
+      // Version can help with compatibility
+      version: 'v1.10.100'
+    });
+    
+    console.log(`PDF parsing completed. Pages: ${pdfData.numpages}, Text length: ${pdfData.text.length}`);
+    
+    // Clean and validate the extracted text
+    let cleanText = pdfData.text
+      .replace(/\x00/g, '') // Remove null characters
+      .replace(/\f/g, '\n') // Replace form feeds with newlines
+      .replace(/\r\n/g, '\n') // Normalize line endings
+      .replace(/\r/g, '\n')
+      .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines to double
+      .trim();
+    
+    console.log(`Cleaned text length: ${cleanText.length} characters`);
+    
+    // Validate that we have readable text
+    if (cleanText.length < 10) {
+      throw new Error('Extracted text is too short, PDF might be image-based or corrupted');
+    }
+    
+    // Check if text contains mostly readable characters
+    const readableChars = cleanText.match(/[a-zA-Z0-9\s\.\,\!\?\-\(\)]/g)?.length || 0;
+    const readableRatio = readableChars / cleanText.length;
+    
+    if (readableRatio < 0.5) {
+      console.warn(`Low readable character ratio: ${readableRatio}. Text might be garbled.`);
+      throw new Error('Extracted text appears to be corrupted or unreadable');
+    }
+    
+    console.log(`Text extraction successful. Readable ratio: ${readableRatio.toFixed(2)}`);
+    return cleanText;
+    
+  } catch (error) {
+    console.error('Error in PDF parsing:', error);
+    
+    // Fallback: Try a simpler approach if pdf-parse fails
+    console.log('Attempting fallback PDF extraction...');
+    try {
+      return await fallbackPDFExtraction(arrayBuffer);
+    } catch (fallbackError) {
+      console.error('Fallback extraction also failed:', fallbackError);
+      throw new Error(`PDF text extraction failed: ${error.message}. Please ensure the PDF contains extractable text and is not image-based.`);
+    }
+  }
+}
+
+// Fallback method for PDF extraction
+async function fallbackPDFExtraction(arrayBuffer: ArrayBuffer): Promise<string> {
+  console.log('Using fallback PDF extraction method...');
+  
+  try {
+    // Try using a different PDF library as fallback
+    const { default: PDFExtract } = await import('https://esm.sh/pdf.js-extract@0.2.1');
+    
     const uint8Array = new Uint8Array(arrayBuffer);
+    const extractor = new PDFExtract();
     
-    // Simple text extraction approach that's memory-efficient
-    // This avoids loading complex PDF parsing libraries that consume lots of memory
+    const extractedData = await extractor.extractBuffer(uint8Array);
+    
     let text = '';
-    let textFound = false;
-    
-    // Look for text objects in PDF (simplified approach)
-    const decoder = new TextDecoder('utf-8', { fatal: false });
-    const pdfString = decoder.decode(uint8Array);
-    
-    // Extract text between common PDF text markers
-    const textPatterns = [
-      /BT\s*.*?ET/gs,  // Text objects
-      /\(([^)]+)\)/g,  // Text in parentheses
-      /\[([^\]]+)\]/g  // Text in brackets
-    ];
-    
-    for (const pattern of textPatterns) {
-      const matches = pdfString.match(pattern);
-      if (matches) {
-        for (const match of matches) {
-          const cleanText = match
-            .replace(/BT|ET|Tj|TJ|Tm|Td|TD/g, '')
-            .replace(/[()[\]]/g, '')
-            .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-            .trim();
-          
-          if (cleanText.length > 3) {
-            text += cleanText + ' ';
-            textFound = true;
-          }
+    for (const page of extractedData.pages) {
+      for (const item of page.content) {
+        if (item.str && item.str.trim()) {
+          text += item.str + ' ';
         }
       }
+      text += '\n';
     }
     
-    // Fallback: extract any readable ASCII text
-    if (!textFound || text.length < 50) {
-      text = pdfString
-        .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-    
-    console.log(`Extracted ${text.length} characters from PDF`);
+    text = text.trim();
+    console.log(`Fallback extraction completed. Text length: ${text.length}`);
     
     if (text.length < 10) {
-      throw new Error('Unable to extract meaningful text from PDF. Consider converting to text format.');
+      throw new Error('Fallback extraction also produced insufficient text');
     }
     
     return text;
+    
   } catch (error) {
-    console.error('Error extracting text from PDF:', error);
-    throw error;
+    console.error('Fallback extraction failed:', error);
+    throw new Error('All PDF extraction methods failed. The PDF might be image-based or corrupted.');
   }
 }
 
@@ -89,7 +128,7 @@ async function extractTextFromFile(url: string, type: string): Promise<string> {
   
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // Increased timeout
     
     const response = await fetch(url, { 
       signal: controller.signal,
@@ -112,8 +151,13 @@ async function extractTextFromFile(url: string, type: string): Promise<string> {
       return text;
     } else if (type === 'pdf') {
       const arrayBuffer = await response.arrayBuffer();
+      console.log(`Downloaded PDF arrayBuffer, size: ${arrayBuffer.byteLength} bytes`);
+      
       const text = await extractTextFromPDF(arrayBuffer);
-      // Clear the arrayBuffer reference to free memory
+      
+      // Log a sample of the extracted text for verification
+      console.log(`PDF text extraction sample (first 200 chars): "${text.substring(0, 200)}"`);
+      
       return text;
     } else {
       throw new Error(`Unsupported file type: ${type}`);
