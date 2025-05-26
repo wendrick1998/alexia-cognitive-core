@@ -9,9 +9,9 @@ export function useDocumentProcessing() {
     try {
       console.log(`Starting processing for document: ${documentId}`);
 
-      // Add timeout to the function call
+      // Increase timeout for memory-optimized processing
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Processing timeout after 5 minutes')), 300000);
+        setTimeout(() => reject(new Error('Processing timeout after 8 minutes')), 480000);
       });
 
       const processingPromise = supabase.functions.invoke('process-document', {
@@ -25,9 +25,10 @@ export function useDocumentProcessing() {
         
         let errorMessage = 'Falha ao processar documento';
         
-        // Handle specific error types
         if (error.message?.includes('timeout') || error.message?.includes('fetch')) {
-          errorMessage = 'Timeout no processamento do documento. Tente novamente.';
+          errorMessage = 'Timeout no processamento do documento. O arquivo pode ser muito grande.';
+        } else if (error.message?.includes('Memory limit exceeded')) {
+          errorMessage = 'Documento muito grande para processamento. Considere dividir em arquivos menores.';
         } else if (error.message?.includes('OpenAI')) {
           errorMessage = 'Erro na API do OpenAI. Verifique sua configuração.';
         } else if (error.message?.includes('PDF')) {
@@ -63,6 +64,8 @@ export function useDocumentProcessing() {
       if (error instanceof Error) {
         if (error.message.includes('timeout')) {
           errorMessage = "Timeout no processamento. O documento pode ser muito grande.";
+        } else if (error.message.includes('Memory limit exceeded')) {
+          errorMessage = "Documento muito grande para processamento. Considere arquivos menores.";
         } else if (error.message.includes('network')) {
           errorMessage = "Erro de conexão. Verifique sua internet.";
         } else {
