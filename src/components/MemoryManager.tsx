@@ -23,7 +23,7 @@ const MemoryManager = () => {
   const [formData, setFormData] = useState({
     content: '',
     type: '' as 'fact' | 'preference' | 'decision' | 'note' | '',
-    project_id: '',
+    project_id: 'none',
   });
   const [filters, setFilters] = useState({
     type: 'all',
@@ -39,11 +39,11 @@ const MemoryManager = () => {
     const success = await createMemory({
       content: formData.content,
       type: formData.type,
-      project_id: formData.project_id || undefined,
+      project_id: formData.project_id === 'none' ? undefined : formData.project_id,
     });
 
     if (success) {
-      setFormData({ content: '', type: '', project_id: '' });
+      setFormData({ content: '', type: '', project_id: 'none' });
       setShowCreateForm(false);
     }
     setCreating(false);
@@ -55,7 +55,9 @@ const MemoryManager = () => {
     
     const filterParams: any = {};
     if (newFilters.type !== 'all') filterParams.type = newFilters.type;
-    if (newFilters.project_id !== 'all') filterParams.project_id = newFilters.project_id;
+    if (newFilters.project_id !== 'all' && newFilters.project_id !== 'none') {
+      filterParams.project_id = newFilters.project_id;
+    }
     
     fetchMemories(filterParams);
   };
@@ -183,7 +185,7 @@ const MemoryManager = () => {
                       <SelectValue placeholder="Selecione um projeto (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhum projeto</SelectItem>
+                      <SelectItem value="none">Nenhum projeto</SelectItem>
                       {projects.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.name}
@@ -265,6 +267,20 @@ const MemoryManager = () => {
       )}
     </div>
   );
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getTypeInfo = (type: string) => {
+  return MEMORY_TYPES.find(t => t.value === type) || MEMORY_TYPES[3];
 };
 
 export default MemoryManager;
