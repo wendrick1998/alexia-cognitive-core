@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -103,10 +102,10 @@ export function useDocuments() {
     try {
       setUploading(true);
 
-      // Upload file to Supabase Storage
+      // Upload file to Supabase Storage - CORRIGIDO: usar user.id como primeiro segmento
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${file.name}`;
-      const filePath = `documents/${user.id}/${fileName}`;
+      const filePath = `${user.id}/${fileName}`; // Corrigido: user.id primeiro
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documents')
