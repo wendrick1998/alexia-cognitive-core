@@ -6,7 +6,8 @@ import {
   FileText, 
   User, 
   FolderOpen, 
-  Settings 
+  Settings,
+  Search
 } from "lucide-react";
 
 interface SidebarProps {
@@ -19,6 +20,11 @@ const menuItems = [
     id: "chat",
     label: "Chat",
     icon: MessageCircle,
+  },
+  {
+    id: "search",
+    label: "Busca Semântica",
+    icon: Search,
   },
   {
     id: "memory",

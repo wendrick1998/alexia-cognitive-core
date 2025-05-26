@@ -6,6 +6,7 @@ import Chat from "../components/Chat";
 import ProjectsManager from "../components/ProjectsManager";
 import MemoryManager from "../components/MemoryManager";
 import DocumentsManager from "../components/DocumentsManager";
+import SemanticSearch from "../components/SemanticSearch";
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState("chat");
@@ -18,6 +19,8 @@ const Index = () => {
         return <MemoryManager />;
       case "documents":
         return <DocumentsManager />;
+      case "search":
+        return <SemanticSearch />;
       case "preferences":
         return (
           <div className="flex-1 flex items-center justify-center">
