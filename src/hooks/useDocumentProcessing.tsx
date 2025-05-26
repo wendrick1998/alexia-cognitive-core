@@ -82,7 +82,61 @@ export function useDocumentProcessing() {
     }
   };
 
+  const reprocessDocument = async (documentId: string): Promise<boolean> => {
+    try {
+      console.log(`Starting reprocessing for document: ${documentId}`);
+
+      // Update document status to processing before starting
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update({ 
+          status_processing: 'processing',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', documentId);
+
+      if (updateError) {
+        console.error('Error updating document status:', updateError);
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar status do documento",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Delete existing chunks for this document before reprocessing
+      const { error: deleteError } = await supabase
+        .from('document_chunks')
+        .delete()
+        .eq('document_id', documentId);
+
+      if (deleteError) {
+        console.error('Error deleting existing chunks:', deleteError);
+        // Continue anyway, as this is not critical
+      }
+
+      toast({
+        title: "Reprocessamento iniciado",
+        description: "O documento está sendo reprocessado. Isso pode levar alguns minutos.",
+      });
+
+      // Call the process function
+      return await processDocument(documentId);
+    } catch (error) {
+      console.error('Error in reprocessDocument:', error);
+      
+      toast({
+        title: "Erro no reprocessamento",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   return {
-    processDocument
+    processDocument,
+    reprocessDocument
   };
 }

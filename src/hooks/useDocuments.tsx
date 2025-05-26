@@ -4,13 +4,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentService } from '@/services/documentService';
 import { useDocumentUpload } from '@/hooks/useDocumentUpload';
+import { useDocumentProcessing } from '@/hooks/useDocumentProcessing';
 import { Document, DocumentFilters } from '@/types/document';
 
 export function useDocuments() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reprocessingIds, setReprocessingIds] = useState<Set<string>>(new Set());
   const { user } = useAuth();
   const { toast } = useToast();
+  const { reprocessDocument } = useDocumentProcessing();
 
   const handleDocumentUploaded = (document: Document) => {
     setDocuments(prev => [document, ...prev]);
@@ -59,6 +62,41 @@ export function useDocuments() {
     }
   };
 
+  const handleReprocessDocument = async (documentId: string): Promise<boolean> => {
+    if (reprocessingIds.has(documentId)) {
+      return false; // Already reprocessing
+    }
+
+    try {
+      setReprocessingIds(prev => new Set(prev).add(documentId));
+      
+      // Update the document status in local state immediately
+      setDocuments(prev => prev.map(doc => 
+        doc.id === documentId 
+          ? { ...doc, status_processing: 'processing' } 
+          : doc
+      ));
+
+      const success = await reprocessDocument(documentId);
+      
+      if (success) {
+        // Refresh documents to get updated status
+        await fetchDocuments();
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error reprocessing document:', error);
+      return false;
+    } finally {
+      setReprocessingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(documentId);
+        return newSet;
+      });
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchDocuments();
@@ -69,9 +107,11 @@ export function useDocuments() {
     documents,
     loading,
     uploading,
+    reprocessingIds,
     uploadDocument,
     deleteDocument,
     fetchDocuments,
+    handleReprocessDocument,
   };
 }
 

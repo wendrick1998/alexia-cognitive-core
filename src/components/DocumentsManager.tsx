@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useProjects } from '@/hooks/useProjects';
@@ -13,13 +14,23 @@ import {
   FileText, 
   FileType,
   Calendar,
-  HardDrive
+  HardDrive,
+  RefreshCw
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils';
 
 const DocumentsManager = () => {
-  const { documents, loading, uploading, uploadDocument, deleteDocument, fetchDocuments } = useDocuments();
+  const { 
+    documents, 
+    loading, 
+    uploading, 
+    reprocessingIds,
+    uploadDocument, 
+    deleteDocument, 
+    fetchDocuments,
+    handleReprocessDocument
+  } = useDocuments();
   const { projects } = useProjects();
   const [selectedProject, setSelectedProject] = useState<string>('all');
 
@@ -252,14 +263,30 @@ const DocumentsManager = () => {
                           </div>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteDocument(document.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReprocessDocument(document.id)}
+                          disabled={reprocessingIds.has(document.id)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          title="Reprocessar documento"
+                        >
+                          <RefreshCw className={cn(
+                            "h-4 w-4", 
+                            reprocessingIds.has(document.id) && "animate-spin"
+                          )} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteDocument(document.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          title="Excluir documento"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
