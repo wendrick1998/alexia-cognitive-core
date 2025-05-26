@@ -145,6 +145,7 @@ export function useDocuments() {
         .insert({
           ...documentData,
           user_id: user.id,
+          status_processing: 'pending'
         })
         .select(`
           *,
@@ -174,10 +175,23 @@ export function useDocuments() {
       };
 
       setDocuments(prev => [typedDocument, ...prev]);
+      
       toast({
         title: "Documento enviado com sucesso",
-        description: `O arquivo ${file.name} foi carregado.`,
+        description: `O arquivo ${file.name} foi carregado e será processado em breve.`,
       });
+
+      // Trigger document processing asynchronously
+      setTimeout(async () => {
+        try {
+          await supabase.functions.invoke('process-document', {
+            body: { documentId: data.id }
+          });
+        } catch (processError) {
+          console.error('Error triggering document processing:', processError);
+        }
+      }, 1000);
+
       return true;
     } catch (error) {
       console.error('Error in uploadDocument:', error);
