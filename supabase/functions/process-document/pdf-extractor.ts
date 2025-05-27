@@ -1,34 +1,36 @@
-
-// Enhanced PDF text extraction with multiple fallback strategies
+// Enhanced PDF text extraction with native decompression and parsing
 export interface ExtractionResult {
   text: string;
   method: string;
   quality: number;
+  metadata?: any;
 }
 
-// Main PDF text extraction function with robust fallbacks
+// Main PDF text extraction function with comprehensive approach
 export async function extractTextFromPDF(arrayBuffer: ArrayBuffer): Promise<string> {
-  console.log(`=== INICIANDO EXTRAÇÃO ROBUSTA DE PDF ===`);
+  console.log(`=== INICIANDO EXTRAÇÃO ROBUSTA DE PDF (VERSÃO CORRIGIDA) ===`);
   console.log(`Tamanho do buffer: ${arrayBuffer.byteLength} bytes`);
   
   if (arrayBuffer.byteLength === 0) {
     throw new Error('Buffer do PDF está vazio');
   }
 
-  // Validate PDF header
+  // Validate PDF header and get version
   const uint8Array = new Uint8Array(arrayBuffer);
-  const headerCheck = validatePDFHeader(uint8Array);
-  if (!headerCheck.isValid) {
-    throw new Error(`Arquivo inválido: ${headerCheck.error}`);
+  const headerValidation = validatePDFHeader(uint8Array);
+  if (!headerValidation.isValid) {
+    throw new Error(`Arquivo inválido: ${headerValidation.error}`);
   }
 
-  console.log(`PDF válido detectado: ${headerCheck.version}`);
+  console.log(`PDF válido detectado: ${headerValidation.version}`);
+  console.log(`Primeira linha do arquivo: ${new TextDecoder().decode(uint8Array.slice(0, 50))}`);
 
-  // Try multiple extraction strategies in order of preference
+  // Try multiple extraction strategies with improved implementations
   const strategies = [
-    { name: 'pdf-parse', method: extractWithPdfParse },
-    { name: 'native-regex', method: extractWithNativeRegex },
-    { name: 'stream-parser', method: extractWithStreamParser }
+    { name: 'native-pdf-parser', method: extractWithNativePDFParser },
+    { name: 'pdf-parse-enhanced', method: extractWithEnhancedPdfParse },
+    { name: 'stream-decompression', method: extractWithStreamDecompression },
+    { name: 'raw-text-search', method: extractWithRawTextSearch }
   ];
 
   let bestResult: ExtractionResult | null = null;
@@ -36,205 +38,305 @@ export async function extractTextFromPDF(arrayBuffer: ArrayBuffer): Promise<stri
 
   for (const strategy of strategies) {
     try {
-      console.log(`Tentando estratégia: ${strategy.name}`);
+      console.log(`🔍 Tentando estratégia: ${strategy.name}`);
+      const startTime = Date.now();
+      
       const result = await strategy.method(arrayBuffer);
+      const processingTime = Date.now() - startTime;
       
       if (result && result.text.length > 10) {
         const quality = calculateTextQuality(result.text);
         result.quality = quality;
         
-        console.log(`Estratégia ${strategy.name} - Qualidade: ${(quality * 100).toFixed(1)}%`);
-        console.log(`Amostra do texto: "${result.text.substring(0, 200)}"`);
+        console.log(`✅ Estratégia ${strategy.name} - Tempo: ${processingTime}ms, Qualidade: ${(quality * 100).toFixed(1)}%`);
+        console.log(`📝 Amostra (primeiros 200 chars): "${result.text.substring(0, 200)}"`);
+        console.log(`📊 Stats: ${result.text.length} chars, ${result.text.split(/\s+/).length} palavras`);
         
+        // Accept high quality results immediately
         if (quality >= 0.7) {
-          console.log(`✅ Extração bem-sucedida com ${strategy.name} (qualidade alta)`);
+          console.log(`🎯 Extração bem-sucedida com ${strategy.name} (qualidade alta)`);
           return cleanAndValidateText(result.text);
         }
         
+        // Keep track of best result
         if (!bestResult || quality > bestResult.quality) {
           bestResult = result;
         }
+      } else {
+        console.log(`❌ Estratégia ${strategy.name} produziu texto muito curto`);
       }
     } catch (error) {
-      console.error(`Estratégia ${strategy.name} falhou:`, error);
+      console.error(`❌ Estratégia ${strategy.name} falhou:`, error);
       lastError = error;
     }
   }
 
-  // Use best result if available, even with lower quality
+  // Use best available result if it meets minimum quality
   if (bestResult && bestResult.quality >= 0.3) {
-    console.log(`⚠️ Usando melhor resultado disponível (qualidade: ${(bestResult.quality * 100).toFixed(1)}%)`);
+    console.log(`⚠️ Usando melhor resultado disponível: ${bestResult.method} (qualidade: ${(bestResult.quality * 100).toFixed(1)}%)`);
     return cleanAndValidateText(bestResult.text);
   }
 
   // All strategies failed
-  console.error('❌ Todas as estratégias de extração falharam');
+  console.error('💥 Todas as estratégias de extração falharam');
+  console.error('📋 Informações de debug:');
+  console.error(`- Tamanho do arquivo: ${arrayBuffer.byteLength} bytes`);
+  console.error(`- Header válido: ${headerValidation.isValid}`);
+  console.error(`- Último erro: ${lastError?.message}`);
+  
   throw new Error(`Falha na extração de texto: ${lastError?.message || 'Métodos esgotados'}`);
 }
 
-// Strategy 1: Enhanced pdf-parse with better error handling
-async function extractWithPdfParse(arrayBuffer: ArrayBuffer): Promise<ExtractionResult> {
-  try {
-    console.log('Iniciando extração com pdf-parse...');
-    
-    // Import pdf-parse dynamically
-    const pdfParse = await import('https://esm.sh/pdf-parse@1.1.1');
-    
-    const buffer = new Uint8Array(arrayBuffer);
-    
-    const options = {
-      max: 50, // Increase page limit
-      version: 'v1.10.100',
-      normalizeWhitespace: true,
-      disableCombineTextItems: false
-    };
-    
-    const pdfData = await pdfParse.default(buffer, options);
-    
-    console.log(`pdf-parse: ${pdfData.numpages} páginas, ${pdfData.text.length} caracteres`);
-    
-    if (!pdfData.text || pdfData.text.length < 10) {
-      throw new Error('Texto extraído muito curto');
-    }
-    
-    return {
-      text: pdfData.text,
-      method: 'pdf-parse',
-      quality: 0
-    };
-    
-  } catch (error) {
-    console.error('pdf-parse falhou:', error);
-    throw error;
-  }
-}
-
-// Strategy 2: Enhanced native regex extraction
-async function extractWithNativeRegex(arrayBuffer: ArrayBuffer): Promise<ExtractionResult> {
-  console.log('Iniciando extração com regex nativo...');
+// Strategy 1: Native PDF parser with proper decompression
+async function extractWithNativePDFParser(arrayBuffer: ArrayBuffer): Promise<ExtractionResult> {
+  console.log('🔧 Iniciando parser PDF nativo...');
   
   try {
     const uint8Array = new Uint8Array(arrayBuffer);
+    const pdfContent = new TextDecoder('latin1', { fatal: false }).decode(uint8Array);
     
-    // Try multiple encodings
-    const encodings = ['utf-8', 'latin1', 'ascii'];
-    let bestText = '';
-    let bestQuality = 0;
+    // Extract PDF structure information
+    const pdfInfo = analyzePDFStructure(pdfContent);
+    console.log(`📋 Estrutura PDF: ${pdfInfo.objects} objetos, ${pdfInfo.streams} streams`);
     
-    for (const encoding of encodings) {
+    // Find and extract text objects
+    const textObjects = extractTextObjects(pdfContent);
+    console.log(`📄 Encontrados ${textObjects.length} objetos de texto`);
+    
+    if (textObjects.length === 0) {
+      throw new Error('Nenhum objeto de texto encontrado no PDF');
+    }
+    
+    // Process each text object and decompress if needed
+    const extractedTexts: string[] = [];
+    
+    for (let i = 0; i < textObjects.length; i++) {
+      const textObj = textObjects[i];
+      console.log(`🔍 Processando objeto ${i + 1}/${textObjects.length}...`);
+      
       try {
-        const content = new TextDecoder(encoding, { fatal: false }).decode(uint8Array);
-        const extractedText = extractTextFromPDFContent(content);
-        
-        if (extractedText.length > bestText.length) {
-          const quality = calculateTextQuality(extractedText);
-          if (quality > bestQuality) {
-            bestText = extractedText;
-            bestQuality = quality;
-          }
-        }
-      } catch (err) {
-        console.log(`Encoding ${encoding} falhou, continuando...`);
-      }
-    }
-    
-    if (bestText.length < 10) {
-      throw new Error('Nenhum texto significativo encontrado');
-    }
-    
-    console.log(`Regex nativo: ${bestText.length} caracteres extraídos`);
-    
-    return {
-      text: bestText,
-      method: 'native-regex',
-      quality: bestQuality
-    };
-    
-  } catch (error) {
-    console.error('Regex nativo falhou:', error);
-    throw error;
-  }
-}
-
-// Strategy 3: Stream-based parser for complex PDFs
-async function extractWithStreamParser(arrayBuffer: ArrayBuffer): Promise<ExtractionResult> {
-  console.log('Iniciando extração com parser de stream...');
-  
-  try {
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const content = new TextDecoder('latin1', { fatal: false }).decode(uint8Array);
-    
-    // Find and extract text from content streams
-    const streamPattern = /stream\s*\n([\s\S]*?)\nendstream/gi;
-    const textCommands = /\(((?:[^\\()]|\\.)*)?\)\s*(?:Tj|TJ)/g;
-    const hexStrings = /<([0-9A-Fa-f\s]+)>\s*(?:Tj|TJ)/g;
-    
-    let extractedTexts: string[] = [];
-    let match;
-    
-    // Extract from streams
-    while ((match = streamPattern.exec(content)) !== null) {
-      const streamContent = match[1];
-      
-      // Extract text commands
-      let textMatch;
-      while ((textMatch = textCommands.exec(streamContent)) !== null) {
-        if (textMatch[1]) {
-          const cleanText = textMatch[1]
-            .replace(/\\n/g, ' ')
-            .replace(/\\r/g, ' ')
-            .replace(/\\t/g, ' ')
-            .replace(/\\\\/g, '\\')
-            .replace(/\\\(/g, '(')
-            .replace(/\\\)/g, ')')
-            .trim();
-          
-          if (cleanText.length > 2) {
-            extractedTexts.push(cleanText);
-          }
-        }
-      }
-      
-      // Extract hex strings
-      while ((textMatch = hexStrings.exec(streamContent)) !== null) {
-        try {
-          const hexText = textMatch[1].replace(/\s/g, '');
-          if (hexText.length % 2 === 0) {
-            const decoded = hexText.match(/.{2}/g)
-              ?.map(hex => String.fromCharCode(parseInt(hex, 16)))
-              .join('')
-              .trim();
-            
-            if (decoded && decoded.length > 2) {
-              extractedTexts.push(decoded);
+        // Check if object is compressed
+        if (textObj.includes('FlateDecode') || textObj.includes('/Filter')) {
+          console.log(`🗜️ Objeto ${i + 1} está comprimido, tentando descomprimir...`);
+          const decompressed = await decompressPDFStream(textObj);
+          if (decompressed) {
+            const text = extractTextFromDecompressedStream(decompressed);
+            if (text.length > 5) {
+              extractedTexts.push(text);
+              console.log(`✅ Objeto ${i + 1} descomprimido: ${text.length} chars`);
             }
           }
-        } catch (err) {
-          // Continue with next hex string
+        } else {
+          // Try to extract text directly
+          const text = extractTextFromPDFObject(textObj);
+          if (text.length > 5) {
+            extractedTexts.push(text);
+            console.log(`✅ Objeto ${i + 1} extraído diretamente: ${text.length} chars`);
+          }
         }
+      } catch (objError) {
+        console.warn(`⚠️ Erro no objeto ${i + 1}:`, objError.message);
       }
     }
     
     if (extractedTexts.length === 0) {
-      throw new Error('Nenhum texto encontrado nos streams');
+      throw new Error('Não foi possível extrair texto de nenhum objeto');
     }
     
-    const finalText = extractedTexts.join(' ');
-    console.log(`Parser de stream: ${extractedTexts.length} fragmentos, ${finalText.length} caracteres`);
+    const finalText = extractedTexts.join(' ').trim();
+    console.log(`🎯 Parser nativo: ${extractedTexts.length} objetos processados, ${finalText.length} chars totais`);
     
     return {
       text: finalText,
-      method: 'stream-parser',
-      quality: 0
+      method: 'native-pdf-parser',
+      quality: 0,
+      metadata: { objectsProcessed: extractedTexts.length, ...pdfInfo }
     };
     
   } catch (error) {
-    console.error('Parser de stream falhou:', error);
+    console.error('❌ Parser PDF nativo falhou:', error);
     throw error;
   }
 }
 
-// Validate PDF header and extract version info
+// Strategy 2: Enhanced pdf-parse with better error handling
+async function extractWithEnhancedPdfParse(arrayBuffer: ArrayBuffer): Promise<ExtractionResult> {
+  console.log('📚 Iniciando pdf-parse aprimorado...');
+  
+  try {
+    // Import pdf-parse with more robust options
+    const pdfParse = await import('https://esm.sh/pdf-parse@1.1.1');
+    
+    const buffer = new Uint8Array(arrayBuffer);
+    
+    // Enhanced options for better extraction
+    const options = {
+      max: 100,
+      version: 'v1.10.100',
+      normalizeWhitespace: true,
+      disableCombineTextItems: false,
+      useSystemFonts: false
+    };
+    
+    console.log('🔄 Executando pdf-parse...');
+    const pdfData = await pdfParse.default(buffer, options);
+    
+    console.log(`📊 pdf-parse stats: ${pdfData.numpages} páginas, ${pdfData.text?.length || 0} caracteres`);
+    console.log(`📋 Metadata: ${JSON.stringify(pdfData.info || {})}`);
+    
+    if (!pdfData.text || pdfData.text.length < 10) {
+      throw new Error(`Texto extraído muito curto: ${pdfData.text?.length || 0} chars`);
+    }
+    
+    // Log sample of extracted text for debugging
+    const sample = pdfData.text.substring(0, 300);
+    console.log(`📝 Amostra do texto extraído: "${sample}"`);
+    
+    return {
+      text: pdfData.text,
+      method: 'pdf-parse-enhanced',
+      quality: 0,
+      metadata: { pages: pdfData.numpages, info: pdfData.info }
+    };
+    
+  } catch (error) {
+    console.error('❌ pdf-parse aprimorado falhou:', error);
+    throw error;
+  }
+}
+
+// Strategy 3: Stream decompression with proper PDF parsing
+async function extractWithStreamDecompression(arrayBuffer: ArrayBuffer): Promise<ExtractionResult> {
+  console.log('🌊 Iniciando decompressão de streams...');
+  
+  try {
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const pdfContent = new TextDecoder('latin1', { fatal: false }).decode(uint8Array);
+    
+    // Find all stream objects
+    const streamPattern = /(\d+\s+\d+\s+obj[\s\S]*?stream\s*\n)([\s\S]*?)(\nendstream)/gi;
+    const streams = [];
+    let match;
+    
+    while ((match = streamPattern.exec(pdfContent)) !== null) {
+      const streamHeader = match[1];
+      const streamData = match[2];
+      
+      streams.push({
+        header: streamHeader,
+        data: streamData,
+        isCompressed: streamHeader.includes('FlateDecode') || streamHeader.includes('/Filter')
+      });
+    }
+    
+    console.log(`🔍 Encontrados ${streams.length} streams no PDF`);
+    
+    if (streams.length === 0) {
+      throw new Error('Nenhum stream encontrado no PDF');
+    }
+    
+    const extractedTexts: string[] = [];
+    
+    for (let i = 0; i < streams.length; i++) {
+      const stream = streams[i];
+      console.log(`🔄 Processando stream ${i + 1}/${streams.length} (comprimido: ${stream.isCompressed})`);
+      
+      try {
+        let processedData = stream.data;
+        
+        if (stream.isCompressed) {
+          console.log(`🗜️ Descomprimindo stream ${i + 1}...`);
+          const decompressed = await decompressFlateData(stream.data);
+          if (decompressed) {
+            processedData = decompressed;
+            console.log(`✅ Stream ${i + 1} descomprimido: ${processedData.length} chars`);
+          }
+        }
+        
+        // Extract text from processed data
+        const text = extractTextFromStreamData(processedData);
+        if (text.length > 10) {
+          extractedTexts.push(text);
+          console.log(`📝 Stream ${i + 1} texto extraído: ${text.length} chars`);
+        }
+        
+      } catch (streamError) {
+        console.warn(`⚠️ Erro no stream ${i + 1}:`, streamError.message);
+      }
+    }
+    
+    if (extractedTexts.length === 0) {
+      throw new Error('Nenhum texto extraído dos streams');
+    }
+    
+    const finalText = extractedTexts.join(' ').trim();
+    console.log(`🎯 Decompressão de streams: ${extractedTexts.length} streams processados, ${finalText.length} chars`);
+    
+    return {
+      text: finalText,
+      method: 'stream-decompression',
+      quality: 0,
+      metadata: { streamsProcessed: extractedTexts.length, totalStreams: streams.length }
+    };
+    
+  } catch (error) {
+    console.error('❌ Decompressão de streams falhou:', error);
+    throw error;
+  }
+}
+
+// Strategy 4: Raw text search as final fallback
+async function extractWithRawTextSearch(arrayBuffer: ArrayBuffer): Promise<ExtractionResult> {
+  console.log('🔍 Iniciando busca de texto bruto...');
+  
+  try {
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    // Try different encodings
+    const encodings = ['utf-8', 'latin1', 'ascii', 'utf-16'];
+    let bestText = '';
+    let bestEncoding = '';
+    
+    for (const encoding of encodings) {
+      try {
+        const content = new TextDecoder(encoding, { fatal: false }).decode(uint8Array);
+        
+        // Search for readable text patterns
+        const textMatches = content.match(/\b[a-zA-ZÀ-ÿ\u00C0-\u017F]{3,}\b/g);
+        const readableText = textMatches ? textMatches.join(' ') : '';
+        
+        if (readableText.length > bestText.length) {
+          bestText = readableText;
+          bestEncoding = encoding;
+        }
+        
+        console.log(`📊 Encoding ${encoding}: ${readableText.length} chars de texto legível`);
+        
+      } catch (err) {
+        console.log(`⚠️ Encoding ${encoding} falhou`);
+      }
+    }
+    
+    if (bestText.length < 20) {
+      throw new Error(`Texto bruto insuficiente: ${bestText.length} chars`);
+    }
+    
+    console.log(`🎯 Busca de texto bruto: melhor encoding ${bestEncoding}, ${bestText.length} chars`);
+    
+    return {
+      text: bestText,
+      method: 'raw-text-search',
+      quality: 0,
+      metadata: { encoding: bestEncoding, wordsFound: bestText.split(/\s+/).length }
+    };
+    
+  } catch (error) {
+    console.error('❌ Busca de texto bruto falhou:', error);
+    throw error;
+  }
+}
+
+// Helper function to validate PDF header
 function validatePDFHeader(uint8Array: Uint8Array): { isValid: boolean; version?: string; error?: string } {
   if (uint8Array.length < 8) {
     return { isValid: false, error: 'Arquivo muito pequeno' };
@@ -250,41 +352,121 @@ function validatePDFHeader(uint8Array: Uint8Array): { isValid: boolean; version?
   return { isValid: true, version: `PDF ${version}` };
 }
 
-// Extract text using various PDF content patterns
-function extractTextFromPDFContent(content: string): string {
-  const patterns = [
-    // Standard text showing operators
+// Helper function to analyze PDF structure
+function analyzePDFStructure(content: string): { objects: number; streams: number; compressed: number } {
+  const objectMatches = content.match(/\d+\s+\d+\s+obj/g);
+  const streamMatches = content.match(/stream\s*\n/g);
+  const compressedMatches = content.match(/FlateDecode/g);
+  
+  return {
+    objects: objectMatches?.length || 0,
+    streams: streamMatches?.length || 0,
+    compressed: compressedMatches?.length || 0
+  };
+}
+
+// Helper function to extract text objects from PDF
+function extractTextObjects(content: string): string[] {
+  const objects: string[] = [];
+  const objectPattern = /(\d+\s+\d+\s+obj[\s\S]*?endobj)/gi;
+  let match;
+  
+  while ((match = objectPattern.exec(content)) !== null) {
+    const obj = match[1];
+    // Look for text-related objects
+    if (obj.includes('/Type/Page') || obj.includes('BT') || obj.includes('Tj') || obj.includes('TJ')) {
+      objects.push(obj);
+    }
+  }
+  
+  return objects;
+}
+
+// Helper function to decompress PDF stream data
+async function decompressPDFStream(streamObject: string): Promise<string | null> {
+  try {
+    // Extract the actual stream data
+    const streamMatch = streamObject.match(/stream\s*\n([\s\S]*?)\nendstream/);
+    if (!streamMatch) return null;
+    
+    const streamData = streamMatch[1];
+    return await decompressFlateData(streamData);
+  } catch (error) {
+    console.warn('Erro na decompressão do stream PDF:', error);
+    return null;
+  }
+}
+
+// Helper function to decompress Flate/Deflate data
+async function decompressFlateData(data: string): Promise<string | null> {
+  try {
+    // Convert string to Uint8Array
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const uint8Data = encoder.encode(data);
+    
+    // Try to decompress using native Deno compression
+    const decompressedStream = new DecompressionStream('deflate');
+    const writer = decompressedStream.writable.getWriter();
+    const reader = decompressedStream.readable.getReader();
+    
+    writer.write(uint8Data);
+    writer.close();
+    
+    const { value } = await reader.read();
+    if (value) {
+      return decoder.decode(value);
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('Erro na decompressão Flate:', error);
+    return null;
+  }
+}
+
+// Helper function to extract text from decompressed stream
+function extractTextFromDecompressedStream(data: string): string {
+  // Look for text showing operators and extract text
+  const textPatterns = [
     /\(((?:[^\\()]|\\.)*?)\)\s*(?:Tj|TJ)/g,
-    // Hex encoded strings
-    /<([0-9A-Fa-f\s]+)>\s*(?:Tj|TJ)/g,
-    // Array of strings
-    /\[\s*\(((?:[^\\()]|\\.)*?)\)\s*\]\s*TJ/g,
-    // Simple text patterns
-    /BT\s+(?:.*?)\s+\((.*?)\)\s+Tj/g
+    /\[((?:\([^)]*\)|[^\[\]])*)\]\s*TJ/g,
+    /<([0-9A-Fa-f\s]+)>\s*(?:Tj|TJ)/g
   ];
   
   const extractedTexts: string[] = [];
   
-  for (const pattern of patterns) {
+  for (const pattern of textPatterns) {
     let match;
-    while ((match = pattern.exec(content)) !== null) {
-      const text = match[1];
-      if (text && text.length > 1) {
-        if (pattern === patterns[1]) { // Hex pattern
-          try {
-            const hexText = text.replace(/\s/g, '');
-            if (hexText.length % 2 === 0) {
-              const decoded = hexText.match(/.{2}/g)
-                ?.map(hex => String.fromCharCode(parseInt(hex, 16)))
-                .join('');
-              if (decoded) extractedTexts.push(decoded);
-            }
-          } catch (err) {
-            // Continue with next match
+    while ((match = pattern.exec(data)) !== null) {
+      let text = match[1];
+      
+      // Handle hex encoding if applicable
+      if (pattern === textPatterns[2]) {
+        try {
+          const hexText = text.replace(/\s/g, '');
+          if (hexText.length % 2 === 0) {
+            text = hexText.match(/.{2}/g)
+              ?.map(hex => String.fromCharCode(parseInt(hex, 16)))
+              .join('') || '';
           }
-        } else {
-          extractedTexts.push(text);
+        } catch (err) {
+          continue;
         }
+      }
+      
+      // Clean up extracted text
+      text = text
+        .replace(/\\n/g, ' ')
+        .replace(/\\r/g, ' ')
+        .replace(/\\t/g, ' ')
+        .replace(/\\\\/g, '\\')
+        .replace(/\\\(/g, '(')
+        .replace(/\\\)/g, ')')
+        .trim();
+      
+      if (text.length > 2) {
+        extractedTexts.push(text);
       }
     }
   }
@@ -292,11 +474,22 @@ function extractTextFromPDFContent(content: string): string {
   return extractedTexts.join(' ');
 }
 
-// Calculate text quality based on readable characters
+// Helper function to extract text from PDF object
+function extractTextFromPDFObject(obj: string): string {
+  // Similar to extractTextFromDecompressedStream but for uncompressed objects
+  return extractTextFromDecompressedStream(obj);
+}
+
+// Helper function to extract text from stream data
+function extractTextFromStreamData(data: string): string {
+  return extractTextFromDecompressedStream(data);
+}
+
+// Helper function to calculate text quality
 function calculateTextQuality(text: string): number {
   if (!text || text.length === 0) return 0;
   
-  // Count readable characters
+  // Count readable characters (letters, numbers, common punctuation, accented chars)
   const readableChars = (text.match(/[a-zA-Z0-9À-ÿ\u00C0-\u017F\s\.\,\!\?\;\:\-\(\)\[\]\"\']/g) || []).length;
   const totalChars = text.length;
   
@@ -304,19 +497,27 @@ function calculateTextQuality(text: string): number {
   let quality = readableChars / totalChars;
   
   // Bonus for word presence
-  const wordCount = (text.match(/\b[a-zA-ZÀ-ÿ\u00C0-\u017F]{2,}\b/g) || []).length;
-  if (wordCount > 5) quality += 0.1;
+  const words = text.match(/\b[a-zA-ZÀ-ÿ\u00C0-\u017F]{2,}\b/g) || [];
+  if (words.length > 5) quality += 0.1;
+  
+  // Bonus for sentences
+  const sentences = text.match(/[.!?]+/g) || [];
+  if (sentences.length > 1) quality += 0.05;
   
   // Penalty for too many special characters
   const specialChars = (text.match(/[^\w\s\.\,\!\?\;\:\-\(\)\[\]\"\'À-ÿ\u00C0-\u017F]/g) || []).length;
   if (specialChars > totalChars * 0.3) quality -= 0.2;
   
+  // Penalty for excessive repetition
+  const uniqueChars = new Set(text.toLowerCase()).size;
+  if (uniqueChars < 10) quality -= 0.3;
+  
   return Math.max(0, Math.min(1, quality));
 }
 
-// Clean and validate extracted text
+// Helper function to clean and validate extracted text
 function cleanAndValidateText(text: string): string {
-  console.log('Iniciando limpeza e validação do texto...');
+  console.log('🧹 Iniciando limpeza e validação do texto...');
   
   // Remove control characters and normalize whitespace
   let cleaned = text
@@ -338,18 +539,26 @@ function cleanAndValidateText(text: string): string {
     .replace(/\\t/g, '\t')
     .replace(/\\\\/g, '\\');
   
-  const quality = calculateTextQuality(cleaned);
-  console.log(`Texto limpo: ${cleaned.length} caracteres, qualidade: ${(quality * 100).toFixed(1)}%`);
+  // Remove obviously corrupted sequences
+  cleaned = cleaned
+    .replace(/[^\w\s\.\,\!\?\;\:\-\(\)\[\]\"\'À-ÿ\u00C0-\u017F]{3,}/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   
-  if (quality < 0.3) {
-    console.warn('⚠️ Qualidade do texto baixa, mas prosseguindo...');
+  const quality = calculateTextQuality(cleaned);
+  console.log(`📊 Texto limpo: ${cleaned.length} caracteres, qualidade: ${(quality * 100).toFixed(1)}%`);
+  console.log(`📝 Palavras encontradas: ${(cleaned.match(/\b[a-zA-ZÀ-ÿ\u00C0-\u017F]{2,}\b/g) || []).length}`);
+  
+  if (quality < 0.2) {
+    console.warn('⚠️ Qualidade do texto muito baixa, mas prosseguindo...');
   }
   
   if (cleaned.length < 10) {
     throw new Error('Texto extraído muito curto após limpeza');
   }
   
-  console.log(`Amostra do texto limpo: "${cleaned.substring(0, 300)}"`);
+  // Log sample of cleaned text for debugging
+  console.log(`📋 Amostra do texto limpo (300 chars): "${cleaned.substring(0, 300)}"`);
   
   return cleaned;
 }
