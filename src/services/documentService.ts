@@ -35,7 +35,11 @@ export class DocumentService {
       project_id: doc.project_id || undefined,
       url: doc.url || undefined,
       summary: doc.summary || undefined,
-      file_size: doc.file_size || undefined
+      file_size: doc.file_size || undefined,
+      file_path: doc.file_path || undefined,
+      mime_type: doc.mime_type || undefined,
+      extraction_method: doc.extraction_method || undefined,
+      extraction_quality: doc.extraction_quality || undefined
     }));
   }
 
@@ -89,7 +93,11 @@ export class DocumentService {
       project_id: data.project_id || undefined,
       url: data.url || undefined,
       summary: data.summary || undefined,
-      file_size: data.file_size || undefined
+      file_size: data.file_size || undefined,
+      file_path: data.file_path || undefined,
+      mime_type: data.mime_type || undefined,
+      extraction_method: data.extraction_method || undefined,
+      extraction_quality: data.extraction_quality || undefined
     };
   }
 

@@ -51,40 +51,40 @@ export type Database = {
           },
         ]
       }
-      document_chunks: {
+      document_sections: {
         Row: {
-          chunk_index: number
           content: string
           created_at: string
           document_id: string
           embedding: string | null
           id: string
           metadata: Json | null
+          section_number: number
           updated_at: string
         }
         Insert: {
-          chunk_index: number
           content: string
           created_at?: string
           document_id: string
           embedding?: string | null
           id?: string
           metadata?: Json | null
+          section_number: number
           updated_at?: string
         }
         Update: {
-          chunk_index?: number
           content?: string
           created_at?: string
           document_id?: string
           embedding?: string | null
           id?: string
           metadata?: Json | null
+          section_number?: number
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "document_chunks_document_id_fkey"
+            foreignKeyName: "document_sections_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
@@ -95,14 +95,18 @@ export type Database = {
       documents: {
         Row: {
           created_at: string
+          extraction_method: string | null
+          extraction_quality: number | null
+          file_path: string | null
           file_size: number | null
           id: string
           metadata: Json | null
-          name: string
+          mime_type: string | null
           project_id: string | null
           source: string
           status_processing: string | null
           summary: string | null
+          title: string
           type: string
           updated_at: string
           url: string | null
@@ -110,14 +114,18 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          extraction_method?: string | null
+          extraction_quality?: number | null
+          file_path?: string | null
           file_size?: number | null
           id?: string
           metadata?: Json | null
-          name: string
+          mime_type?: string | null
           project_id?: string | null
           source: string
           status_processing?: string | null
           summary?: string | null
+          title: string
           type: string
           updated_at?: string
           url?: string | null
@@ -125,14 +133,18 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          extraction_method?: string | null
+          extraction_quality?: number | null
+          file_path?: string | null
           file_size?: number | null
           id?: string
           metadata?: Json | null
-          name?: string
+          mime_type?: string | null
           project_id?: string | null
           source?: string
           status_processing?: string | null
           summary?: string | null
+          title?: string
           type?: string
           updated_at?: string
           url?: string | null

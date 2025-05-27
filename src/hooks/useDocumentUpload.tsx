@@ -21,13 +21,16 @@ export function useDocumentUpload(
       // Upload file to Supabase Storage
       const publicUrl = await DocumentService.uploadFile(file, user.id);
 
-      // Create document record
+      // Create document record with new schema
       const documentData: CreateDocumentData = {
-        name: file.name,
+        title: file.name, // Changed from 'name' to 'title'
         type: file.name.split('.').pop() || 'unknown',
         source: 'upload',
         url: publicUrl,
         file_size: file.size,
+        file_path: publicUrl,
+        mime_type: file.type,
+        extraction_method: 'pending',
         project_id: projectId || null,
         metadata: {
           originalName: file.name,

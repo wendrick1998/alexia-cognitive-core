@@ -52,7 +52,7 @@ export function useDocumentProcessing() {
       
       toast({
         title: "Documento processado",
-        description: `Documento processado com sucesso. ${chunksCreated} chunks criados em ${Math.round(processingTime / 1000)}s.`,
+        description: `Documento processado com sucesso. ${chunksCreated} seções criadas em ${Math.round(processingTime / 1000)}s.`,
       });
 
       return true;
@@ -105,14 +105,14 @@ export function useDocumentProcessing() {
         return false;
       }
 
-      // Delete existing chunks for this document before reprocessing
+      // Delete existing sections for this document before reprocessing (updated table name)
       const { error: deleteError } = await supabase
-        .from('document_chunks')
+        .from('document_sections') // Updated table name
         .delete()
         .eq('document_id', documentId);
 
       if (deleteError) {
-        console.error('Error deleting existing chunks:', deleteError);
+        console.error('Error deleting existing sections:', deleteError);
         // Continue anyway, as this is not critical
       }
 

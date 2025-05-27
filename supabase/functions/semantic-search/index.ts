@@ -65,15 +65,15 @@ serve(async (req) => {
     const queryEmbedding = await generateEmbedding(query_text);
     const embeddingString = `[${queryEmbedding.join(',')}]`;
 
-    // Build the query to search for similar chunks
+    // Build the query to search for similar sections (updated table name)
     let searchQuery = supabase
-      .from('document_chunks')
+      .from('document_sections') // Updated table name
       .select(`
         content,
-        chunk_index,
+        section_number,
         document_id,
         documents!inner(
-          name,
+          title,
           user_id,
           project_id
         )
@@ -107,10 +107,10 @@ serve(async (req) => {
         throw fallbackError;
       }
 
-      const formattedResults = (fallbackResults || []).map(chunk => ({
-        content: chunk.content,
-        document_name: chunk.documents.name,
-        chunk_index: chunk.chunk_index,
+      const formattedResults = (fallbackResults || []).map(section => ({
+        content: section.content,
+        document_name: section.documents.title, // Updated field name
+        section_number: section.section_number, // Updated field name
         similarity_score: 0.5 // Default score for fallback
       }));
 
@@ -124,7 +124,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${searchResults?.length || 0} similar chunks`);
+    console.log(`Found ${searchResults?.length || 0} similar sections`);
 
     return new Response(
       JSON.stringify({ 

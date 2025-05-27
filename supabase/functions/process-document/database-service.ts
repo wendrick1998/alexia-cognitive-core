@@ -7,29 +7,29 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// Database operations for chunks and documents
+// Database operations for sections and documents (updated for new schema)
 export async function saveChunkWithEmbedding(documentId: string, chunk: ChunkData, embedding: number[]) {
-  console.log(`Saving chunk ${chunk.chunk_index} for document ${documentId} (${chunk.content.length} chars)`);
+  console.log(`Saving section ${chunk.chunk_index} for document ${documentId} (${chunk.content.length} chars)`);
   
   try {
     const { error } = await supabase
-      .from('document_chunks')
+      .from('document_sections') // Updated table name
       .insert({
         document_id: documentId,
-        chunk_index: chunk.chunk_index,
+        section_number: chunk.chunk_index, // Updated column name
         content: chunk.content,
         embedding: JSON.stringify(embedding),
         metadata: chunk.metadata
       });
 
     if (error) {
-      console.error(`Database error saving chunk ${chunk.chunk_index}:`, error);
+      console.error(`Database error saving section ${chunk.chunk_index}:`, error);
       throw error;
     }
     
-    console.log(`Successfully saved chunk ${chunk.chunk_index}`);
+    console.log(`Successfully saved section ${chunk.chunk_index}`);
   } catch (error) {
-    console.error(`Error saving chunk ${chunk.chunk_index}:`, error);
+    console.error(`Error saving section ${chunk.chunk_index}:`, error);
     throw error;
   }
 }
