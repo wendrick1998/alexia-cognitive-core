@@ -1,5 +1,12 @@
-
-import { extractTextFromPDF } from './pdf-extractor.ts';
+import { validateInput, validateFileSize, validatePDFHeader, validatePDFSize } from './file-validator.ts';
+import { cleanAndValidateText, calculateTextQuality } from './text-processor.ts';
+import { 
+  extractWithNativePDFParser, 
+  extractWithEnhancedPdfParse, 
+  extractWithStreamDecompression, 
+  extractWithRawTextSearch,
+  ExtractionResult 
+} from './extraction-strategies.ts';
 
 // Enhanced file text extraction with comprehensive PDF support
 export async function extractTextFromFile(url: string, type: string): Promise<string> {
@@ -9,13 +16,7 @@ export async function extractTextFromFile(url: string, type: string): Promise<st
   console.log(`Timestamp: ${new Date().toISOString()}`);
   
   // Validate input parameters
-  if (!url || typeof url !== 'string') {
-    throw new Error('URL do arquivo é obrigatória');
-  }
-  
-  if (!type || typeof type !== 'string') {
-    throw new Error('Tipo do arquivo é obrigatório');
-  }
+  validateInput(url, type);
   
   try {
     console.log('📥 Iniciando download do arquivo...');
@@ -52,10 +53,8 @@ export async function extractTextFromFile(url: string, type: string): Promise<st
     console.log(`- Tamanho: ${fileSize} bytes`);
     console.log(`- Tipo detectado: ${type}`);
     
-    // Validate file size (max 100MB for improved handling)
-    if (typeof fileSize === 'number' && fileSize > 100 * 1024 * 1024) {
-      throw new Error('Arquivo muito grande (máximo 100MB)');
-    }
+    // Validate file size
+    validateFileSize(contentLength);
 
     // Process based on file type with enhanced logic
     const normalizedType = type.toLowerCase().trim();
@@ -135,9 +134,7 @@ async function extractPDFFile(response: Response, url: string): Promise<string> 
     // Get PDF as ArrayBuffer with validation
     const arrayBuffer = await response.arrayBuffer();
     
-    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-      throw new Error('PDF está vazio ou corrompido');
-    }
+    validatePDFSize(arrayBuffer);
     
     console.log(`📊 PDF carregado:`);
     console.log(`- Tamanho: ${arrayBuffer.byteLength} bytes`);
@@ -145,54 +142,64 @@ async function extractPDFFile(response: Response, url: string): Promise<string> 
     
     // Enhanced PDF validation
     const uint8Array = new Uint8Array(arrayBuffer);
-    if (uint8Array.length < 1024) {
-      throw new Error('PDF muito pequeno, possivelmente corrompido');
+    const headerValidation = validatePDFHeader(uint8Array);
+    if (!headerValidation.isValid) {
+      throw new Error(`Arquivo inválido: ${headerValidation.error}`);
     }
     
-    // Validate PDF signature
-    const header = new TextDecoder().decode(uint8Array.slice(0, 10));
-    if (!header.startsWith('%PDF-')) {
-      throw new Error('Arquivo não é um PDF válido (header inválido)');
+    console.log(`✅ PDF válido detectado: ${headerValidation.version}`);
+    
+    // Try multiple extraction strategies with improved implementations
+    const strategies = [
+      { name: 'native-pdf-parser', method: extractWithNativePDFParser },
+      { name: 'pdf-parse-enhanced', method: extractWithEnhancedPdfParse },
+      { name: 'stream-decompression', method: extractWithStreamDecompression },
+      { name: 'raw-text-search', method: extractWithRawTextSearch }
+    ];
+
+    let bestResult: ExtractionResult | null = null;
+    let lastError: Error | null = null;
+
+    for (const strategy of strategies) {
+      try {
+        console.log(`🔍 Tentando estratégia: ${strategy.name}`);
+        const startTime = Date.now();
+        
+        const result = await strategy.method(arrayBuffer);
+        const processingTime = Date.now() - startTime;
+        
+        if (result && result.text.length > 10) {
+          const quality = calculateTextQuality(result.text);
+          result.quality = quality;
+          
+          console.log(`✅ Estratégia ${strategy.name} - Tempo: ${processingTime}ms, Qualidade: ${(quality * 100).toFixed(1)}%`);
+          
+          // Accept high quality results immediately
+          if (quality >= 0.7) {
+            console.log(`🎯 Extração bem-sucedida com ${strategy.name} (qualidade alta)`);
+            return cleanAndValidateText(result.text);
+          }
+          
+          // Keep track of best result
+          if (!bestResult || quality > bestResult.quality) {
+            bestResult = result;
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Estratégia ${strategy.name} falhou:`, error);
+        lastError = error;
+      }
     }
-    
-    console.log(`✅ PDF válido detectado: ${header.trim()}`);
-    
-    // Extract text using enhanced PDF extractor
-    const extractionStartTime = Date.now();
-    const extractedText = await extractTextFromPDF(arrayBuffer);
-    const extractionTime = Date.now() - extractionStartTime;
-    
-    // Final comprehensive validation
-    if (!extractedText || extractedText.trim().length === 0) {
-      throw new Error('Nenhum texto foi extraído do PDF');
+
+    // Use best available result if it meets minimum quality
+    if (bestResult && bestResult.quality >= 0.3) {
+      console.log(`⚠️ Usando melhor resultado disponível: ${bestResult.method} (qualidade: ${(bestResult.quality * 100).toFixed(1)}%)`);
+      return cleanAndValidateText(bestResult.text);
     }
-    
-    if (extractedText.length < 5) {
-      throw new Error('Texto extraído do PDF muito curto');
-    }
-    
-    // Calculate and log quality metrics
-    const words = extractedText.match(/\b[a-zA-ZÀ-ÿ\u00C0-\u017F]{2,}\b/g) || [];
-    const sentences = extractedText.match(/[.!?]+/g) || [];
-    const readableChars = (extractedText.match(/[a-zA-Z0-9À-ÿ\u00C0-\u017F\s\.\,\!\?\;\:\-\(\)\[\]\"\']/g) || []).length;
-    const qualityRatio = readableChars / extractedText.length;
-    
-    console.log(`=== EXTRAÇÃO PDF CONCLUÍDA COM SUCESSO ===`);
-    console.log(`📊 Estatísticas finais:`);
-    console.log(`- Tempo de extração: ${extractionTime}ms`);
-    console.log(`- Caracteres totais: ${extractedText.length}`);
-    console.log(`- Palavras encontradas: ${words.length}`);
-    console.log(`- Sentenças encontradas: ${sentences.length}`);
-    console.log(`- Qualidade do texto: ${(qualityRatio * 100).toFixed(1)}%`);
-    console.log(`- Primeiros 500 chars: "${extractedText.substring(0, 500)}"`);
-    console.log(`- Últimos 200 chars: "${extractedText.substring(Math.max(0, extractedText.length - 200))}"`);
-    
-    // Warn if quality is low but proceed
-    if (qualityRatio < 0.5) {
-      console.warn(`⚠️ Qualidade do texto relativamente baixa (${(qualityRatio * 100).toFixed(1)}%), mas dentro dos limites aceitáveis`);
-    }
-    
-    return extractedText;
+
+    // All strategies failed
+    console.error('💥 Todas as estratégias de extração falharam');
+    throw new Error(`Falha na extração de texto: ${lastError?.message || 'Métodos esgotados'}`);
     
   } catch (error) {
     console.error('❌ Erro na extração de PDF:', error);
