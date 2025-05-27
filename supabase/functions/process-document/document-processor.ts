@@ -38,7 +38,7 @@ export class DocumentProcessor {
 
     const document = await this.getAndValidateDocument(documentId);
     
-    const { text, extractionTime, quality, method } = await this.extractTextUltimate(document);
+    const { text, extractionTime, quality, method } = await this.extractTextWithUltimateExtractor(document);
     
     const { chunksCreated, chunksFailed, chunkingTime, totalEmbeddingTime } = 
       await this.processChunks(documentId, text, quality, method);
@@ -102,41 +102,82 @@ export class DocumentProcessor {
     return document;
   }
 
-  private async extractTextUltimate(document: any): Promise<{
+  private async extractTextWithUltimateExtractor(document: any): Promise<{
     text: string;
     extractionTime: number;
     quality: number;
     method: string;
   }> {
-    this.logger.log('🔍 Starting ultimate PDF extraction...');
+    this.logger.log('🚀 Starting Ultimate PDF Extractor...');
     const extractionStartTime = Date.now();
     
     try {
-      // Download the file
-      const response = await fetch(document.url);
+      // Validate document type
+      if (!document.type || document.type.toLowerCase() !== 'pdf') {
+        throw new Error(`Unsupported document type: ${document.type}. Only PDF files are supported.`);
+      }
+
+      this.logger.log(`📥 Downloading PDF from: ${document.url}`);
+      
+      // Download the file with enhanced error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        this.logger.warn('Download timeout reached, aborting...');
+        controller.abort();
+      }, 300000); // 5 minutes timeout
+      
+      const response = await fetch(document.url, { 
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Alex-IA-Ultimate-Processor/1.0',
+          'Accept': 'application/pdf,*/*',
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (!response.ok) {
-        throw new Error(`Failed to download file: ${response.statusText}`);
+        throw new Error(`Failed to download PDF: ${response.status} ${response.statusText}`);
+      }
+
+      const contentLength = response.headers.get('content-length');
+      const fileSize = contentLength ? parseInt(contentLength) : 'unknown';
+      this.logger.log(`📊 PDF downloaded: ${fileSize} bytes`);
+
+      // Validate file size
+      if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) { // 50MB limit
+        throw new Error('PDF file too large (>50MB). Please use a smaller file.');
       }
       
       const arrayBuffer = await response.arrayBuffer();
       const pdfBuffer = new Uint8Array(arrayBuffer);
       
-      // Use ultimate extractor
+      this.logger.log(`🔍 Starting Ultimate PDF extraction on ${pdfBuffer.length} bytes...`);
+      
+      // Use Ultimate PDF Extractor
       const extractor = new UltimatePDFExtractor();
       const result = await extractor.extractText(pdfBuffer);
       
       const extractionTime = Date.now() - extractionStartTime;
       
-      this.logger.success(`Extraction completed in ${extractionTime}ms`);
-      this.logger.stats(`Method: ${result.method}, Quality: ${result.quality.toFixed(2)}%`);
-      this.logger.stats(`Text extracted: ${result.text.length} characters`);
+      this.logger.success(`✅ Ultimate extraction completed in ${extractionTime}ms`);
+      this.logger.stats(`🎯 Method: ${result.method}`);
+      this.logger.stats(`📊 Quality: ${result.quality.toFixed(2)}%`);
+      this.logger.stats(`📝 Text extracted: ${result.text.length} characters`);
+      this.logger.stats(`📄 Pages detected: ${result.metadata.pages}`);
+      this.logger.stats(`💭 Valid words: ${result.metadata.validWords}`);
       
+      // Validate extracted text quality
       if (!result.text || result.text.trim().length === 0) {
-        throw new Error('No text was extracted from the document');
+        throw new Error('Ultimate extractor returned empty text');
       }
 
       if (result.text.length < 10) {
-        throw new Error('Extracted text too short for useful processing');
+        throw new Error('Extracted text too short for processing (minimum 10 characters)');
+      }
+
+      if (result.quality < 15) {
+        this.logger.warn(`⚠️ Low quality extraction: ${result.quality.toFixed(2)}%`);
       }
 
       return {
@@ -145,50 +186,27 @@ export class DocumentProcessor {
         quality: result.quality,
         method: result.method
       };
+      
     } catch (error) {
-      this.logger.error('Ultimate extraction failed, trying fallback...', error);
+      this.logger.error('❌ Ultimate PDF extraction failed:', error);
       
-      // Fallback to basic extraction if ultimate fails
-      const fallbackResult = await this.basicFallbackExtraction(document.url);
-      const extractionTime = Date.now() - extractionStartTime;
+      // Enhanced error categorization
+      let errorMessage = error.message;
       
-      return {
-        text: fallbackResult,
-        extractionTime,
-        quality: 30, // Low quality for fallback
-        method: 'fallback'
-      };
-    }
-  }
-
-  private async basicFallbackExtraction(url: string): Promise<string> {
-    this.logger.warn('Using basic fallback extraction...');
-    
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    
-    // Very basic text extraction as last resort
-    const decoder = new TextDecoder('latin1');
-    const content = decoder.decode(uint8Array);
-    
-    const textMatches = content.match(/\(([^)]+)\)/g);
-    let text = '';
-    
-    if (textMatches) {
-      for (const match of textMatches) {
-        const extracted = match.slice(1, -1);
-        if (extracted.length > 3 && /[a-zA-Z]/.test(extracted)) {
-          text += extracted + ' ';
-        }
+      if (error.name === 'AbortError') {
+        errorMessage = 'PDF download timeout (5 minutes). File may be too large or network issues.';
+      } else if (error.message?.includes('fetch') || error.message?.includes('network')) {
+        errorMessage = `Network error downloading PDF: ${error.message}`;
+      } else if (error.message?.includes('PDF') || error.message?.includes('pdf')) {
+        errorMessage = `PDF processing error: ${error.message}`;
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = 'Processing timeout. PDF may be too complex.';
+      } else if (error.message?.includes('memory') || error.message?.includes('Memory')) {
+        errorMessage = 'PDF too large for processing. Try a smaller file.';
       }
+      
+      throw new Error(errorMessage);
     }
-    
-    if (text.length < 10) {
-      throw new Error('Fallback extraction also failed to extract readable text');
-    }
-    
-    return text.trim();
   }
 
   private async processChunks(
@@ -202,14 +220,19 @@ export class DocumentProcessor {
     chunkingTime: number;
     totalEmbeddingTime: number;
   }> {
-    this.logger.log('🔧 Creating chunks with optimized processing...');
+    this.logger.log('🔧 Creating optimized chunks...');
     const chunkingStartTime = Date.now();
     
     let processedChunks = 0;
     let totalEmbeddingTime = 0;
     let failedChunks = 0;
     
-    const chunks = createChunks(text, 1000);
+    // Use optimized chunk size based on quality
+    const chunkSize = quality >= 70 ? 1200 : quality >= 50 ? 1000 : 800;
+    this.logger.log(`📏 Using chunk size: ${chunkSize} (based on quality: ${quality.toFixed(1)}%)`);
+    
+    const chunks = createChunks(text, chunkSize);
+    this.logger.log(`📦 Created ${chunks.length} chunks for processing`);
     
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
@@ -219,27 +242,46 @@ export class DocumentProcessor {
         
         this.logger.log(`🔄 Processing chunk ${i + 1}/${chunks.length}: ${chunk.length} chars`);
         
-        if (!chunk || chunk.trim().length < 10) {
-          this.logger.warn(`Chunk ${i + 1} too small, skipping...`);
+        // Validate chunk quality
+        if (!chunk || chunk.trim().length < 20) {
+          this.logger.warn(`⚠️ Chunk ${i + 1} too small (${chunk.length} chars), skipping...`);
           continue;
         }
         
-        const embeddingStartTime = Date.now();
-        const embedding = await generateEmbedding(chunk, this.openAIApiKey);
-        const embeddingTime = Date.now() - embeddingStartTime;
+        // Generate embedding with retry logic
+        let embedding;
+        let embeddingTime = 0;
+        
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            const embeddingStartTime = Date.now();
+            embedding = await generateEmbedding(chunk, this.openAIApiKey);
+            embeddingTime = Date.now() - embeddingStartTime;
+            break;
+          } catch (embeddingError) {
+            this.logger.warn(`⚠️ Embedding attempt ${attempt}/3 failed for chunk ${i + 1}: ${embeddingError.message}`);
+            if (attempt === 3) throw embeddingError;
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Progressive delay
+          }
+        }
+        
         totalEmbeddingTime += embeddingTime;
         
         if (!embedding || !Array.isArray(embedding) || embedding.length === 0) {
-          throw new Error(`Invalid embedding generated for chunk ${i}`);
+          throw new Error(`Invalid embedding generated for chunk ${i + 1}`);
         }
         
+        // Enhanced chunk metadata
         const chunkData = {
           chunk_index: i,
           content: chunk,
           metadata: {
             extraction_quality: quality,
             extraction_method: method,
-            chunk_size: chunk.length
+            chunk_size: chunk.length,
+            word_count: chunk.split(/\s+/).length,
+            processing_timestamp: new Date().toISOString(),
+            embedding_time_ms: embeddingTime
           }
         };
         
@@ -247,19 +289,24 @@ export class DocumentProcessor {
         
         processedChunks++;
         const chunkTime = Date.now() - chunkStartTime;
-        this.logger.success(`Chunk ${i + 1} processed in ${chunkTime}ms (embedding: ${embeddingTime}ms)`);
+        this.logger.success(`✅ Chunk ${i + 1} processed in ${chunkTime}ms (embedding: ${embeddingTime}ms)`);
         
+        // Progress logging every 5 chunks
         if (processedChunks % 5 === 0) {
-          this.logger.progress(`Progress: ${processedChunks}/${chunks.length} chunks processed...`);
-          await new Promise(resolve => setTimeout(resolve, 50));
+          const progress = ((processedChunks / chunks.length) * 100).toFixed(1);
+          this.logger.progress(`📈 Progress: ${processedChunks}/${chunks.length} chunks (${progress}%)`);
+          
+          // Small delay to prevent overwhelming the system
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
       } catch (chunkError) {
         failedChunks++;
-        this.logger.error(`Error in chunk ${i}:`, chunkError);
+        this.logger.error(`❌ Error processing chunk ${i + 1}:`, chunkError);
         
-        if (failedChunks > 3) {
-          throw new Error(`Too many chunk failures (${failedChunks}). Last error: ${chunkError.message}`);
+        // Stop processing if too many failures
+        if (failedChunks > Math.max(3, chunks.length * 0.1)) { // Max 10% failure rate
+          throw new Error(`Too many chunk failures (${failedChunks}/${chunks.length}). Last error: ${chunkError.message}`);
         }
       }
     }
@@ -269,6 +316,8 @@ export class DocumentProcessor {
     if (processedChunks === 0) {
       throw new Error('No chunks were successfully created from the extracted text');
     }
+
+    this.logger.success(`🎉 Chunking completed: ${processedChunks} successful, ${failedChunks} failed`);
 
     return {
       chunksCreated: processedChunks,
