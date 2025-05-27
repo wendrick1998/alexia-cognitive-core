@@ -3,13 +3,14 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface CognitiveMemory {
   id: string;
   user_id?: string;
   source: string;
   content: string;
-  metadata: Record<string, any>;
+  metadata: Json;
   created_at: string;
   updated_at: string;
 }
