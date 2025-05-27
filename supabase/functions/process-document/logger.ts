@@ -1,51 +1,24 @@
 
-// Logging utilities for document processing
 export class ProcessingLogger {
   private requestId: string;
+  private startTime: number;
 
   constructor(requestId: string) {
     this.requestId = requestId;
-  }
-
-  log(message: string, ...args: any[]) {
-    console.log(`[${this.requestId}] ${message}`, ...args);
-  }
-
-  error(message: string, ...args: any[]) {
-    console.error(`[${this.requestId}] ❌ ${message}`, ...args);
-  }
-
-  warn(message: string, ...args: any[]) {
-    console.warn(`[${this.requestId}] ⚠️ ${message}`, ...args);
-  }
-
-  success(message: string, ...args: any[]) {
-    console.log(`[${this.requestId}] ✅ ${message}`, ...args);
-  }
-
-  info(message: string, ...args: any[]) {
-    console.log(`[${this.requestId}] 📋 ${message}`, ...args);
-  }
-
-  stats(message: string, ...args: any[]) {
-    console.log(`[${this.requestId}] 📊 ${message}`, ...args);
-  }
-
-  progress(message: string, ...args: any[]) {
-    console.log(`[${this.requestId}] 📈 ${message}`, ...args);
+    this.startTime = Date.now();
   }
 
   logStartHeader() {
-    console.log(`=== [${this.requestId}] PROCESSO INICIADO (VERSÃO CORRIGIDA) EM ${new Date().toISOString()} ===`);
+    console.log('\n🚀 ═══════════════════════════════════════════════════════════════');
+    console.log(`📋 DOCUMENT PROCESSING STARTED - Request ID: ${this.requestId}`);
+    console.log('═══════════════════════════════════════════════════════════════');
   }
 
   logCompletionHeader() {
-    console.log(`=== [${this.requestId}] PROCESSAMENTO CONCLUÍDO COM SUCESSO ===`);
-  }
-
-  logErrorHeader(processingTime: number, documentId?: string) {
-    console.error(`=== [${this.requestId}] ERRO CRÍTICO APÓS ${processingTime}ms ===`);
-    console.error(`[${this.requestId}] Documento: ${documentId || 'unknown'}`);
+    const elapsed = Date.now() - this.startTime;
+    console.log('\n✅ ═══════════════════════════════════════════════════════════════');
+    console.log(`🎉 PROCESSING COMPLETED - Total time: ${elapsed}ms`);
+    console.log('═══════════════════════════════════════════════════════════════');
   }
 
   logFinalStats(stats: {
@@ -59,17 +32,60 @@ export class ProcessingLogger {
     processingRate: number;
     textLength: number;
     successRate: number;
+    extractionQuality?: number;
+    extractionMethod?: string;
   }) {
-    this.info(`Estatísticas finais:`);
-    this.log(`- Documento: ${stats.documentId}`);
-    this.log(`- Chunks criados: ${stats.chunksCreated}`);
-    this.log(`- Chunks falharam: ${stats.chunksFailed}`);
-    this.log(`- Tempo total: ${stats.totalTime}ms`);
-    this.log(`- Tempo de extração: ${stats.extractionTime}ms`);
-    this.log(`- Tempo de chunking: ${stats.chunkingTime}ms`);
-    this.log(`- Tempo médio por embedding: ${stats.avgEmbeddingTime.toFixed(0)}ms`);
-    this.log(`- Taxa de processamento: ${stats.processingRate.toFixed(2)} chunks/segundo`);
-    this.log(`- Caracteres originais: ${stats.textLength}`);
-    this.log(`- Taxa de sucesso: ${stats.successRate.toFixed(1)}%`);
+    console.log('\n📊 FINAL PROCESSING STATISTICS:');
+    console.log(`   Document ID: ${stats.documentId}`);
+    console.log(`   📝 Text length: ${stats.textLength} characters`);
+    console.log(`   🔧 Chunks created: ${stats.chunksCreated}`);
+    console.log(`   ❌ Chunks failed: ${stats.chunksFailed}`);
+    console.log(`   ⏱️  Total time: ${stats.totalTime}ms`);
+    console.log(`   📤 Extraction time: ${stats.extractionTime}ms`);
+    console.log(`   🔄 Chunking time: ${stats.chunkingTime}ms`);
+    console.log(`   🧠 Avg embedding time: ${Math.round(stats.avgEmbeddingTime)}ms`);
+    console.log(`   📈 Processing rate: ${stats.processingRate} chunks/sec`);
+    console.log(`   ✅ Success rate: ${stats.successRate.toFixed(1)}%`);
+    
+    if (stats.extractionQuality !== undefined) {
+      console.log(`   🎯 Extraction quality: ${stats.extractionQuality.toFixed(2)}%`);
+    }
+    
+    if (stats.extractionMethod) {
+      console.log(`   🔍 Extraction method: ${stats.extractionMethod}`);
+    }
+    
+    console.log('═══════════════════════════════════════════════════════════════\n');
+  }
+
+  log(message: string) {
+    console.log(`[${this.requestId}] ${message}`);
+  }
+
+  info(message: string) {
+    console.log(`[${this.requestId}] ℹ️  ${message}`);
+  }
+
+  success(message: string) {
+    console.log(`[${this.requestId}] ✅ ${message}`);
+  }
+
+  warn(message: string) {
+    console.log(`[${this.requestId}] ⚠️  ${message}`);
+  }
+
+  error(message: string, error?: any) {
+    console.error(`[${this.requestId}] ❌ ${message}`);
+    if (error) {
+      console.error(`[${this.requestId}] Error details:`, error);
+    }
+  }
+
+  stats(message: string) {
+    console.log(`[${this.requestId}] 📊 ${message}`);
+  }
+
+  progress(message: string) {
+    console.log(`[${this.requestId}] 🔄 ${message}`);
   }
 }

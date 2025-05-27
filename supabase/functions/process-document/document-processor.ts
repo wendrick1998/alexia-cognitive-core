@@ -1,6 +1,5 @@
 
-import { extractTextFromFile } from './file-extractor.ts';
-import { createChunksGenerator } from './text-chunker.ts';
+import { UltimatePDFExtractor, createChunks } from './pdf-extractor-ultimate.ts';
 import { generateEmbedding } from './embedding-service.ts';
 import { saveChunkWithEmbedding, getDocument } from './database-service.ts';
 import { ProcessingLogger } from './logger.ts';
@@ -17,6 +16,8 @@ export interface ProcessingResult {
   averageEmbeddingTimeMs: number;
   processingRate: number;
   successRate: number;
+  extractionQuality: number;
+  extractionMethod: string;
 }
 
 export class DocumentProcessor {
@@ -33,20 +34,15 @@ export class DocumentProcessor {
   async processDocument(documentId: string): Promise<ProcessingResult> {
     const startTime = Date.now();
 
-    // Update status to processing
     await this.statusManager.setProcessing(documentId);
 
-    // Get document details with validation
     const document = await this.getAndValidateDocument(documentId);
     
-    // Extract text with comprehensive error handling
-    const { text, extractionTime } = await this.extractText(document);
+    const { text, extractionTime, quality, method } = await this.extractTextUltimate(document);
     
-    // Create and process chunks
     const { chunksCreated, chunksFailed, chunkingTime, totalEmbeddingTime } = 
-      await this.processChunks(documentId, text);
+      await this.processChunks(documentId, text, quality, method);
 
-    // Update status to completed
     await this.statusManager.setCompleted(documentId);
 
     const totalTime = Date.now() - startTime;
@@ -54,7 +50,6 @@ export class DocumentProcessor {
     const processingRate = chunksCreated / (totalTime / 1000);
     const successRate = ((chunksCreated / (chunksCreated + chunksFailed)) * 100);
 
-    // Log final statistics
     this.logger.logCompletionHeader();
     this.logger.logFinalStats({
       documentId,
@@ -66,7 +61,9 @@ export class DocumentProcessor {
       avgEmbeddingTime,
       processingRate,
       textLength: text.length,
-      successRate
+      successRate,
+      extractionQuality: quality,
+      extractionMethod: method
     });
 
     return {
@@ -79,133 +76,190 @@ export class DocumentProcessor {
       textLength: text.length,
       averageEmbeddingTimeMs: Math.round(avgEmbeddingTime),
       processingRate: parseFloat(processingRate.toFixed(2)),
-      successRate: parseFloat(successRate.toFixed(1))
+      successRate: parseFloat(successRate.toFixed(1)),
+      extractionQuality: quality,
+      extractionMethod: method
     };
   }
 
   private async getAndValidateDocument(documentId: string) {
     const document = await getDocument(documentId);
     if (!document) {
-      throw new Error(`Documento ${documentId} não encontrado`);
+      throw new Error(`Document ${documentId} not found`);
     }
     
-    this.logger.info('Documento encontrado:');
-    this.logger.log(`- Nome: ${document.name}`);
-    this.logger.log(`- Tipo: ${document.type}`);
+    this.logger.info('Document found:');
+    this.logger.log(`- Title: ${document.title}`);
+    this.logger.log(`- Type: ${document.type}`);
     this.logger.log(`- URL: ${document.url}`);
-    this.logger.log(`- Tamanho: ${document.file_size || 'unknown'} bytes`);
-    this.logger.log(`- Fonte: ${document.source}`);
+    this.logger.log(`- Size: ${document.file_size || 'unknown'} bytes`);
+    this.logger.log(`- Source: ${document.source}`);
 
     if (!document.url) {
-      throw new Error('URL do documento não encontrada');
+      throw new Error('Document URL not found');
     }
 
     return document;
   }
 
-  private async extractText(document: any): Promise<{ text: string; extractionTime: number }> {
-    this.logger.log('🔍 Iniciando extração de texto aprimorada...');
+  private async extractTextUltimate(document: any): Promise<{
+    text: string;
+    extractionTime: number;
+    quality: number;
+    method: string;
+  }> {
+    this.logger.log('🔍 Starting ultimate PDF extraction...');
     const extractionStartTime = Date.now();
     
-    const text = await extractTextFromFile(document.url, document.type);
-    
-    const extractionTime = Date.now() - extractionStartTime;
-    this.logger.success(`Extração concluída em ${extractionTime}ms`);
-    this.logger.stats(`Texto extraído: ${text.length} caracteres`);
-    
-    // Enhanced text validation
-    if (!text || text.trim().length === 0) {
-      throw new Error('Nenhum texto foi extraído do documento');
-    }
+    try {
+      // Download the file
+      const response = await fetch(document.url);
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.statusText}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const pdfBuffer = new Uint8Array(arrayBuffer);
+      
+      // Use ultimate extractor
+      const extractor = new UltimatePDFExtractor();
+      const result = await extractor.extractText(pdfBuffer);
+      
+      const extractionTime = Date.now() - extractionStartTime;
+      
+      this.logger.success(`Extraction completed in ${extractionTime}ms`);
+      this.logger.stats(`Method: ${result.method}, Quality: ${result.quality.toFixed(2)}%`);
+      this.logger.stats(`Text extracted: ${result.text.length} characters`);
+      
+      if (!result.text || result.text.trim().length === 0) {
+        throw new Error('No text was extracted from the document');
+      }
 
-    if (text.length < 5) {
-      throw new Error('Texto extraído muito curto para processamento útil');
-    }
+      if (result.text.length < 10) {
+        throw new Error('Extracted text too short for useful processing');
+      }
 
-    // Comprehensive text quality validation for PDFs
-    if (document.type.toLowerCase() === 'pdf') {
-      this.validatePDFQuality(text);
+      return {
+        text: result.text,
+        extractionTime,
+        quality: result.quality,
+        method: result.method
+      };
+    } catch (error) {
+      this.logger.error('Ultimate extraction failed, trying fallback...', error);
+      
+      // Fallback to basic extraction if ultimate fails
+      const fallbackResult = await this.basicFallbackExtraction(document.url);
+      const extractionTime = Date.now() - extractionStartTime;
+      
+      return {
+        text: fallbackResult,
+        extractionTime,
+        quality: 30, // Low quality for fallback
+        method: 'fallback'
+      };
     }
-
-    return { text, extractionTime };
   }
 
-  private validatePDFQuality(text: string) {
-    const words = text.match(/\b[a-zA-ZÀ-ÿ\u00C0-\u017F]{2,}\b/g) || [];
-    const readableChars = (text.match(/[a-zA-Z0-9À-ÿ\u00C0-\u017F\s\.\,\!\?\;\:\-\(\)\[\]\"\']/g) || []).length;
-    const qualityRatio = readableChars / text.length;
+  private async basicFallbackExtraction(url: string): Promise<string> {
+    this.logger.warn('Using basic fallback extraction...');
     
-    this.logger.stats('Análise de qualidade do PDF:');
-    this.logger.log(`- Palavras encontradas: ${words.length}`);
-    this.logger.log(`- Caracteres legíveis: ${readableChars}/${text.length}`);
-    this.logger.log(`- Qualidade do texto: ${(qualityRatio * 100).toFixed(1)}%`);
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
     
-    if (qualityRatio < 0.2) {
-      this.logger.warn('Qualidade muito baixa detectada, mas prosseguindo...');
+    // Very basic text extraction as last resort
+    const decoder = new TextDecoder('latin1');
+    const content = decoder.decode(uint8Array);
+    
+    const textMatches = content.match(/\(([^)]+)\)/g);
+    let text = '';
+    
+    if (textMatches) {
+      for (const match of textMatches) {
+        const extracted = match.slice(1, -1);
+        if (extracted.length > 3 && /[a-zA-Z]/.test(extracted)) {
+          text += extracted + ' ';
+        }
+      }
     }
     
-    if (words.length < 5) {
-      throw new Error(`PDF pode estar corrompido: apenas ${words.length} palavras detectadas`);
+    if (text.length < 10) {
+      throw new Error('Fallback extraction also failed to extract readable text');
     }
+    
+    return text.trim();
   }
 
-  private async processChunks(documentId: string, text: string): Promise<{
+  private async processChunks(
+    documentId: string,
+    text: string,
+    quality: number,
+    method: string
+  ): Promise<{
     chunksCreated: number;
     chunksFailed: number;
     chunkingTime: number;
     totalEmbeddingTime: number;
   }> {
-    this.logger.log('🔧 Criando chunks com processamento otimizado...');
+    this.logger.log('🔧 Creating chunks with optimized processing...');
     const chunkingStartTime = Date.now();
     
     let processedChunks = 0;
     let totalEmbeddingTime = 0;
     let failedChunks = 0;
-    const chunkGenerator = createChunksGenerator(text);
     
-    for (const chunk of chunkGenerator) {
+    const chunks = createChunks(text, 1000);
+    
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      
       try {
         const chunkStartTime = Date.now();
         
-        this.logger.log(`🔄 Processando chunk ${chunk.chunk_index + 1}: ${chunk.content.length} chars`);
+        this.logger.log(`🔄 Processing chunk ${i + 1}/${chunks.length}: ${chunk.length} chars`);
         
-        // Validate chunk content
-        if (!chunk.content || chunk.content.trim().length < 10) {
-          this.logger.warn(`Chunk ${chunk.chunk_index + 1} muito pequeno, pulando...`);
+        if (!chunk || chunk.trim().length < 10) {
+          this.logger.warn(`Chunk ${i + 1} too small, skipping...`);
           continue;
         }
         
-        // Generate embedding with retries
         const embeddingStartTime = Date.now();
-        const embedding = await generateEmbedding(chunk.content, this.openAIApiKey);
+        const embedding = await generateEmbedding(chunk, this.openAIApiKey);
         const embeddingTime = Date.now() - embeddingStartTime;
         totalEmbeddingTime += embeddingTime;
         
-        // Validate embedding
         if (!embedding || !Array.isArray(embedding) || embedding.length === 0) {
-          throw new Error(`Embedding inválido gerado para chunk ${chunk.chunk_index}`);
+          throw new Error(`Invalid embedding generated for chunk ${i}`);
         }
         
-        // Save to database
-        await saveChunkWithEmbedding(documentId, chunk, embedding);
+        const chunkData = {
+          chunk_index: i,
+          content: chunk,
+          metadata: {
+            extraction_quality: quality,
+            extraction_method: method,
+            chunk_size: chunk.length
+          }
+        };
+        
+        await saveChunkWithEmbedding(documentId, chunkData, embedding);
         
         processedChunks++;
         const chunkTime = Date.now() - chunkStartTime;
-        this.logger.success(`Chunk ${chunk.chunk_index + 1} processado em ${chunkTime}ms (embedding: ${embeddingTime}ms)`);
+        this.logger.success(`Chunk ${i + 1} processed in ${chunkTime}ms (embedding: ${embeddingTime}ms)`);
         
-        // Memory management and progress feedback
-        if (processedChunks % 10 === 0) {
-          this.logger.progress(`Progresso: ${processedChunks} chunks processados...`);
-          await new Promise(resolve => setTimeout(resolve, 50)); // Brief pause for memory
+        if (processedChunks % 5 === 0) {
+          this.logger.progress(`Progress: ${processedChunks}/${chunks.length} chunks processed...`);
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
         
       } catch (chunkError) {
         failedChunks++;
-        this.logger.error(`Erro no chunk ${chunk.chunk_index}:`, chunkError);
+        this.logger.error(`Error in chunk ${i}:`, chunkError);
         
-        // Continue with other chunks unless too many failures
-        if (failedChunks > 5) {
-          throw new Error(`Muitas falhas de chunks (${failedChunks}). Último erro: ${chunkError.message}`);
+        if (failedChunks > 3) {
+          throw new Error(`Too many chunk failures (${failedChunks}). Last error: ${chunkError.message}`);
         }
       }
     }
@@ -213,7 +267,7 @@ export class DocumentProcessor {
     const chunkingTime = Date.now() - chunkingStartTime;
     
     if (processedChunks === 0) {
-      throw new Error('Nenhum chunk foi criado com sucesso a partir do texto extraído');
+      throw new Error('No chunks were successfully created from the extracted text');
     }
 
     return {

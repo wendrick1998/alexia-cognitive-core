@@ -7,16 +7,15 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// Database operations for sections and documents (updated for new schema)
 export async function saveChunkWithEmbedding(documentId: string, chunk: ChunkData, embedding: number[]) {
   console.log(`Saving section ${chunk.chunk_index} for document ${documentId} (${chunk.content.length} chars)`);
   
   try {
     const { error } = await supabase
-      .from('document_sections') // Updated table name
+      .from('document_sections')
       .insert({
         document_id: documentId,
-        section_number: chunk.chunk_index, // Updated column name
+        section_number: chunk.chunk_index,
         content: chunk.content,
         embedding: JSON.stringify(embedding),
         metadata: chunk.metadata
@@ -63,6 +62,34 @@ export async function updateDocumentStatus(documentId: string, status: string, e
   }
 }
 
+export async function updateDocumentExtractionInfo(
+  documentId: string, 
+  extractionMethod: string, 
+  extractionQuality: number
+) {
+  console.log(`Updating document ${documentId} extraction info: ${extractionMethod} (${extractionQuality}%)`);
+  
+  try {
+    const { error } = await supabase
+      .from('documents')
+      .update({
+        extraction_method: extractionMethod,
+        extraction_quality: extractionQuality,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', documentId);
+
+    if (error) {
+      console.error('Error updating document extraction info:', error);
+      throw error;
+    }
+    
+    console.log('Successfully updated document extraction info');
+  } catch (error) {
+    console.error('Failed to update document extraction info:', error);
+  }
+}
+
 export async function getDocument(documentId: string) {
   console.log('Fetching document details from database...');
   const { data: document, error: docError } = await supabase
@@ -78,4 +105,26 @@ export async function getDocument(documentId: string) {
   }
 
   return document;
+}
+
+export async function cleanupFailedDocument(documentId: string) {
+  console.log(`Cleaning up failed document ${documentId}`);
+  
+  try {
+    // Remove document sections
+    await supabase
+      .from('document_sections')
+      .delete()
+      .eq('document_id', documentId);
+
+    // Remove embeddings
+    await supabase
+      .from('embeddings')
+      .delete()
+      .eq('document_id', documentId);
+
+    console.log('Successfully cleaned up failed document');
+  } catch (error) {
+    console.error('Error cleaning up failed document:', error);
+  }
 }
