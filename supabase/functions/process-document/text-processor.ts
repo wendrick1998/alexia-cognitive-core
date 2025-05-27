@@ -1,7 +1,11 @@
 
 // Text processing and cleaning utilities
 export function cleanAndValidateText(text: string): string {
-  console.log('🧹 Iniciando limpeza e validação do texto...');
+  console.log('🧹 Iniciando limpeza e validação avançada do texto...');
+  
+  if (!text || text.trim().length === 0) {
+    throw new Error('Texto vazio fornecido para limpeza');
+  }
   
   // Remove control characters and normalize whitespace
   let cleaned = text
@@ -21,27 +25,36 @@ export function cleanAndValidateText(text: string): string {
     .replace(/\\n/g, '\n')
     .replace(/\\r/g, '\r')
     .replace(/\\t/g, '\t')
-    .replace(/\\\\/g, '\\');
+    .replace(/\\\\/g, '\\')
+    .replace(/\\\[/g, '[')
+    .replace(/\\\]/g, ']');
   
-  // Remove obviously corrupted sequences
+  // Remove obviously corrupted sequences but preserve valid special characters
   cleaned = cleaned
-    .replace(/[^\w\s\.\,\!\?\;\:\-\(\)\[\]\"\'À-ÿ\u00C0-\u017F]{3,}/g, ' ')
+    .replace(/[^\w\s\.\,\!\?\;\:\-\(\)\[\]\"\'À-ÿ\u00C0-\u017F\u0100-\u017F\u1E00-\u1EFF0-9%$€£¥©®™°±×÷]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   
+  // Fix spacing around punctuation
+  cleaned = cleaned
+    .replace(/\s+([.!?,:;])/g, '$1') // Remove space before punctuation
+    .replace(/([.!?])\s*([A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ])/g, '$1 $2') // Ensure space after sentence end
+    .replace(/([,;:])\s*/g, '$1 '); // Ensure space after commas, semicolons, colons
+  
   const quality = calculateTextQuality(cleaned);
   console.log(`📊 Texto limpo: ${cleaned.length} caracteres, qualidade: ${(quality * 100).toFixed(1)}%`);
-  console.log(`📝 Palavras encontradas: ${(cleaned.match(/\b[a-zA-ZÀ-ÿ\u00C0-\u017F]{2,}\b/g) || []).length}`);
   
-  if (quality < 0.2) {
-    console.warn('⚠️ Qualidade do texto muito baixa, mas prosseguindo...');
+  const words = (cleaned.match(/\b[a-zA-ZÀ-ÿ\u00C0-\u017F0-9]{2,}\b/g) || []);
+  console.log(`📝 Palavras válidas encontradas: ${words.length}`);
+  console.log(`📋 Amostra do texto limpo (300 chars): "${cleaned.substring(0, 300)}"`);
+  
+  if (quality < 0.15) {
+    console.warn(`⚠️ Qualidade do texto baixa (${(quality * 100).toFixed(1)}%), mas prosseguindo...`);
   }
   
   if (cleaned.length < 10) {
-    throw new Error('Texto extraído muito curto após limpeza');
+    throw new Error('Texto extraído muito curto após limpeza (mínimo 10 caracteres)');
   }
-  
-  console.log(`📋 Amostra do texto limpo (300 chars): "${cleaned.substring(0, 300)}"`);
   
   return cleaned;
 }
@@ -49,38 +62,71 @@ export function cleanAndValidateText(text: string): string {
 export function calculateTextQuality(text: string): number {
   if (!text || text.length === 0) return 0;
   
-  // Count readable characters (letters, numbers, common punctuation, accented chars)
-  const readableChars = (text.match(/[a-zA-Z0-9À-ÿ\u00C0-\u017F\s\.\,\!\?\;\:\-\(\)\[\]\"\']/g) || []).length;
-  const totalChars = text.length;
+  const cleanText = text.trim();
+  if (cleanText.length < 5) return 0;
   
-  // Basic quality score
-  let quality = readableChars / totalChars;
+  // Métricas básicas
+  const totalChars = cleanText.length;
+  const words = cleanText.split(/\s+/).filter(w => w.length > 0);
+  const sentences = cleanText.split(/[.!?]+/).filter(s => s.trim().length > 0);
   
-  // Bonus for word presence
-  const words = text.match(/\b[a-zA-ZÀ-ÿ\u00C0-\u017F]{2,}\b/g) || [];
-  if (words.length > 5) quality += 0.1;
+  // Contadores de caracteres válidos expandidos
+  const alphaChars = (cleanText.match(/[a-zA-ZÀ-ÿ\u00C0-\u017F]/g) || []).length;
+  const numericChars = (cleanText.match(/[0-9]/g) || []).length;
+  const punctuationChars = (cleanText.match(/[.,!?;:()\-"'\[\]]/g) || []).length;
+  const spaceChars = (cleanText.match(/\s/g) || []).length;
   
-  // Bonus for sentences
-  const sentences = text.match(/[.!?]+/g) || [];
-  if (sentences.length > 1) quality += 0.05;
+  const validChars = alphaChars + numericChars + punctuationChars + spaceChars;
+  const readabilityRatio = validChars / totalChars;
   
-  // Penalty for too many special characters
-  const specialChars = (text.match(/[^\w\s\.\,\!\?\;\:\-\(\)\[\]\"\'À-ÿ\u00C0-\u017F]/g) || []).length;
-  if (specialChars > totalChars * 0.3) quality -= 0.2;
+  // Palavras válidas (incluindo números e hífens)
+  const validWords = words.filter(w => /^[a-zA-ZÀ-ÿ\u00C0-\u017F0-9\-']{2,}$/.test(w));
+  const wordValidityRatio = words.length > 0 ? validWords.length / words.length : 0;
   
-  // Penalty for excessive repetition
-  const uniqueChars = new Set(text.toLowerCase()).size;
-  if (uniqueChars < 10) quality -= 0.3;
+  // Densidade de palavras
+  const wordDensity = totalChars > 0 ? words.length / totalChars : 0;
+  
+  // Diversidade de caracteres
+  const uniqueChars = new Set(cleanText.toLowerCase()).size;
+  
+  // Cálculo da qualidade (0-1)
+  let quality = readabilityRatio * 0.6; // 60% peso para legibilidade
+  quality += wordValidityRatio * 0.25; // 25% peso para validez das palavras
+  
+  // Bônus para densidade apropriada (0.1-0.3 é bom)
+  if (wordDensity >= 0.1 && wordDensity <= 0.3) {
+    quality += 0.1;
+  }
+  
+  // Bônus para diversidade de caracteres
+  if (uniqueChars > 15) {
+    quality += 0.05;
+  }
+  
+  // Penalidades reduzidas
+  if (totalChars < 20) quality *= 0.7; // Menos penalidade para texto curto
+  if (words.length < 5) quality *= 0.8; // Menos penalidade para poucas palavras
+  
+  // Bônus para texto substancial
+  if (totalChars > 100 && words.length > 15) quality += 0.05;
+  if (sentences.length > 2) quality += 0.05;
   
   return Math.max(0, Math.min(1, quality));
 }
 
 export function extractTextFromStreamData(data: string): string {
-  // Look for text showing operators and extract text
+  console.log('🔍 Extraindo texto de dados de stream...');
+  
+  // Padrões melhorados para extração de texto
   const textPatterns = [
+    // Texto simples entre parênteses + Tj/TJ
     /\(((?:[^\\()]|\\.)*?)\)\s*(?:Tj|TJ)/g,
+    // Arrays de texto TJ
     /\[((?:\([^)]*\)|[^\[\]])*)\]\s*TJ/g,
-    /<([0-9A-Fa-f\s]+)>\s*(?:Tj|TJ)/g
+    // Texto hexadecimal
+    /<([0-9A-Fa-f\s]+)>\s*(?:Tj|TJ)/g,
+    // Texto com posicionamento
+    /\(((?:[^\\()]|\\.)*?)\)\s*(?:\d+\s+)*(?:Tj|TJ)/g
   ];
   
   const extractedTexts: string[] = [];
@@ -94,9 +140,12 @@ export function extractTextFromStreamData(data: string): string {
       if (pattern === textPatterns[2]) {
         try {
           const hexText = text.replace(/\s/g, '');
-          if (hexText.length % 2 === 0) {
+          if (hexText.length % 2 === 0 && hexText.length > 0) {
             text = hexText.match(/.{2}/g)
-              ?.map(hex => String.fromCharCode(parseInt(hex, 16)))
+              ?.map(hex => {
+                const code = parseInt(hex, 16);
+                return code > 31 && code < 127 ? String.fromCharCode(code) : '';
+              })
               .join('') || '';
           }
         } catch (err) {
@@ -104,7 +153,7 @@ export function extractTextFromStreamData(data: string): string {
         }
       }
       
-      // Clean up extracted text
+      // Clean up extracted text mais robusto
       text = text
         .replace(/\\n/g, ' ')
         .replace(/\\r/g, ' ')
@@ -112,13 +161,45 @@ export function extractTextFromStreamData(data: string): string {
         .replace(/\\\\/g, '\\')
         .replace(/\\\(/g, '(')
         .replace(/\\\)/g, ')')
+        .replace(/\\\[/g, '[')
+        .replace(/\\\]/g, ']')
+        .replace(/\\'/g, "'")
+        .replace(/\\"/g, '"')
         .trim();
       
-      if (text.length > 2) {
+      // Validar se é texto válido
+      if (text.length > 1 && isValidTextSegment(text)) {
         extractedTexts.push(text);
       }
     }
   }
   
-  return extractedTexts.join(' ');
+  const finalText = extractedTexts.join(' ').trim();
+  console.log(`📝 Extraído ${extractedTexts.length} segmentos de texto, ${finalText.length} caracteres totais`);
+  
+  return finalText;
+}
+
+function isValidTextSegment(text: string): boolean {
+  if (!text || text.length < 2) return false;
+  
+  // Verifica se contém caracteres legíveis suficientes
+  const alphaNumCount = (text.match(/[a-zA-ZÀ-ÿ\u00C0-\u017F0-9]/g) || []).length;
+  const totalCount = text.length;
+  const ratio = alphaNumCount / totalCount;
+  
+  // Filtrar metadados PDF comuns
+  const pdfMetadataPatterns = [
+    /^(Type|Font|PDF|Creator|Producer|Title|Author|Subject|Keywords)/i,
+    /FontDescriptor|BaseFont|MediaBox|CropBox|BleedBox/i,
+    /^\d+\s+\d+\s+R$/,
+    /^[A-Z]+$/,
+    /obj|endobj|stream|endstream/i,
+    /^[0-9\.\s]+$/
+  ];
+  
+  const isMetadata = pdfMetadataPatterns.some(pattern => pattern.test(text.trim()));
+  
+  // Deve ter pelo menos 30% de caracteres alfanuméricos e não ser metadata
+  return ratio > 0.3 && !isMetadata;
 }
