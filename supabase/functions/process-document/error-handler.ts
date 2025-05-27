@@ -63,7 +63,11 @@ export class ErrorHandler {
     processingTime: number, 
     requestId: string
   ): Promise<Response> {
-    this.logger.logErrorHeader(processingTime, documentId);
+    // Log error header manually since logErrorHeader doesn't exist
+    this.logger.error(`❌ ERROR OCCURRED - Processing Time: ${processingTime}ms - Request ID: ${requestId}`);
+    if (documentId) {
+      this.logger.error(`📄 Document ID: ${documentId}`);
+    }
     this.logger.error('Erro:', error);
     this.logger.error('Stack:', error.stack);
 
