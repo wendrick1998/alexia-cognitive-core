@@ -236,7 +236,7 @@ const DocumentsManager = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium text-gray-900 truncate">
-                            {document.name}
+                            {document.title}
                           </h3>
                           <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
