@@ -20,115 +20,207 @@ interface ChunkData {
   metadata: Record<string, any>;
 }
 
-// Improved PDF text extraction using pdf-parse library
+// Função melhorada para extração de texto de PDF usando abordagem nativa
 async function extractTextFromPDF(arrayBuffer: ArrayBuffer): Promise<string> {
-  console.log(`Processing PDF with ${arrayBuffer.byteLength} bytes`);
+  console.log(`=== INICIANDO EXTRAÇÃO DE PDF ===`);
+  console.log(`Tamanho do buffer: ${arrayBuffer.byteLength} bytes`);
   
   try {
-    // Import pdf-parse library dynamically
-    const pdfParse = await import('https://esm.sh/pdf-parse@1.1.1');
-    
-    // Convert ArrayBuffer to Buffer for pdf-parse
-    const buffer = new Uint8Array(arrayBuffer);
-    
-    console.log('Starting PDF parsing with pdf-parse library...');
-    
-    // Parse PDF with pdf-parse
-    const pdfData = await pdfParse.default(buffer, {
-      // Limit to reasonable number of pages to manage memory
-      max: 50,
-      // Version can help with compatibility
-      version: 'v1.10.100'
-    });
-    
-    console.log(`PDF parsing completed. Pages: ${pdfData.numpages}, Text length: ${pdfData.text.length}`);
-    
-    // Clean and validate the extracted text
-    let cleanText = pdfData.text
-      .replace(/\x00/g, '') // Remove null characters
-      .replace(/\f/g, '\n') // Replace form feeds with newlines
-      .replace(/\r\n/g, '\n') // Normalize line endings
-      .replace(/\r/g, '\n')
-      .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines to double
-      .trim();
-    
-    console.log(`Cleaned text length: ${cleanText.length} characters`);
-    
-    // Validate that we have readable text
-    if (cleanText.length < 10) {
-      throw new Error('Extracted text is too short, PDF might be image-based or corrupted');
+    // Verificar se o buffer contém dados válidos
+    if (arrayBuffer.byteLength === 0) {
+      throw new Error('Buffer do PDF está vazio');
     }
+
+    // Verificar magic bytes do PDF
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const pdfHeader = new TextDecoder().decode(uint8Array.slice(0, 8));
+    console.log(`Header do arquivo: "${pdfHeader}"`);
     
-    // Check if text contains mostly readable characters
-    const readableChars = cleanText.match(/[a-zA-Z0-9\s\.\,\!\?\-\(\)]/g)?.length || 0;
-    const readableRatio = readableChars / cleanText.length;
-    
-    if (readableRatio < 0.5) {
-      console.warn(`Low readable character ratio: ${readableRatio}. Text might be garbled.`);
-      throw new Error('Extracted text appears to be corrupted or unreadable');
+    if (!pdfHeader.startsWith('%PDF-')) {
+      throw new Error('Arquivo não é um PDF válido (header inválido)');
     }
-    
-    console.log(`Text extraction successful. Readable ratio: ${readableRatio.toFixed(2)}`);
-    return cleanText;
+
+    // Tentar extração usando biblioteca pdf2pic/pdf-parse atualizada
+    console.log('Tentando extração com pdf-parse...');
+    try {
+      const pdfParse = await import('https://esm.sh/pdf-parse@1.1.1');
+      
+      // Converter para Buffer compatível
+      const buffer = new Uint8Array(arrayBuffer);
+      
+      const options = {
+        max: 20, // Limitar a 20 páginas para evitar problemas de memória
+        version: 'v1.10.100',
+        normalizeWhitespace: true,
+        disableCombineTextItems: false
+      };
+      
+      console.log('Iniciando parsing do PDF...');
+      const pdfData = await pdfParse.default(buffer, options);
+      
+      console.log(`PDF parseado - Páginas: ${pdfData.numpages}, Texto bruto: ${pdfData.text.length} chars`);
+      console.log(`Amostra do texto bruto (primeiros 200 chars): "${pdfData.text.substring(0, 200)}"`);
+      
+      let extractedText = pdfData.text;
+      
+      // Validação e limpeza rigorosa do texto
+      if (!extractedText || extractedText.length < 10) {
+        throw new Error('Texto extraído muito curto ou vazio');
+      }
+
+      // Limpeza do texto extraído
+      extractedText = extractedText
+        .replace(/\x00/g, '') // Remover caracteres null
+        .replace(/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remover caracteres de controle
+        .replace(/\f/g, '\n') // Form feed para quebra de linha
+        .replace(/\r\n/g, '\n') // Normalizar quebras de linha
+        .replace(/\r/g, '\n')
+        .replace(/\n{3,}/g, '\n\n') // Reduzir múltiplas quebras de linha
+        .trim();
+
+      console.log(`Texto após limpeza: ${extractedText.length} chars`);
+      console.log(`Amostra do texto limpo (primeiros 300 chars): "${extractedText.substring(0, 300)}"`);
+      
+      // Validação de qualidade do texto
+      const printableChars = extractedText.match(/[a-zA-Z0-9À-ÿ\s\.\,\!\?\;\:\-\(\)\[\]]/g)?.length || 0;
+      const qualityRatio = printableChars / extractedText.length;
+      
+      console.log(`Caracteres legíveis: ${printableChars}/${extractedText.length} (${(qualityRatio * 100).toFixed(2)}%)`);
+      
+      if (qualityRatio < 0.3) {
+        console.warn(`Qualidade do texto baixa: ${qualityRatio}. Tentando método alternativo...`);
+        throw new Error('Texto extraído parece corrompido (baixa qualidade)');
+      }
+      
+      // Verificação adicional - procurar por padrões de texto válido
+      const hasValidWords = /\b[a-zA-ZÀ-ÿ]{2,}\b/.test(extractedText);
+      if (!hasValidWords) {
+        throw new Error('Texto extraído não contém palavras válidas');
+      }
+      
+      console.log('✅ Extração PDF bem-sucedida com pdf-parse');
+      return extractedText;
+      
+    } catch (pdfParseError) {
+      console.error('Erro com pdf-parse:', pdfParseError);
+      console.log('Tentando método alternativo...');
+      
+      // Método alternativo usando regex simples para extrair texto
+      return await extractTextWithSimpleMethod(arrayBuffer);
+    }
     
   } catch (error) {
-    console.error('Error in PDF parsing:', error);
-    
-    // Fallback: Try a simpler approach if pdf-parse fails
-    console.log('Attempting fallback PDF extraction...');
-    try {
-      return await fallbackPDFExtraction(arrayBuffer);
-    } catch (fallbackError) {
-      console.error('Fallback extraction also failed:', fallbackError);
-      throw new Error(`PDF text extraction failed: ${error.message}. Please ensure the PDF contains extractable text and is not image-based.`);
-    }
+    console.error('Erro geral na extração de PDF:', error);
+    throw new Error(`Falha na extração de texto do PDF: ${error.message}`);
   }
 }
 
-// Fallback method for PDF extraction
-async function fallbackPDFExtraction(arrayBuffer: ArrayBuffer): Promise<string> {
-  console.log('Using fallback PDF extraction method...');
+// Método alternativo simples para extração de texto
+async function extractTextWithSimpleMethod(arrayBuffer: ArrayBuffer): Promise<string> {
+  console.log('=== USANDO MÉTODO ALTERNATIVO DE EXTRAÇÃO ===');
   
   try {
-    // Try using a different PDF library as fallback
-    const { default: PDFExtract } = await import('https://esm.sh/pdf.js-extract@0.2.1');
-    
     const uint8Array = new Uint8Array(arrayBuffer);
-    const extractor = new PDFExtract();
+    const pdfContent = new TextDecoder('latin1').decode(uint8Array);
     
-    const extractedData = await extractor.extractBuffer(uint8Array);
+    // Buscar por streams de texto no PDF usando regex
+    const textMatches = pdfContent.match(/stream\s*(.*?)\s*endstream/gs) || [];
+    console.log(`Encontrados ${textMatches.length} streams no PDF`);
     
-    let text = '';
-    for (const page of extractedData.pages) {
-      for (const item of page.content) {
-        if (item.str && item.str.trim()) {
-          text += item.str + ' ';
+    let extractedTexts: string[] = [];
+    
+    for (let i = 0; i < textMatches.length; i++) {
+      const stream = textMatches[i];
+      
+      // Tentar extrair texto do stream
+      const textContent = stream
+        .replace(/^stream\s*/, '')
+        .replace(/\s*endstream$/, '')
+        .replace(/BT\s+/, '') // Begin Text
+        .replace(/\s+ET/, '') // End Text
+        .replace(/\/\w+\s+\d+\s+Tf\s+/g, '') // Font commands
+        .replace(/\d+\.?\d*\s+\d+\.?\d*\s+(m|l|c|v|y|h)\s+/g, '') // Path commands
+        .replace(/\d+\.?\d*\s+(w|J|j|M|d)\s+/g, '') // Graphics state
+        .replace(/q\s+|Q\s+/g, '') // Save/restore graphics state
+        .replace(/\[\s*\]\s+d\s+/g, '') // Dash pattern
+        .replace(/rg\s+|RG\s+/g, '') // Color commands
+        .replace(/\d+\.?\d*\s+\d+\.?\d*\s+(TD|Td|Tm)\s+/g, '') // Text positioning
+        .replace(/\(\s*(.*?)\s*\)\s*(Tj|TJ)/g, '$1 ') // Extract text from Tj commands
+        .replace(/\<\s*(.*?)\s*\>\s*(Tj|TJ)/g, (match, hex) => {
+          // Convert hex strings to text
+          try {
+            return String.fromCharCode(...hex.match(/.{2}/g)?.map((h: string) => parseInt(h, 16)) || []);
+          } catch {
+            return '';
+          }
+        });
+      
+      if (textContent && textContent.length > 5) {
+        extractedTexts.push(textContent);
+      }
+    }
+    
+    // Se não encontrou texto nos streams, tentar busca mais ampla
+    if (extractedTexts.length === 0) {
+      console.log('Nenhum texto encontrado nos streams, tentando busca geral...');
+      
+      // Buscar padrões de texto mais gerais no PDF
+      const generalTextMatches = pdfContent.match(/\((.*?)\)\s*Tj/g) || [];
+      for (const match of generalTextMatches) {
+        const text = match.replace(/^\(/, '').replace(/\)\s*Tj$/, '');
+        if (text && text.length > 2) {
+          extractedTexts.push(text);
         }
       }
-      text += '\n';
     }
     
-    text = text.trim();
-    console.log(`Fallback extraction completed. Text length: ${text.length}`);
+    console.log(`Textos extraídos pelo método alternativo: ${extractedTexts.length} fragmentos`);
     
-    if (text.length < 10) {
-      throw new Error('Fallback extraction also produced insufficient text');
+    if (extractedTexts.length === 0) {
+      throw new Error('Nenhum texto encontrado no PDF com método alternativo');
     }
     
-    return text;
+    // Combinar e limpar textos extraídos
+    let finalText = extractedTexts.join(' ')
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      .replace(/\\\\/g, '\\')
+      .replace(/\\\(/g, '(')
+      .replace(/\\\)/g, ')')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    console.log(`Texto final extraído: ${finalText.length} chars`);
+    console.log(`Amostra do texto (primeiros 300 chars): "${finalText.substring(0, 300)}"`);
+    
+    if (finalText.length < 10) {
+      throw new Error('Texto extraído muito curto pelo método alternativo');
+    }
+    
+    // Validação final
+    const hasValidContent = /[a-zA-ZÀ-ÿ]{2,}/.test(finalText);
+    if (!hasValidContent) {
+      throw new Error('Texto extraído não contém conteúdo válido');
+    }
+    
+    console.log('✅ Extração alternativa bem-sucedida');
+    return finalText;
     
   } catch (error) {
-    console.error('Fallback extraction failed:', error);
-    throw new Error('All PDF extraction methods failed. The PDF might be image-based or corrupted.');
+    console.error('Erro no método alternativo:', error);
+    throw new Error(`Método alternativo falhou: ${error.message}`);
   }
 }
 
 async function extractTextFromFile(url: string, type: string): Promise<string> {
-  console.log(`Starting text extraction from ${type} file: ${url}`);
+  console.log(`=== INICIANDO EXTRAÇÃO DE ARQUIVO ===`);
+  console.log(`URL: ${url}`);
+  console.log(`Tipo: ${type}`);
   
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // Increased timeout
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos timeout
     
     const response = await fetch(url, { 
       signal: controller.signal,
@@ -140,32 +232,37 @@ async function extractTextFromFile(url: string, type: string): Promise<string> {
     clearTimeout(timeoutId);
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+      throw new Error(`Falha ao buscar arquivo: ${response.status} ${response.statusText}`);
     }
 
-    console.log(`File fetched successfully, size: ${response.headers.get('content-length') || 'unknown'} bytes`);
+    const contentLength = response.headers.get('content-length');
+    console.log(`Arquivo baixado com sucesso, tamanho: ${contentLength || 'unknown'} bytes`);
 
     if (type === 'txt' || type === 'md') {
       const text = await response.text();
-      console.log(`Extracted ${text.length} characters from ${type} file`);
+      console.log(`Texto extraído de ${type}: ${text.length} caracteres`);
+      console.log(`Amostra: "${text.substring(0, 200)}"`);
       return text;
     } else if (type === 'pdf') {
       const arrayBuffer = await response.arrayBuffer();
-      console.log(`Downloaded PDF arrayBuffer, size: ${arrayBuffer.byteLength} bytes`);
+      console.log(`PDF baixado: ${arrayBuffer.byteLength} bytes`);
       
       const text = await extractTextFromPDF(arrayBuffer);
       
-      // Log a sample of the extracted text for verification
-      console.log(`PDF text extraction sample (first 200 chars): "${text.substring(0, 200)}"`);
+      // Log final do resultado
+      console.log(`=== RESULTADO FINAL DA EXTRAÇÃO PDF ===`);
+      console.log(`Tamanho do texto extraído: ${text.length} caracteres`);
+      console.log(`Primeiros 500 caracteres: "${text.substring(0, 500)}"`);
+      console.log(`Últimos 200 caracteres: "${text.substring(Math.max(0, text.length - 200))}"`);
       
       return text;
     } else {
-      throw new Error(`Unsupported file type: ${type}`);
+      throw new Error(`Tipo de arquivo não suportado: ${type}`);
     }
   } catch (error) {
-    console.error(`Error extracting text from ${type}:`, error);
+    console.error(`Erro na extração de ${type}:`, error);
     if (error.name === 'AbortError') {
-      throw new Error(`Timeout while fetching file: ${url}`);
+      throw new Error(`Timeout ao baixar arquivo: ${url}`);
     }
     throw error;
   }
@@ -173,21 +270,25 @@ async function extractTextFromFile(url: string, type: string): Promise<string> {
 
 // Memory-optimized chunking function
 function* createChunksGenerator(text: string, chunkSize: number = 800, overlap: number = 150): Generator<ChunkData> {
-  console.log(`Creating chunks from text of length: ${text.length} characters`);
+  console.log(`=== CRIANDO CHUNKS ===`);
+  console.log(`Texto de entrada: ${text.length} caracteres`);
+  console.log(`Configuração: chunkSize=${chunkSize}, overlap=${overlap}`);
   
   if (text.length === 0) {
-    throw new Error('Cannot create chunks from empty text');
+    throw new Error('Não é possível criar chunks de texto vazio');
   }
   
   let startIndex = 0;
   let chunkIndex = 0;
-  const maxChunks = 100; // Limit chunks per document
+  const maxChunks = 100; // Limitar chunks por documento
 
   while (startIndex < text.length && chunkIndex < maxChunks) {
     const endIndex = Math.min(startIndex + chunkSize, text.length);
     const content = text.slice(startIndex, endIndex).trim();
     
     if (content.length > 10) {
+      console.log(`Chunk ${chunkIndex}: ${content.length} chars - "${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"`);
+      
       yield {
         content,
         chunk_index: chunkIndex,
@@ -208,7 +309,7 @@ function* createChunksGenerator(text: string, chunkSize: number = 800, overlap: 
     }
   }
 
-  console.log(`Created ${chunkIndex} chunks successfully`);
+  console.log(`Total de chunks criados: ${chunkIndex}`);
 }
 
 async function generateEmbedding(text: string, retries: number = 3): Promise<number[]> {
@@ -331,7 +432,7 @@ async function updateDocumentStatus(documentId: string, status: string, errorMes
 
 serve(async (req) => {
   const startTime = Date.now();
-  console.log(`=== Processing document request started at ${new Date().toISOString()} ===`);
+  console.log(`=== PROCESSAMENTO DE DOCUMENTO INICIADO EM ${new Date().toISOString()} ===`);
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
