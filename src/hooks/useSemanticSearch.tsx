@@ -15,6 +15,7 @@ export interface SearchResponse {
   results: SearchResult[];
   query: string;
   total_results: number;
+  similarity_threshold_used?: number;
   fallback?: boolean;
   message?: string;
 }
@@ -29,7 +30,8 @@ export function useSemanticSearch() {
   const searchDocuments = async (
     queryText: string, 
     projectId?: string, 
-    topN: number = 5
+    topN: number = 5,
+    similarityThreshold: number = 0.7
   ): Promise<SearchResult[]> => {
     if (!user) {
       toast({
@@ -53,14 +55,16 @@ export function useSemanticSearch() {
       setSearching(true);
       setLastQuery(queryText);
 
-      console.log(`Starting semantic search for: "${queryText}"`);
+      console.log(`Starting enhanced semantic search for: "${queryText}"`);
+      console.log(`Similarity threshold: ${similarityThreshold}, Top N: ${topN}`);
 
       const { data, error } = await supabase.functions.invoke('semantic-search', {
         body: { 
           query_text: queryText.trim(),
           user_id: user.id,
           project_id: projectId,
-          top_n: topN
+          top_n: topN,
+          similarity_threshold: similarityThreshold
         }
       });
 
@@ -75,7 +79,7 @@ export function useSemanticSearch() {
       }
 
       const searchResponse = data as SearchResponse;
-      console.log('Search response:', searchResponse);
+      console.log('Enhanced search response:', searchResponse);
 
       if (searchResponse.fallback) {
         toast({
@@ -88,9 +92,13 @@ export function useSemanticSearch() {
       const searchResults = searchResponse.results || [];
       setResults(searchResults);
 
+      const thresholdInfo = searchResponse.similarity_threshold_used 
+        ? ` (threshold: ${(searchResponse.similarity_threshold_used * 100).toFixed(0)}%)`
+        : '';
+
       toast({
         title: "Busca concluída",
-        description: `Encontrados ${searchResults.length} resultados para "${queryText}"`,
+        description: `Encontrados ${searchResults.length} resultados para "${queryText}"${thresholdInfo}`,
       });
 
       return searchResults;

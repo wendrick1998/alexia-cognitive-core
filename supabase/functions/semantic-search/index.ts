@@ -50,7 +50,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query_text, user_id, project_id, top_n = 5 } = await req.json();
+    const { query_text, user_id, project_id, top_n = 5, similarity_threshold = 0.7 } = await req.json();
     
     if (!query_text || !user_id) {
       return new Response(
@@ -60,77 +60,40 @@ serve(async (req) => {
     }
 
     console.log(`Processing semantic search for user: ${user_id}, query: "${query_text}"`);
+    console.log(`Using similarity threshold: ${similarity_threshold}, top_n: ${top_n}`);
 
     // Generate embedding for the query
     const queryEmbedding = await generateEmbedding(query_text);
-    const embeddingString = `[${queryEmbedding.join(',')}]`;
 
-    // Build the query to search for similar sections (updated table name)
-    let searchQuery = supabase
-      .from('document_sections') // Updated table name
-      .select(`
-        content,
-        section_number,
-        document_id,
-        documents!inner(
-          title,
-          user_id,
-          project_id
-        )
-      `)
-      .eq('documents.user_id', user_id);
-
-    // Add project filter if provided
-    if (project_id) {
-      if (project_id === 'none') {
-        searchQuery = searchQuery.is('documents.project_id', null);
-      } else {
-        searchQuery = searchQuery.eq('documents.project_id', project_id);
-      }
-    }
-
-    // Execute the similarity search using raw SQL through RPC
-    const { data: searchResults, error } = await supabase.rpc('search_similar_chunks', {
-      query_embedding: embeddingString,
-      target_user_id: user_id,
-      target_project_id: project_id,
-      match_count: top_n
+    // Use the new enhanced RPC function with improved similarity logic
+    const { data: searchResults, error } = await supabase.rpc('match_document_sections', {
+      p_query_embedding: queryEmbedding,
+      p_match_similarity_threshold: similarity_threshold,
+      p_match_count: top_n,
+      p_user_id_filter: user_id
     });
 
     if (error) {
       console.error('Error in similarity search:', error);
-      
-      // Fallback to basic search without similarity scoring
-      const { data: fallbackResults, error: fallbackError } = await searchQuery.limit(top_n);
-      
-      if (fallbackError) {
-        throw fallbackError;
-      }
-
-      const formattedResults = (fallbackResults || []).map(section => ({
-        content: section.content,
-        document_name: section.documents.title, // Updated field name
-        section_number: section.section_number, // Updated field name
-        similarity_score: 0.5 // Default score for fallback
-      }));
-
-      return new Response(
-        JSON.stringify({ 
-          results: formattedResults,
-          fallback: true,
-          message: 'Used fallback search without similarity scoring'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw error;
     }
 
     console.log(`Found ${searchResults?.length || 0} similar sections`);
 
+    // Format results to match expected interface
+    const formattedResults = (searchResults || []).map((result: any) => ({
+      content: result.content,
+      document_name: 'Document', // We'll need to join with documents table if title is needed
+      chunk_index: 0, // This would need to be section_number if available
+      similarity_score: result.similarity
+    }));
+
     return new Response(
       JSON.stringify({ 
-        results: searchResults || [],
+        results: formattedResults,
         query: query_text,
-        total_results: searchResults?.length || 0
+        total_results: searchResults?.length || 0,
+        similarity_threshold_used: similarity_threshold
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

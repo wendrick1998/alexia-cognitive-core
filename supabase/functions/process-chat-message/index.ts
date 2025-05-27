@@ -15,6 +15,33 @@ const supabase = createClient(
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
+async function generateEmbedding(text: string): Promise<number[]> {
+  try {
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'text-embedding-ada-002',
+        input: text.substring(0, 8191),
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenAI API error: ${response.statusText} - ${error}`);
+    }
+
+    const data = await response.json();
+    return data.data[0].embedding;
+  } catch (error) {
+    console.error('Error generating embedding:', error);
+    throw error;
+  }
+}
+
 async function callOpenAI(prompt: string): Promise<string> {
   console.log('Calling OpenAI with prompt length:', prompt.length);
   
@@ -72,79 +99,74 @@ serve(async (req) => {
 
     console.log(`Processing chat message for user: ${user_id}, message: "${user_message.substring(0, 100)}..."`);
 
-    // Passo 1: Recuperação de Contexto via busca semântica
-    console.log('=== SEMANTIC SEARCH DEBUG ===');
-    console.log(`Calling semantic-search function with query: "${user_message}"`);
-    console.log(`Project ID: ${project_id || 'none'}`);
-    console.log(`User ID: ${user_id}`);
-    
-    const { data: searchData, error: searchError } = await supabase.functions.invoke('semantic-search', {
-      body: { 
-        query_text: user_message,
-        user_id: user_id,
-        project_id: project_id,
-        top_n: 3
-      }
+    // Generate embedding for the query
+    const queryEmbedding = await generateEmbedding(user_message);
+
+    // Step 1: Search document sections using enhanced RPC
+    console.log('=== DOCUMENT SEARCH ===');
+    const { data: documentResults, error: docError } = await supabase.rpc('match_document_sections', {
+      p_query_embedding: queryEmbedding,
+      p_match_similarity_threshold: 0.7,
+      p_match_count: 3,
+      p_user_id_filter: user_id
     });
 
-    if (searchError) {
-      console.error('ERROR in semantic-search function:', searchError);
-      console.log('Search error details:', JSON.stringify(searchError, null, 2));
-    } else {
-      console.log('Semantic search completed successfully');
+    if (docError) {
+      console.error('Error in document search:', docError);
     }
 
-    const searchResults = searchData?.results || [];
-    console.log(`=== SEARCH RESULTS (${searchResults.length} chunks found) ===`);
-    
-    if (searchResults.length === 0) {
-      console.log(`⚠️  NENHUM CHUNK ENCONTRADO pela busca semântica para a query: "${user_message}"`);
-      console.log('Search data received:', JSON.stringify(searchData, null, 2));
-    } else {
-      console.log('📄 CHUNKS RECUPERADOS:');
-      searchResults.forEach((result: any, index: number) => {
-        console.log(`--- CHUNK ${index + 1} ---`);
-        console.log(`Documento: "${result.document_name || 'N/A'}"`);
-        console.log(`Pontuação de similaridade: ${result.similarity_score || 'N/A'}`);
-        console.log(`Índice do chunk: ${result.chunk_index || 'N/A'}`);
-        console.log(`Conteúdo (${result.content?.length || 0} caracteres):`);
-        console.log(`"${result.content?.substring(0, 300) || 'N/A'}${result.content?.length > 300 ? '...' : ''}"`);
-        console.log('--- FIM CHUNK ---');
-      });
+    // Step 2: Search cognitive memories using enhanced RPC
+    console.log('=== MEMORY SEARCH ===');
+    const { data: memoryResults, error: memError } = await supabase.rpc('search_cognitive_memories', {
+      p_query_embedding: queryEmbedding,
+      p_match_similarity_threshold: 0.7,
+      p_match_count: 2,
+      p_user_id_filter: user_id
+    });
+
+    if (memError) {
+      console.error('Error in memory search:', memError);
     }
 
-    // Passo 2: Construção do Prompt para o LLM
+    const documentChunks = documentResults || [];
+    const memoryChunks = memoryResults || [];
+
+    console.log(`Found ${documentChunks.length} document chunks and ${memoryChunks.length} memory chunks`);
+
+    // Step 3: Build context for LLM
     let contextText = '';
-    if (searchResults.length > 0) {
-      contextText = 'Contexto Fornecido:\n';
-      searchResults.forEach((result: any, index: number) => {
-        contextText += `---\n[Trecho ${index + 1} do documento "${result.document_name}"]\n${result.content}\n`;
+    
+    if (documentChunks.length > 0) {
+      contextText += 'Contexto dos Documentos:\n';
+      documentChunks.forEach((chunk: any, index: number) => {
+        contextText += `---\n[Trecho ${index + 1} - Similaridade: ${(chunk.similarity * 100).toFixed(1)}%]\n${chunk.content}\n`;
       });
       contextText += '---\n\n';
-    } else {
-      contextText = 'Nenhum contexto relevante encontrado nos documentos atuais.\n\n';
+    }
+
+    if (memoryChunks.length > 0) {
+      contextText += 'Memórias Relevantes:\n';
+      memoryChunks.forEach((memory: any, index: number) => {
+        contextText += `---\n[Memória ${index + 1} - ${memory.source || 'Sistema'} - Similaridade: ${(memory.similarity * 100).toFixed(1)}%]\n${memory.content}\n`;
+      });
+      contextText += '---\n\n';
+    }
+
+    if (!contextText) {
+      contextText = 'Nenhum contexto relevante encontrado nos documentos ou memórias.\n\n';
     }
 
     const fullPrompt = `${contextText}Pergunta do Usuário: ${user_message}\n\nResposta de Alex iA:`;
 
     console.log('=== PROMPT COMPLETO PARA LLM ===');
     console.log('Tamanho total do prompt:', fullPrompt.length, 'caracteres');
-    console.log('--- INÍCIO DO PROMPT ---');
-    console.log(fullPrompt);
-    console.log('--- FIM DO PROMPT ---');
 
-    // Passo 3: Chamada ao LLM
-    console.log('=== CHAMANDO OPENAI ===');
-    console.log('Enviando prompt para OpenAI...');
+    // Step 4: Call LLM
     const aiResponse = await callOpenAI(fullPrompt);
-    
-    console.log('=== RESPOSTA DO LLM ===');
-    console.log(`Resposta recebida (${aiResponse.length} caracteres):`);
-    console.log(`"${aiResponse.substring(0, 200)}${aiResponse.length > 200 ? '...' : ''}"`);
 
-    // Passo 4: Salvar mensagens no banco de dados
+    // Step 5: Save messages to database
     if (conversation_id) {
-      // Salvar mensagem do usuário
+      // Save user message
       const { error: userMessageError } = await supabase
         .from('messages')
         .insert({
@@ -157,7 +179,7 @@ serve(async (req) => {
         console.error('Error saving user message:', userMessageError);
       }
 
-      // Salvar resposta da IA
+      // Save AI response
       const { error: aiMessageError } = await supabase
         .from('messages')
         .insert({
@@ -172,22 +194,18 @@ serve(async (req) => {
       }
     }
 
-    console.log('=== PROCESSO CONCLUÍDO ===');
-    console.log('Retornando resposta para o cliente');
-
     return new Response(
       JSON.stringify({ 
         response: aiResponse,
-        context_used: searchResults.length > 0,
-        chunks_found: searchResults.length
+        context_used: documentChunks.length > 0 || memoryChunks.length > 0,
+        chunks_found: documentChunks.length,
+        memories_found: memoryChunks.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('=== ERRO NA FUNÇÃO ===');
     console.error('Error in process-chat-message function:', error);
-    console.error('Error stack:', error.stack);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

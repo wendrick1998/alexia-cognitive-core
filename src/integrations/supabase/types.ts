@@ -250,6 +250,47 @@ export type Database = {
           },
         ]
       }
+      memory_embeddings: {
+        Row: {
+          content: string
+          created_at: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          source: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_embeddings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -413,6 +454,37 @@ export type Database = {
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
+      }
+      match_document_sections: {
+        Args: {
+          p_query_embedding: string
+          p_match_similarity_threshold: number
+          p_match_count: number
+          p_user_id_filter: string
+        }
+        Returns: {
+          id: string
+          document_id: string
+          content: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
+      search_cognitive_memories: {
+        Args: {
+          p_query_embedding: string
+          p_match_similarity_threshold: number
+          p_match_count: number
+          p_user_id_filter?: string
+        }
+        Returns: {
+          id: string
+          user_id: string
+          content: string
+          source: string
+          metadata: Json
+          similarity: number
+        }[]
       }
       sparsevec_out: {
         Args: { "": unknown }
