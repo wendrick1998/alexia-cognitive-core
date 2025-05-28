@@ -17,6 +17,8 @@ export function useConversationsActions(
     if (!user) return null;
 
     try {
+      console.log('🔥 Criando nova conversa no backend...');
+      
       const { data, error } = await supabase
         .from('conversations')
         .insert({
@@ -25,7 +27,12 @@ export function useConversationsActions(
           category_id: categoryId,
           session_id: crypto.randomUUID(),
           name: `Nova Conversa`,
-          message_count: 0
+          message_count: 0,
+          is_favorite: false,
+          is_archived: false,
+          tags: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select(`
           *,
@@ -36,13 +43,23 @@ export function useConversationsActions(
       if (error) throw error;
 
       const newConversation = data as Conversation;
+      console.log(`✅ Nova conversa criada no backend: ${newConversation.id}`);
+      
+      // Atualizar lista de conversas imediatamente
       setConversations(prev => [newConversation, ...prev]);
-      setCurrentConversation(newConversation);
+      
+      // Limpar mensagens e definir como conversa atual
       setMessages([]);
+      setCurrentConversation(newConversation);
+      
+      toast({
+        title: "Nova conversa criada",
+        description: "Sua nova conversa está pronta para uso!",
+      });
       
       return newConversation;
     } catch (error) {
-      console.error('Error creating conversation:', error);
+      console.error('❌ Erro ao criar conversa:', error);
       toast({
         title: "Erro",
         description: "Não foi possível criar uma nova conversa",
@@ -56,7 +73,10 @@ export function useConversationsActions(
     try {
       const { error } = await supabase
         .from('conversations')
-        .update(updates)
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', conversationId);
 
       if (error) throw error;
@@ -64,21 +84,18 @@ export function useConversationsActions(
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationId 
-            ? { ...conv, ...updates }
+            ? { ...conv, ...updates, updated_at: new Date().toISOString() }
             : conv
-        )
+        ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
       );
 
       if (currentConversation?.id === conversationId) {
         setCurrentConversation(prev => prev ? { ...prev, ...updates } : null);
       }
 
-      toast({
-        title: "Sucesso",
-        description: "Conversa atualizada com sucesso",
-      });
+      console.log(`✅ Conversa ${conversationId} atualizada`);
     } catch (error) {
-      console.error('Error updating conversation:', error);
+      console.error('❌ Erro ao atualizar conversa:', error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar a conversa",
@@ -108,7 +125,7 @@ export function useConversationsActions(
         description: "Conversa excluída com sucesso",
       });
     } catch (error) {
-      console.error('Error deleting conversation:', error);
+      console.error('❌ Erro ao deletar conversa:', error);
       toast({
         title: "Erro",
         description: "Não foi possível excluir a conversa",
@@ -149,7 +166,7 @@ export function useConversationsActions(
         ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
       );
     } catch (error) {
-      console.error('Error updating conversation timestamp:', error);
+      console.error('❌ Erro ao atualizar timestamp:', error);
     }
   };
 

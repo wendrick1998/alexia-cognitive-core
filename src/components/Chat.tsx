@@ -23,18 +23,20 @@ const Chat = () => {
   
   const { processing, processMessage } = useChatProcessor();
 
-  // Remover o useEffect que causava carregamentos duplicados
-  // O carregamento agora é feito diretamente em navigateToConversation
-
   const handleSendMessage = async (messageText: string) => {
     let conversation = currentConversation;
     
     // Se não há conversa atual, criar uma nova automaticamente
     if (!conversation) {
+      console.log('🔥 Nenhuma conversa ativa, criando nova...');
       conversation = await createAndNavigateToNewConversation();
-      if (!conversation) return;
+      if (!conversation) {
+        console.error('❌ Falha ao criar conversa para enviar mensagem');
+        return;
+      }
     }
 
+    console.log(`📤 Enviando mensagem para conversa: ${conversation.id}`);
     const response = await processMessage(messageText, conversation.id);
     
     if (response) {
@@ -44,13 +46,19 @@ const Chat = () => {
     }
   };
 
+  // ✅ FUNÇÃO PRINCIPAL - Nova Conversa Premium
   const handleNewConversation = async () => {
-    console.log(`🆕 Iniciando nova conversa premium...`);
-    await createAndNavigateToNewConversation();
+    console.log('🆕 NOVA CONVERSA SOLICITADA - UX PREMIUM');
+    const newConversation = await createAndNavigateToNewConversation();
+    
+    if (newConversation) {
+      console.log('🎯 Nova conversa criada e ativa, pronta para primeira mensagem!');
+    }
   };
 
-  // Estados de carregamento com UX premium
+  // Estados de carregamento otimizados
   const isLoadingState = loading || conversationState.isNavigating || conversationState.isLoadingMessages;
+  const isCreatingNew = conversationState.isCreatingNew;
 
   return (
     <div className="flex-1 flex bg-gradient-to-br from-slate-50 via-white to-blue-50/30 min-h-screen">
@@ -65,7 +73,7 @@ const Chat = () => {
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onNewConversation={handleNewConversation}
-          isCreatingNew={conversationState.isCreatingNew}
+          isCreatingNew={isCreatingNew}
           isNavigating={conversationState.isNavigating}
         />
 
@@ -80,13 +88,15 @@ const Chat = () => {
         )}
 
         <ChatInput
-          processing={processing || conversationState.isCreatingNew}
+          processing={processing || isCreatingNew}
           currentConversation={currentConversation}
           onSendMessage={handleSendMessage}
           placeholder={
-            conversationState.isCreatingNew 
-              ? "Iniciando nova conversa..." 
-              : "Faça uma pergunta sobre seus documentos..."
+            isCreatingNew 
+              ? "Criando nova conversa..." 
+              : currentConversation 
+                ? "Digite sua mensagem..."
+                : "Comece uma nova conversa..."
           }
         />
       </div>

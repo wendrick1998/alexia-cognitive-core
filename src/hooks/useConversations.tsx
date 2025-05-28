@@ -57,31 +57,29 @@ export function useConversations() {
     clearPendingNavigation
   } = useConversationsState();
 
-  // Referência para evitar navegações duplicadas
   const navigationInProgress = useRef<string | null>(null);
 
-  // Navegação otimizada e segura para conversa específica
+  // Navegação otimizada para conversa específica
   const navigateToConversation = useCallback(async (conversation: any) => {
-    // Evitar navegação duplicada ou para a mesma conversa
     if (navigationInProgress.current === conversation.id || 
         currentConversation?.id === conversation.id) {
       console.log(`🚫 Navegação ignorada: já na conversa ${conversation.id}`);
       return;
     }
     
-    console.log(`🧭 Iniciando navegação para conversa: ${conversation.id}`);
+    console.log(`🧭 Navegando para conversa: ${conversation.id}`);
     navigationInProgress.current = conversation.id;
     
     try {
       setNavigating(true, conversation.id);
       
-      // Limpar mensagens atuais imediatamente para UX responsiva
-      setMessages([]);
-      
-      // Definir conversa atual
+      // Definir conversa atual imediatamente
       setCurrentConversation(conversation);
       
-      // Carregar mensagens da nova conversa
+      // Limpar mensagens atuais
+      setMessages([]);
+      
+      // Carregar mensagens da conversa
       setLoadingMessages(true);
       await loadMessages(conversation.id);
       
@@ -90,7 +88,6 @@ export function useConversations() {
       
     } catch (error) {
       console.error('❌ Erro na navegação:', error);
-      // Em caso de erro, voltar para estado consistente
       setCurrentConversation(null);
       setMessages([]);
     } finally {
@@ -100,34 +97,39 @@ export function useConversations() {
     }
   }, [currentConversation, setCurrentConversation, setMessages, loadMessages, setNavigating, setLoadingMessages, updateLastInteraction]);
 
-  // Criação otimizada de nova conversa com navegação automática
+  // ✅ FUNÇÃO PRINCIPAL - Nova Conversa com UX Premium
   const createAndNavigateToNewConversation = useCallback(async () => {
     if (conversationState.isCreatingNew) {
       console.log('🚫 Criação já em andamento, ignorando...');
-      return;
+      return null;
     }
     
+    console.log('🔥 INICIANDO NOVA CONVERSA - UX PREMIUM');
     setCreatingNew(true);
     
     try {
-      console.log('🆕 Criando nova conversa e navegando automaticamente...');
-      
-      // Criar nova conversa
+      // 1. Criar conversa imediatamente no backend
       const newConversation = await createConversation();
       
       if (newConversation) {
-        // Limpar estado de mensagens e navegar automaticamente
+        console.log(`✅ Nova conversa criada: ${newConversation.id}`);
+        
+        // 2. Limpar ambiente de chat e abrir conversa nova
         setMessages([]);
         setCurrentConversation(newConversation);
+        
+        // 3. Atualizar interação
         updateLastInteraction();
         
-        console.log(`✅ Nova conversa criada e ativada: ${newConversation.id}`);
+        console.log('🎯 NOVA CONVERSA PRONTA PARA USO!');
         return newConversation;
       } else {
         console.error('❌ Falha ao criar nova conversa');
+        return null;
       }
     } catch (error) {
       console.error('❌ Erro ao criar nova conversa:', error);
+      return null;
     } finally {
       setCreatingNew(false);
     }
@@ -165,7 +167,7 @@ export function useConversations() {
     getCurrentOrCreateConversation,
     updateConversationTimestamp,
     
-    // Navegação premium
+    // 🔥 NAVEGAÇÃO PREMIUM
     navigateToConversation,
     createAndNavigateToNewConversation,
     
