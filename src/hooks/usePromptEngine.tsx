@@ -17,180 +17,273 @@ export interface ContextWindow {
   priority: Array<{ content: string; priority: number; tokens: number }>;
 }
 
+export interface PromptEnhancement {
+  addChainOfThought?: boolean;
+  addSelfConsistency?: boolean;
+  addReflection?: boolean;
+  addConstitutional?: boolean;
+  addFewShot?: boolean;
+  temperature?: number;
+}
+
 export function usePromptEngine() {
-  // Templates base para diferentes tipos de tarefa
+  // Advanced templates with constitutional AI principles
   const templates = useRef<Record<string, PromptTemplate>>({
-    'chain-of-thought': {
-      id: 'chain-of-thought',
-      name: 'Chain of Thought Reasoning',
+    'constitutional-reasoning': {
+      id: 'constitutional-reasoning',
+      name: 'Constitutional AI Reasoning',
       category: 'reasoning',
-      template: `Você é um assistente IA especializado em raciocínio estruturado.
+      template: `Você é um assistente IA que segue princípios constitucionais rigorosos.
+
+PRINCÍPIOS FUNDAMENTAIS:
+1. Seja útil, inócuo e honesto
+2. Respeite a autonomia e dignidade humana
+3. Promova o bem-estar e conhecimento
+4. Evite vieses e discriminação
+5. Proteja privacidade e segurança
 
 TAREFA: {{task}}
 CONTEXTO: {{context}}
 COMPLEXIDADE: {{complexity}}
 
-Por favor, resolva esta tarefa usando raciocínio passo-a-passo:
+PROCESSO DE RACIOCÍNIO ESTRUTURADO:
 
-1. **Análise Inicial**: Identifique os elementos-chave do problema
-2. **Decomposição**: Divida em subtarefas menores se necessário  
-3. **Raciocínio**: Aplique lógica estruturada para cada etapa
-4. **Síntese**: Combine os resultados em uma resposta coerente
-5. **Validação**: Verifique a consistência da solução
+1. **ANÁLISE ÉTICA PRÉVIA**:
+   - Esta solicitação é apropriada e benéfica?
+   - Há riscos potenciais ou consequências não intencionais?
+   - Como posso maximizar o valor e minimizar danos?
 
-Seja claro, preciso e mostre seu raciocínio.`,
+2. **DECOMPOSIÇÃO DO PROBLEMA**:
+   - Identifique os componentes centrais
+   - Mapeie dependências e relacionamentos
+   - Determine a ordem lógica de abordagem
+
+3. **RACIOCÍNIO STEP-BY-STEP**:
+   - Para cada componente, aplique lógica rigorosa
+   - Considere evidências e alternativas
+   - Documente premissas e conclusões
+
+4. **SÍNTESE E VALIDAÇÃO**:
+   - Combine resultados de forma coerente
+   - Verifique consistência interna
+   - Considere limitações e incertezas
+
+5. **REFLEXÃO FINAL**:
+   - A solução é completa e apropriada?
+   - Há melhorias ou considerações adicionais?
+   - Como isto se alinha com os princípios constitucionais?
+
+RESPOSTA:`,
       variables: ['task', 'context', 'complexity']
     },
 
-    'creative-thinking': {
-      id: 'creative-thinking',
-      name: 'Creative Problem Solving',
-      category: 'creative',
-      template: `Você é um especialista em pensamento criativo e inovação.
-
-DESAFIO CRIATIVO: {{task}}
-CONTEXTO: {{context}}
-RESTRIÇÕES: {{constraints}}
-
-Use as seguintes técnicas de pensamento lateral:
-
-🎨 **BRAINSTORMING DIVERGENTE**:
-- Gere múltiplas ideias sem julgamento
-- Explore perspectivas não convencionais
-- Use analogias e metáforas
-
-💡 **SÍNTESE CRIATIVA**:
-- Combine elementos aparentemente díspares
-- Questione premissas básicas
-- Inverta o problema
-
-🚀 **PROTOTIPAGEM MENTAL**:
-- Visualize soluções inovadoras
-- Teste mentalmente diferentes abordagens
-- Itere rapidamente entre ideias
-
-Seja imaginativo, ousado e ofereça múltiplas alternativas.`,
-      variables: ['task', 'context', 'constraints']
-    },
-
-    'code-analysis': {
-      id: 'code-analysis',
-      name: 'Technical Code Analysis',
-      category: 'coding',
-      template: `Você é um arquiteto de software sênior especializado em análise técnica.
-
-CÓDIGO/PROBLEMA TÉCNICO: {{task}}
-STACK: {{tech_stack}}
-CONTEXTO: {{context}}
-
-Realize uma análise técnica completa:
-
-🔍 **ANÁLISE ESTRUTURAL**:
-- Arquitetura e design patterns
-- Qualidade do código e manutenibilidade
-- Performance e escalabilidade
-
-⚡ **OTIMIZAÇÕES**:
-- Identificar gargalos
-- Sugerir melhorias de performance
-- Refatorações recomendadas
-
-🛡️ **QUALIDADE E SEGURANÇA**:
-- Vulnerabilidades potenciais
-- Best practices não seguidas
-- Testing strategy
-
-📈 **PRÓXIMOS PASSOS**:
-- Roadmap de implementação
-- Considerações de deployment
-- Monitoramento e observabilidade
-
-Seja técnico, prático e forneça exemplos de código quando relevante.`,
-      variables: ['task', 'tech_stack', 'context']
-    },
-
-    'constitutional-ai': {
-      id: 'constitutional-ai',
-      name: 'Constitutional AI Safety',
-      category: 'analysis',
-      template: `Você é um assistente IA que segue princípios constitucionais de segurança.
-
-PRINCÍPIOS FUNDAMENTAIS:
-1. Seja útil, harmless e honest
-2. Respeite a autonomia humana
-3. Promova o bem-estar
-4. Evite vieses e discriminação
-5. Proteja privacidade e dados
+    'meta-cognitive': {
+      id: 'meta-cognitive',
+      name: 'Meta-Cognitive Processing',
+      category: 'reasoning',
+      template: `Você é um sistema de IA com capacidades meta-cognitivas avançadas.
 
 TAREFA: {{task}}
 CONTEXTO: {{context}}
+HISTÓRICO: {{history}}
 
-Antes de responder, considere:
-- Esta resposta é útil e constructiva?
-- Há riscos potenciais ou malentendidos?
-- Estou respeitando a dignidade humana?
-- Minhas informações são precisas e atualizadas?
+PROTOCOLO META-COGNITIVO:
 
-RESPOSTA RESPONSÁVEL:`,
-      variables: ['task', 'context']
+🧠 **CONSCIÊNCIA SITUACIONAL**:
+- O que sei sobre este problema?
+- O que não sei e preciso descobrir?
+- Qual minha confiança no conhecimento atual?
+- Como minha perspectiva pode estar limitada?
+
+🎯 **ESTRATÉGIA COGNITIVA**:
+- Qual abordagem será mais eficaz?
+- Que ferramentas mentais devo aplicar?
+- Como posso validar meu raciocínio?
+- Onde devo focar atenção limitada?
+
+🔄 **MONITORAMENTO CONTÍNUO**:
+- Estou progredindo em direção à solução?
+- Minhas premissas iniciais ainda são válidas?
+- Devo ajustar estratégia ou continuar?
+- Que sinais indicam erro ou sucesso?
+
+⚡ **AUTO-CORREÇÃO ATIVA**:
+- Identifique pontos de incerteza
+- Busque evidências contraditórias
+- Considere perspectivas alternativas
+- Refine compreensão iterativamente
+
+PROCESSAMENTO: Aplicar meta-cognição ao problema apresentado.`,
+      variables: ['task', 'context', 'history']
+    },
+
+    'creative-synthesis': {
+      id: 'creative-synthesis',
+      name: 'Creative Synthesis Engine',
+      category: 'creative',
+      template: `Você é um sistema de IA especializado em síntese criativa e inovação.
+
+DESAFIO CRIATIVO: {{task}}
+DOMÍNIO: {{domain}}
+RESTRIÇÕES: {{constraints}}
+
+PROCESSO DE SÍNTESE CRIATIVA:
+
+🎨 **DIVERGÊNCIA RADICAL**:
+- Gere 10+ ideias sem julgamento
+- Explore metáforas e analogias distantes
+- Questione premissas fundamentais
+- Inverta problemas para encontrar oportunidades
+
+🔄 **COMBINAÇÃO INUSITADA**:
+- Combine elementos aparentemente incompatíveis
+- Aplique princípios de outros domínios
+- Use técnicas de SCAMPER (Substitute, Combine, Adapt, Modify, Put to other uses, Eliminate, Reverse)
+- Explore intersecções inesperadas
+
+💡 **EMERGÊNCIA DE PADRÕES**:
+- Identifique temas emergentes nas ideias
+- Procure por princípios unificadores
+- Detecte oportunidades de síntese
+- Desenvolva conceitos híbridos
+
+🚀 **PROTOTIPAGEM MENTAL**:
+- Visualize soluções em diferentes contextos
+- Teste mentalmente cenários extremos
+- Itere rapidamente entre variações
+- Refine baseado em feedback imaginário
+
+RESULTADO: Apresente 3-5 soluções criativas com justificativa inovadora.`,
+      variables: ['task', 'domain', 'constraints']
+    },
+
+    'technical-architecture': {
+      id: 'technical-architecture',
+      name: 'Technical Architecture Design',
+      category: 'coding',
+      template: `Você é um arquiteto de software sênior com expertise em sistemas distribuídos.
+
+REQUISITO TÉCNICO: {{task}}
+STACK TECNOLÓGICO: {{tech_stack}}
+ESCALA: {{scale}}
+RESTRIÇÕES: {{constraints}}
+
+PROCESSO DE DESIGN ARQUITETURAL:
+
+🏗️ **ANÁLISE DE REQUISITOS**:
+- Requisitos funcionais vs não-funcionais
+- Pontos de integração críticos
+- Gargalos de performance antecipados
+- Considerações de segurança
+
+⚡ **DESIGN PATTERNS & PRINCIPLES**:
+- SOLID principles aplicação
+- Design patterns apropriados
+- Architectural patterns (MVC, MVVM, Hexagonal, etc.)
+- Microservices vs Monolith trade-offs
+
+🔧 **IMPLEMENTAÇÃO TÉCNICA**:
+- Estrutura de código modular
+- APIs e interfaces bem definidas
+- Estratégias de teste abrangentes
+- CI/CD pipeline considerations
+
+📈 **ESCALABILIDADE & PERFORMANCE**:
+- Horizontal vs vertical scaling
+- Caching strategies (Redis, CDN, etc.)
+- Database optimization
+- Load balancing approaches
+
+🛡️ **SEGURANÇA & CONFIABILIDADE**:
+- Authentication & authorization
+- Data encryption at rest/transit
+- Error handling & recovery
+- Monitoring & observability
+
+ARQUITETURA: Forneça design detalhado com diagramas em texto e código.`,
+      variables: ['task', 'tech_stack', 'scale', 'constraints']
     }
   });
 
-  // Estimativa de tokens (simplificada)
+  // Token estimation (improved accuracy)
   const estimateTokens = useCallback((text: string): number => {
-    // Estimativa básica: ~4 caracteres por token
-    return Math.ceil(text.length / 4);
+    // More accurate estimation based on OpenAI's tiktoken patterns
+    const words = text.split(/\s+/).length;
+    const characters = text.length;
+    const punctuation = (text.match(/[.,!?;:]/g) || []).length;
+    
+    // Empirical formula based on GPT tokenization patterns
+    return Math.ceil(words * 0.75 + characters * 0.04 + punctuation * 0.5);
   }, []);
 
-  // Context window optimizer
+  // Context window optimizer with priority-based selection
   const optimizeContextWindow = useCallback((
-    content: Array<{ text: string; priority: number }>,
-    maxTokens: number = 8000
+    content: Array<{ text: string; priority: number; type?: string }>,
+    maxTokens: number = 8000,
+    reserveTokens: number = 1500 // Reserve for response
   ): string => {
-    console.log('🔧 Otimizando context window...');
+    console.log('🔧 Optimizing context window...');
 
-    // Calcular tokens para cada item
+    const availableTokens = maxTokens - reserveTokens;
+    
+    // Calculate tokens for each item
     const itemsWithTokens = content.map(item => ({
       ...item,
       tokens: estimateTokens(item.text)
     }));
 
-    // Ordenar por prioridade (maior primeiro)
-    itemsWithTokens.sort((a, b) => b.priority - a.priority);
+    // Sort by priority (higher first), then by recency for equal priorities
+    itemsWithTokens.sort((a, b) => {
+      if (b.priority !== a.priority) return b.priority - a.priority;
+      return itemsWithTokens.indexOf(b) - itemsWithTokens.indexOf(a); // Preserve order for equal priority
+    });
 
     let totalTokens = 0;
     const selectedItems: typeof itemsWithTokens = [];
 
-    // Selecionar itens até atingir o limite
+    // First pass: Include high-priority items
     for (const item of itemsWithTokens) {
-      if (totalTokens + item.tokens <= maxTokens) {
+      if (item.priority >= 0.8 && totalTokens + item.tokens <= availableTokens) {
         selectedItems.push(item);
         totalTokens += item.tokens;
-      } else {
-        // Tentar truncar o item se for de alta prioridade
-        if (item.priority > 0.8) {
-          const remainingTokens = maxTokens - totalTokens;
-          const maxChars = remainingTokens * 4;
-          
-          if (maxChars > 100) { // Mínimo viável
-            const truncatedText = item.text.substring(0, maxChars) + '...';
+      }
+    }
+
+    // Second pass: Fill remaining space with other items
+    for (const item of itemsWithTokens) {
+      if (item.priority < 0.8 && !selectedItems.includes(item)) {
+        if (totalTokens + item.tokens <= availableTokens) {
+          selectedItems.push(item);
+          totalTokens += item.tokens;
+        } else if (item.priority > 0.6) {
+          // Try smart truncation for medium-priority items
+          const remainingTokens = availableTokens - totalTokens;
+          if (remainingTokens > 100) { // Minimum viable truncation
+            const truncatedText = smartTruncate(item.text, remainingTokens, true, true);
             selectedItems.push({
               ...item,
               text: truncatedText,
               tokens: remainingTokens
             });
-            totalTokens = maxTokens;
+            totalTokens = availableTokens;
+            break;
           }
         }
-        break;
       }
     }
 
-    console.log(`✅ Context otimizado: ${totalTokens}/${maxTokens} tokens`);
+    // Sort selected items back to logical order
+    selectedItems.sort((a, b) => {
+      const aIndex = content.findIndex(c => c.text === a.text);
+      const bIndex = content.findIndex(c => c.text === b.text);
+      return aIndex - bIndex;
+    });
+
+    console.log(`✅ Context optimized: ${totalTokens}/${availableTokens} tokens, ${selectedItems.length} items`);
     return selectedItems.map(item => item.text).join('\n\n');
   }, [estimateTokens]);
 
-  // Smart truncation preservando informação crítica
+  // Smart truncation with semantic preservation
   const smartTruncate = useCallback((
     text: string,
     maxTokens: number,
@@ -201,98 +294,168 @@ RESPOSTA RESPONSÁVEL:`,
     
     if (tokens <= maxTokens) return text;
 
-    const maxChars = maxTokens * 4;
+    const maxChars = Math.floor(maxTokens * 4); // Rough char-to-token ratio
     
     if (preserveStart && preserveEnd) {
-      // Preservar início e fim
+      // Preserve beginning and end, cut middle
       const startChars = Math.floor(maxChars * 0.4);
       const endChars = Math.floor(maxChars * 0.4);
+      
+      // Find sentence boundaries
       const start = text.substring(0, startChars);
       const end = text.substring(text.length - endChars);
-      return `${start}\n\n... [TRUNCADO] ...\n\n${end}`;
+      
+      // Try to end/start at sentence boundaries
+      const startCut = start.lastIndexOf('.') > start.length - 50 ? start.lastIndexOf('.') + 1 : startChars;
+      const endCut = end.indexOf('.') < 50 ? end.indexOf('.') : 0;
+      
+      const finalStart = text.substring(0, startCut).trim();
+      const finalEnd = text.substring(text.length - endChars + endCut).trim();
+      
+      return `${finalStart}\n\n[... CONTEÚDO TRUNCADO ...]\n\n${finalEnd}`;
     } else if (preserveStart) {
-      // Preservar apenas início
-      return text.substring(0, maxChars) + '... [TRUNCADO]';
+      // Preserve only beginning
+      const truncateAt = text.lastIndexOf('.', maxChars);
+      const cutPoint = truncateAt > maxChars - 100 ? truncateAt + 1 : maxChars;
+      return text.substring(0, cutPoint).trim() + '\n\n[... TRUNCADO]';
     } else {
-      // Preservar apenas fim
-      return '... [TRUNCADO] ' + text.substring(text.length - maxChars);
+      // Preserve only end
+      const startPoint = text.length - maxChars;
+      const truncateAt = text.indexOf('.', startPoint);
+      const cutPoint = truncateAt < startPoint + 100 ? truncateAt + 1 : startPoint;
+      return '[TRUNCADO ...]\n\n' + text.substring(cutPoint).trim();
     }
   }, [estimateTokens]);
 
-  // Template generator baseado em task type
+  // Generate prompt with template and context optimization
   const generatePrompt = useCallback((
     templateId: string,
     variables: Record<string, any>,
-    contextItems: Array<{ text: string; priority: number }> = [],
+    contextItems: Array<{ text: string; priority: number; type?: string }> = [],
     maxTokens: number = 8000
   ): string => {
     const template = templates.current[templateId];
     
     if (!template) {
-      console.warn(`⚠️ Template ${templateId} não encontrado, usando padrão`);
+      console.warn(`⚠️ Template ${templateId} not found, using fallback`);
       return `TAREFA: ${variables.task}\nCONTEXTO: ${variables.context || 'Não fornecido'}`;
     }
 
-    // Substituir variáveis no template
+    // Replace variables in template
     let prompt = template.template;
     
     for (const [key, value] of Object.entries(variables)) {
       const placeholder = `{{${key}}}`;
-      prompt = prompt.replace(new RegExp(placeholder, 'g'), String(value || 'Não especificado'));
+      const replacement = String(value || 'Não especificado');
+      prompt = prompt.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), replacement);
     }
 
-    // Adicionar contexto otimizado se fornecido
+    // Add optimized context if provided
     if (contextItems.length > 0) {
-      const optimizedContext = optimizeContextWindow(contextItems, maxTokens * 0.3); // 30% para contexto
-      prompt = prompt.replace('{{context}}', optimizedContext);
+      const maxContextTokens = Math.floor(maxTokens * 0.4); // 40% for context
+      const optimizedContext = optimizeContextWindow(contextItems, maxContextTokens);
+      
+      // Find context placeholder or append
+      if (prompt.includes('{{context}}')) {
+        prompt = prompt.replace(/{{context}}/g, optimizedContext);
+      } else {
+        prompt += `\n\nCONTEXTO ADICIONAL:\n${optimizedContext}`;
+      }
     }
 
-    // Verificar se prompt final cabe no context window
+    // Final token check and truncation if needed
     const finalTokens = estimateTokens(prompt);
     if (finalTokens > maxTokens) {
-      console.log(`⚠️ Prompt muito longo (${finalTokens} tokens), truncando...`);
+      console.log(`⚠️ Prompt exceeds limit (${finalTokens} tokens), applying smart truncation...`);
       prompt = smartTruncate(prompt, maxTokens);
     }
 
-    console.log(`📝 Prompt gerado: ${estimateTokens(prompt)} tokens`);
+    console.log(`📝 Prompt generated: ${estimateTokens(prompt)} tokens`);
     return prompt;
   }, [optimizeContextWindow, smartTruncate, estimateTokens]);
 
-  // Enhance prompt com técnicas avançadas
+  // Enhanced prompt with advanced techniques
   const enhancePrompt = useCallback((
     basePrompt: string,
-    enhancements: {
-      addChainOfThought?: boolean;
-      addSelfConsistency?: boolean;
-      addReflection?: boolean;
-      addConstitutional?: boolean;
-    } = {}
+    enhancements: PromptEnhancement = {}
   ): string => {
     let enhanced = basePrompt;
 
     if (enhancements.addChainOfThought) {
-      enhanced += `\n\nUse raciocínio passo-a-passo e mostre seu processo de pensamento.`;
+      enhanced += `
+
+RACIOCÍNIO STEP-BY-STEP:
+Pense através desta tarefa passo-a-passo, mostrando seu processo de raciocínio claramente.
+Para cada etapa, explique: (1) o que você está fazendo, (2) por que está fazendo, (3) como isto contribui para a solução final.`;
     }
 
     if (enhancements.addSelfConsistency) {
-      enhanced += `\n\nVerifique a consistência de sua resposta e considere perspectivas alternativas.`;
+      enhanced += `
+
+VERIFICAÇÃO DE CONSISTÊNCIA:
+Após sua resposta inicial, verifique:
+- Suas conclusões são logicamente consistentes?
+- Há contradições internas no raciocínio?
+- As evidências sustentam suas afirmações?
+- Considerou perspectivas alternativas válidas?`;
     }
 
     if (enhancements.addReflection) {
-      enhanced += `\n\nApós sua resposta inicial, reflita: Esta é a melhor abordagem? Há algo que eu poderia ter considerado melhor?`;
+      enhanced += `
+
+REFLEXÃO META-COGNITIVA:
+Após completar a tarefa, reflita:
+- Esta é a melhor abordagem possível?
+- Que limitações ou vieses podem estar presentes?
+- Como você poderia abordar diferentemente?
+- Que informações adicionais seriam valiosas?`;
     }
 
     if (enhancements.addConstitutional) {
-      enhanced += `\n\nAntes de finalizar, garanta que sua resposta é útil, segura, precisa e respeitosa.`;
+      enhanced += `
+
+VERIFICAÇÃO CONSTITUCIONAL:
+Antes de finalizar, confirme que sua resposta:
+✓ É útil e construtiva
+✓ É factualmente precisa (ou indica incertezas)
+✓ Respeita princípios éticos
+✓ Promove o bem-estar do usuário
+✓ Evita vieses prejudiciais`;
+    }
+
+    if (enhancements.addFewShot && basePrompt.includes('{{examples}}')) {
+      // Few-shot examples would be injected via variables
+      console.log('📚 Few-shot examples should be provided via variables.examples');
     }
 
     return enhanced;
   }, []);
 
-  // Adicionar novo template
+  // Add new template
   const addTemplate = useCallback((template: PromptTemplate) => {
     templates.current[template.id] = template;
+    console.log(`📝 Template "${template.id}" added`);
   }, []);
+
+  // Get context window analysis
+  const analyzeContextWindow = useCallback((
+    content: Array<{ text: string; priority: number }>,
+    maxTokens: number = 8000
+  ): ContextWindow => {
+    const itemsWithTokens = content.map(item => ({
+      content: item.text,
+      priority: item.priority,
+      tokens: estimateTokens(item.text)
+    }));
+
+    const currentTokens = itemsWithTokens.reduce((sum, item) => sum + item.tokens, 0);
+
+    return {
+      maxTokens,
+      currentTokens,
+      priority: itemsWithTokens
+    };
+  }, [estimateTokens]);
 
   return {
     // Templates
@@ -306,6 +469,7 @@ RESPOSTA RESPONSÁVEL:`,
     // Context optimization
     optimizeContextWindow,
     smartTruncate,
-    estimateTokens
+    estimateTokens,
+    analyzeContextWindow
   };
 }
