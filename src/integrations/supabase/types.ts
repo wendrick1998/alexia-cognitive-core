@@ -9,6 +9,244 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      cognitive_connections: {
+        Row: {
+          auto_generated: boolean | null
+          connection_type: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          source_node_id: string
+          strength: number | null
+          target_node_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_generated?: boolean | null
+          connection_type: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          source_node_id: string
+          strength?: number | null
+          target_node_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_generated?: boolean | null
+          connection_type?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          source_node_id?: string
+          strength?: number | null
+          target_node_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cognitive_connections_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_connections_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cognitive_insights: {
+        Row: {
+          acted_upon_at: string | null
+          confidence_score: number | null
+          content: string
+          created_at: string | null
+          id: string
+          insight_type: string
+          metadata: Json | null
+          priority_level: number | null
+          related_nodes: Json | null
+          shown_at: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          acted_upon_at?: string | null
+          confidence_score?: number | null
+          content: string
+          created_at?: string | null
+          id?: string
+          insight_type: string
+          metadata?: Json | null
+          priority_level?: number | null
+          related_nodes?: Json | null
+          shown_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          acted_upon_at?: string | null
+          confidence_score?: number | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          insight_type?: string
+          metadata?: Json | null
+          priority_level?: number | null
+          related_nodes?: Json | null
+          shown_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cognitive_nodes: {
+        Row: {
+          access_count: number | null
+          content: string
+          conversation_id: string | null
+          created_at: string | null
+          embedding_conceptual: string | null
+          embedding_general: string | null
+          embedding_relational: string | null
+          id: string
+          last_accessed_at: string | null
+          metadata: Json | null
+          node_type: Database["public"]["Enums"]["cognitive_node_type"]
+          parent_node_id: string | null
+          project_id: string | null
+          relevance_score: number | null
+          root_session_id: string | null
+          status: Database["public"]["Enums"]["node_status"] | null
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_count?: number | null
+          content: string
+          conversation_id?: string | null
+          created_at?: string | null
+          embedding_conceptual?: string | null
+          embedding_general?: string | null
+          embedding_relational?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          metadata?: Json | null
+          node_type: Database["public"]["Enums"]["cognitive_node_type"]
+          parent_node_id?: string | null
+          project_id?: string | null
+          relevance_score?: number | null
+          root_session_id?: string | null
+          status?: Database["public"]["Enums"]["node_status"] | null
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_count?: number | null
+          content?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          embedding_conceptual?: string | null
+          embedding_general?: string | null
+          embedding_relational?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          metadata?: Json | null
+          node_type?: Database["public"]["Enums"]["cognitive_node_type"]
+          parent_node_id?: string | null
+          project_id?: string | null
+          relevance_score?: number | null
+          root_session_id?: string | null
+          status?: Database["public"]["Enums"]["node_status"] | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cognitive_nodes_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_nodes_parent_node_id_fkey"
+            columns: ["parent_node_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_nodes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cognitive_snapshots: {
+        Row: {
+          active_conversations: Json | null
+          active_projects: Json | null
+          cognitive_load: number | null
+          created_at: string | null
+          current_context: Json | null
+          description: string | null
+          focus_level: number | null
+          id: string
+          name: string
+          snapshot_data: Json
+          thought_flow: Json | null
+          user_id: string
+        }
+        Insert: {
+          active_conversations?: Json | null
+          active_projects?: Json | null
+          cognitive_load?: number | null
+          created_at?: string | null
+          current_context?: Json | null
+          description?: string | null
+          focus_level?: number | null
+          id?: string
+          name: string
+          snapshot_data: Json
+          thought_flow?: Json | null
+          user_id: string
+        }
+        Update: {
+          active_conversations?: Json | null
+          active_projects?: Json | null
+          cognitive_load?: number | null
+          created_at?: string | null
+          current_context?: Json | null
+          description?: string | null
+          focus_level?: number | null
+          id?: string
+          name?: string
+          snapshot_data?: Json
+          thought_flow?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversation_categories: {
         Row: {
           color: string | null
@@ -431,6 +669,66 @@ export type Database = {
           },
         ]
       }
+      thought_sessions: {
+        Row: {
+          achievements: Json | null
+          connections_made: number | null
+          context: Json | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          ended_at: string | null
+          goals: Json | null
+          id: string
+          insights_generated: number | null
+          name: string | null
+          nodes_created: number | null
+          session_type: string | null
+          started_at: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievements?: Json | null
+          connections_made?: number | null
+          context?: Json | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          goals?: Json | null
+          id?: string
+          insights_generated?: number | null
+          name?: string | null
+          nodes_created?: number | null
+          session_type?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievements?: Json | null
+          connections_made?: number | null
+          context?: Json | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          goals?: Json | null
+          id?: string
+          insights_generated?: number | null
+          name?: string | null
+          nodes_created?: number | null
+          session_type?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -463,6 +761,25 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      cognitive_search: {
+        Args: {
+          p_user_id: string
+          p_query_embedding: string
+          p_search_type?: string
+          p_limit?: number
+          p_similarity_threshold?: number
+        }
+        Returns: {
+          id: string
+          content: string
+          title: string
+          node_type: Database["public"]["Enums"]["cognitive_node_type"]
+          relevance_score: number
+          similarity: number
+          access_count: number
+          created_at: string
+        }[]
       }
       halfvec_avg: {
         Args: { "": number[] }
@@ -602,7 +919,19 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      cognitive_node_type:
+        | "question"
+        | "answer"
+        | "decision"
+        | "insight"
+        | "code"
+        | "design"
+        | "document"
+        | "conversation"
+        | "project"
+        | "memory"
+        | "connection"
+      node_status: "active" | "archived" | "connected" | "evolving"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -717,6 +1046,21 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      cognitive_node_type: [
+        "question",
+        "answer",
+        "decision",
+        "insight",
+        "code",
+        "design",
+        "document",
+        "conversation",
+        "project",
+        "memory",
+        "connection",
+      ],
+      node_status: ["active", "archived", "connected", "evolving"],
+    },
   },
 } as const
