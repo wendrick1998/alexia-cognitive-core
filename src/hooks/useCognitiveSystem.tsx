@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNeuralSystem } from '@/hooks/useNeuralSystem';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface CognitiveNode {
@@ -54,6 +55,8 @@ export interface CognitiveState {
 
 export function useCognitiveSystem() {
   const { user } = useAuth();
+  const neural = useNeuralSystem();
+  
   const [cognitiveState, setCognitiveState] = useState<CognitiveState>({
     currentMode: { type: 'focus', description: 'Modo Focado', active: true },
     activeNodes: [],
@@ -74,7 +77,7 @@ export function useCognitiveSystem() {
     { type: 'creative', description: 'Modo Criativo - Geração de ideias e brainstorming', active: false }
   ];
 
-  // Core cognitive functions
+  // Enhanced cognitive node creation using neural system
   const createCognitiveNode = useCallback(async (
     content: string,
     nodeType: CognitiveNode['node_type'],
@@ -85,56 +88,51 @@ export function useCognitiveSystem() {
     if (!user) return null;
 
     try {
-      console.log('🧠 Criando nó cognitivo:', { nodeType, content: content.substring(0, 100) });
+      console.log('🧠 Creating cognitive node with neural enhancement:', { nodeType, content: content.substring(0, 100) });
       
-      const { data, error } = await supabase
-        .from('cognitive_nodes')
-        .insert({
-          user_id: user.id,
-          content,
-          node_type: nodeType,
-          conversation_id: conversationId,
-          project_id: projectId,
-          metadata
-        })
-        .select()
-        .single();
+      // Use neural system for enhanced node creation
+      const neuralNode = await neural.createNeuralNode(
+        content,
+        nodeType,
+        metadata,
+        conversationId,
+        projectId,
+        true // auto-connect
+      );
 
-      if (error) throw error;
+      if (!neuralNode) return null;
 
-      const newNode = data as CognitiveNode;
+      // Convert to CognitiveNode format
+      const cognitiveNode: CognitiveNode = {
+        id: neuralNode.id,
+        content: neuralNode.content,
+        title: neuralNode.title,
+        node_type: neuralNode.node_type,
+        relevance_score: neuralNode.relevance_score,
+        access_count: neuralNode.access_count,
+        project_id: projectId,
+        conversation_id: conversationId,
+        metadata: neuralNode.metadata || metadata,
+        created_at: neuralNode.created_at,
+        updated_at: neuralNode.updated_at
+      };
       
-      // Processar embeddings em background
-      processNodeEmbeddings(newNode.id, content);
-      
-      // Atualizar estado local
+      // Update local state
       setCognitiveState(prev => ({
         ...prev,
-        activeNodes: [newNode, ...prev.activeNodes.slice(0, 9)], // Manter apenas 10 mais recentes
+        activeNodes: [cognitiveNode, ...prev.activeNodes.slice(0, 9)],
         cognitiveLoad: Math.min(1.0, prev.cognitiveLoad + 0.1)
       }));
 
-      console.log('✅ Nó cognitivo criado:', newNode.id);
-      return newNode;
+      console.log('✅ Enhanced cognitive node created:', cognitiveNode.id);
+      return cognitiveNode;
     } catch (error) {
-      console.error('❌ Erro ao criar nó cognitivo:', error);
+      console.error('❌ Error creating enhanced cognitive node:', error);
       return null;
     }
-  }, [user]);
+  }, [user, neural]);
 
-  // Process embeddings for semantic search
-  const processNodeEmbeddings = useCallback(async (nodeId: string, content: string) => {
-    try {
-      // Call edge function to generate embeddings
-      await supabase.functions.invoke('process-cognitive-embeddings', {
-        body: { nodeId, content }
-      });
-    } catch (error) {
-      console.error('❌ Erro ao processar embeddings:', error);
-    }
-  }, []);
-
-  // Cognitive search with multi-layer embeddings
+  // Enhanced cognitive search using neural system
   const cognitiveSearch = useCallback(async (
     query: string,
     searchType: 'general' | 'conceptual' | 'relational' = 'general',
@@ -143,28 +141,39 @@ export function useCognitiveSystem() {
     if (!user) return [];
 
     try {
-      console.log('🔍 Busca cognitiva:', { query, searchType });
+      console.log('🔍 Enhanced cognitive search:', { query, searchType });
       
-      const { data, error } = await supabase.functions.invoke('cognitive-search', {
-        body: { 
-          query, 
-          searchType, 
-          limit,
-          userId: user.id 
-        }
-      });
+      // Use neural search with activation boosting
+      const neuralResults = await neural.neuralSearch(
+        query,
+        searchType,
+        limit,
+        0.7, // similarity threshold
+        true // boost activation
+      );
+      
+      // Convert to CognitiveNode format
+      const results: CognitiveNode[] = neuralResults.map(result => ({
+        id: result.id,
+        content: result.content,
+        title: result.title,
+        node_type: result.node_type,
+        relevance_score: result.relevance_score,
+        access_count: result.access_count,
+        project_id: undefined,
+        conversation_id: undefined,
+        metadata: {},
+        created_at: result.created_at,
+        updated_at: result.updated_at
+      }));
 
-      if (error) throw error;
-      
-      const results = data.results || [];
-      console.log(`✅ Encontrados ${results.length} nós relevantes`);
-      
+      console.log(`✅ Enhanced search found ${results.length} nodes with neural activation`);
       return results;
     } catch (error) {
-      console.error('❌ Erro na busca cognitiva:', error);
+      console.error('❌ Error in enhanced cognitive search:', error);
       return [];
     }
-  }, [user]);
+  }, [user, neural]);
 
   // Load cognitive insights
   const loadCognitiveInsights = useCallback(async () => {
@@ -182,7 +191,6 @@ export function useCognitiveSystem() {
 
       if (error) throw error;
 
-      // Transform database records to match our interface
       const transformedInsights: CognitiveInsight[] = (data || []).map(insight => ({
         ...insight,
         insight_type: insight.insight_type as CognitiveInsight['insight_type'],
@@ -217,7 +225,6 @@ export function useCognitiveSystem() {
 
       if (error) throw error;
 
-      // Remove from pending insights
       setCognitiveState(prev => ({
         ...prev,
         pendingInsights: prev.pendingInsights.filter(insight => insight.id !== insightId)
@@ -244,7 +251,6 @@ export function useCognitiveSystem() {
     if (!user) return null;
 
     try {
-      // Serialize everything as plain JSON-compatible objects
       const snapshotData = {
         cognitiveState: {
           currentMode: {
@@ -263,6 +269,7 @@ export function useCognitiveSystem() {
           relevance_score: node.relevance_score,
           created_at: node.created_at
         })),
+        neuralActivation: neural.activationPatterns,
         timestamp: new Date().toISOString()
       };
 
@@ -281,13 +288,13 @@ export function useCognitiveSystem() {
 
       if (error) throw error;
       
-      console.log('📸 Snapshot cognitivo criado:', data.id);
+      console.log('📸 Enhanced cognitive snapshot created:', data.id);
       return data;
     } catch (error) {
       console.error('❌ Erro ao criar snapshot:', error);
       return null;
     }
-  }, [user, cognitiveState]);
+  }, [user, cognitiveState, neural.activationPatterns]);
 
   // Process queue for background operations
   const processQueue = useCallback(async () => {
@@ -298,15 +305,12 @@ export function useCognitiveSystem() {
     
     if (item) {
       try {
-        // Process different types of cognitive operations
         switch (item.type) {
           case 'generate_insights':
-            // Generate proactive insights
             const insights = await generateProactiveInsights();
             item.resolve(insights);
             break;
           case 'update_connections':
-            // Update cognitive connections
             await updateCognitiveConnections();
             item.resolve();
             break;
@@ -320,7 +324,6 @@ export function useCognitiveSystem() {
     
     setIsProcessing(false);
     
-    // Process next item
     if (processingQueue.current.length > 0) {
       setTimeout(processQueue, 100);
     }
@@ -345,8 +348,6 @@ export function useCognitiveSystem() {
 
   // Update cognitive connections
   const updateCognitiveConnections = useCallback(async () => {
-    // This will be processed by database triggers automatically
-    // when new nodes are created with embeddings
     console.log('🔗 Atualizando conexões cognitivas...');
   }, []);
 
@@ -355,15 +356,23 @@ export function useCognitiveSystem() {
     if (!user) return;
 
     try {
-      // Load recent nodes
-      const { data: nodes, error: nodesError } = await supabase
-        .from('cognitive_nodes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(10);
-
-      if (nodesError) throw nodesError;
+      // Load from active neural network view for better performance
+      const activeNodes = await neural.loadActiveNetwork();
+      
+      // Convert to CognitiveNode format
+      const cognitiveNodes: CognitiveNode[] = activeNodes.slice(0, 10).map(node => ({
+        id: node.id,
+        content: node.content,
+        title: node.title,
+        node_type: node.node_type,
+        relevance_score: node.relevance_score,
+        access_count: node.access_count,
+        project_id: undefined,
+        conversation_id: undefined,
+        metadata: {},
+        created_at: node.created_at,
+        updated_at: node.updated_at
+      }));
 
       // Load recent connections
       const { data: connections, error: connectionsError } = await supabase
@@ -377,13 +386,13 @@ export function useCognitiveSystem() {
 
       setCognitiveState(prev => ({
         ...prev,
-        activeNodes: nodes || [],
+        activeNodes: cognitiveNodes,
         recentConnections: connections || []
       }));
     } catch (error) {
       console.error('❌ Erro ao carregar dados cognitivos:', error);
     }
-  }, [user]);
+  }, [user, neural]);
 
   // Initialize cognitive system
   useEffect(() => {
@@ -405,9 +414,12 @@ export function useCognitiveSystem() {
     thoughtModes,
     isProcessing,
     
-    // Core functions
+    // Enhanced functions with neural integration
     createCognitiveNode,
     cognitiveSearch,
+    
+    // Neural system access
+    neural,
     
     // Insights
     loadCognitiveInsights,

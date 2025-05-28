@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { useCognitiveSystem } from '@/hooks/useCognitiveSystem';
 import { useCognitiveOrchestrator } from '@/hooks/useCognitiveOrchestrator';
-import { Brain, Network, Lightbulb, Zap, Search, Eye, BarChart3, Sparkles } from 'lucide-react';
+import { Brain, Network, Lightbulb, Zap, Search, Eye, BarChart3, Sparkles, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import NeuralVisualization from './NeuralVisualization';
 
 interface CognitiveInterfaceProps {
   className?: string;
@@ -18,7 +18,8 @@ const CognitiveInterface: React.FC<CognitiveInterfaceProps> = ({ className }) =>
     thoughtModes, 
     switchThoughtMode,
     updateInsightStatus,
-    createCognitiveSnapshot
+    createCognitiveSnapshot,
+    neural
   } = useCognitiveSystem();
   
   const { agents, processCognitiveCommand } = useCognitiveOrchestrator();
@@ -97,12 +98,12 @@ const CognitiveInterface: React.FC<CognitiveInterfaceProps> = ({ className }) =>
       
       <Button
         variant="outline"
-        onClick={() => handleCognitiveCommand('simulate')}
-        disabled={activeCommand === 'simulate'}
+        onClick={() => neural.loadActivationPatterns()}
+        disabled={neural.isProcessing}
         className="flex flex-col items-center p-4 h-auto space-y-2"
       >
-        <Search className="w-5 h-5" />
-        <span className="text-xs">@simulate</span>
+        <Activity className="w-5 h-5" />
+        <span className="text-xs">@neural-boost</span>
       </Button>
     </div>
   );
@@ -170,7 +171,14 @@ const CognitiveInterface: React.FC<CognitiveInterfaceProps> = ({ className }) =>
             </p>
             <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
               <span>{node.access_count} acessos</span>
-              <span>{new Date(node.created_at).toLocaleDateString()}</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => neural.accessNode(node.id, 0.2)}
+                className="text-xs h-6 px-2"
+              >
+                Ativar
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -217,11 +225,12 @@ const CognitiveInterface: React.FC<CognitiveInterfaceProps> = ({ className }) =>
         <div className="flex items-center gap-3 mb-6">
           <Brain className="w-6 h-6 text-blue-600" />
           <div>
-            <h2 className="text-xl font-semibold">Alex iA - Sistema Cognitivo</h2>
+            <h2 className="text-xl font-semibold">Alex iA - Sistema Cognitivo Neural</h2>
             <p className="text-sm text-gray-600">
               Modo: {cognitiveState.currentMode.description} | 
               Carga: {Math.round(cognitiveState.cognitiveLoad * 100)}% | 
-              Foco: {Math.round(cognitiveState.focusLevel * 100)}%
+              Foco: {Math.round(cognitiveState.focusLevel * 100)}% |
+              Ativação Neural: {neural.activationPatterns.length} padrões
             </p>
           </div>
         </div>
@@ -230,9 +239,10 @@ const CognitiveInterface: React.FC<CognitiveInterfaceProps> = ({ className }) =>
         {renderCognitiveCommands()}
 
         <Tabs defaultValue="insights" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="insights">Insights</TabsTrigger>
             <TabsTrigger value="nodes">Nós Ativos</TabsTrigger>
+            <TabsTrigger value="neural">Neural</TabsTrigger>
             <TabsTrigger value="agents">Agentes</TabsTrigger>
             <TabsTrigger value="metrics">Métricas</TabsTrigger>
           </TabsList>
@@ -243,6 +253,10 @@ const CognitiveInterface: React.FC<CognitiveInterfaceProps> = ({ className }) =>
           
           <TabsContent value="nodes" className="mt-4">
             {renderActiveNodes()}
+          </TabsContent>
+          
+          <TabsContent value="neural" className="mt-4">
+            <NeuralVisualization />
           </TabsContent>
           
           <TabsContent value="agents" className="mt-4">
@@ -270,9 +284,9 @@ const CognitiveInterface: React.FC<CognitiveInterfaceProps> = ({ className }) =>
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {cognitiveState.pendingInsights.length}
+                    {neural.activationPatterns.length}
                   </div>
-                  <div className="text-sm text-gray-600">Insights Pendentes</div>
+                  <div className="text-sm text-gray-600">Padrões Neurais</div>
                 </CardContent>
               </Card>
               <Card>
@@ -291,10 +305,10 @@ const CognitiveInterface: React.FC<CognitiveInterfaceProps> = ({ className }) =>
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => createCognitiveSnapshot('Snapshot Manual', 'Snapshot criado pelo usuário')}
+            onClick={() => createCognitiveSnapshot('Snapshot Neural', 'Snapshot com dados neurais')}
             className="w-full"
           >
-            📸 Criar Snapshot Cognitivo
+            📸 Criar Snapshot Cognitivo Neural
           </Button>
         </div>
       </div>
