@@ -531,6 +531,23 @@ export type Database = {
           similarity: number
         }[]
       }
+      match_document_sections_enhanced: {
+        Args: {
+          p_query_embedding: string
+          p_match_similarity_threshold: number
+          p_match_count: number
+          p_user_id_filter: string
+        }
+        Returns: {
+          id: string
+          document_id: string
+          content: string
+          metadata: Json
+          similarity: number
+          document_name: string
+          title: string
+        }[]
+      }
       search_cognitive_memories: {
         Args: {
           p_query_embedding: string
