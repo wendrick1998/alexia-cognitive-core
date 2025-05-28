@@ -1,4 +1,5 @@
 
+
 // LLMWhisperer API integration service
 export interface LLMWhispererRequest {
   file_url: string;
@@ -20,6 +21,7 @@ export interface LLMWhispererResponse {
     };
   };
   message?: string;
+  whisper_hash?: string; // For async flow detection
 }
 
 export class LLMWhispererService {
@@ -53,7 +55,7 @@ export class LLMWhispererService {
       const response = await fetch(`${this.baseUrl}/whisper`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'unstract-key': this.apiKey,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
@@ -73,9 +75,15 @@ export class LLMWhispererService {
       const result: LLMWhispererResponse = await response.json();
       console.log(`✅ LLMWhisperer processamento concluído`);
       console.log(`📊 Metadados: ${JSON.stringify(result.result?.metadata || {}, null, 2)}`);
+      
+      // Check for async flow
+      if (result.whisper_hash) {
+        console.log(`🔄 Detected async flow with whisper_hash: ${result.whisper_hash}`);
+        console.log(`📝 Full response for debugging:`, JSON.stringify(result, null, 2));
+      }
 
-      if (!result.result?.markdown && !result.result?.text) {
-        throw new Error('LLMWhisperer não retornou texto válido');
+      if (!result.result?.markdown && !result.result?.text && !result.whisper_hash) {
+        throw new Error('LLMWhisperer não retornou texto válido nem whisper_hash');
       }
 
       return result;
@@ -91,3 +99,4 @@ export class LLMWhispererService {
     }
   }
 }
+

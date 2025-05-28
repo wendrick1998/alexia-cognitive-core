@@ -1,4 +1,3 @@
-
 import { LLMWhispererService } from './llm-whisperer-service.ts';
 import { splitTextIntoChunks } from './text-chunker-optimized.ts';
 import { saveChunkWithEmbedding, getDocument } from './database-service.ts';
@@ -20,6 +19,7 @@ export interface LLMWhispererProcessingResult {
   extractionMethod: string;
   pages: number;
   ocrUsed: boolean;
+  whisperHash?: string; // For async flow detection
 }
 
 export class DocumentProcessorLLMWhisperer {
@@ -42,7 +42,30 @@ export class DocumentProcessorLLMWhisperer {
 
     const document = await this.getAndValidateDocument(documentId);
     
-    const { text, extractionTime, metadata } = await this.extractTextWithLLMWhisperer(document);
+    const { text, extractionTime, metadata, whisperHash } = await this.extractTextWithLLMWhisperer(document);
+    
+    // If we got a whisper_hash instead of direct text, we need to handle async flow
+    if (whisperHash && !text) {
+      this.logger.warn(`⚠️ Received whisper_hash: ${whisperHash} - Async flow detected, will need to implement polling`);
+      
+      // For now, mark as processing and return the whisper_hash for further investigation
+      return {
+        success: false,
+        chunksCreated: 0,
+        chunksFailed: 0,
+        processingTimeMs: Date.now() - startTime,
+        extractionTimeMs: extractionTime,
+        chunkingTimeMs: 0,
+        textLength: 0,
+        averageEmbeddingTimeMs: 0,
+        processingRate: 0,
+        successRate: 0,
+        extractionMethod: 'LLMWhisperer',
+        pages: metadata.pages || 0,
+        ocrUsed: metadata.ocr_used || false,
+        whisperHash
+      };
+    }
     
     const { chunksCreated, chunksFailed, chunkingTime, totalEmbeddingTime } = 
       await this.processChunks(documentId, text, metadata);
@@ -83,7 +106,8 @@ export class DocumentProcessorLLMWhisperer {
       successRate: parseFloat(successRate.toFixed(1)),
       extractionMethod: 'LLMWhisperer',
       pages: metadata.pages || 0,
-      ocrUsed: metadata.ocr_used || false
+      ocrUsed: metadata.ocr_used || false,
+      whisperHash
     };
   }
 
@@ -115,16 +139,30 @@ export class DocumentProcessorLLMWhisperer {
     text: string;
     extractionTime: number;
     metadata: any;
+    whisperHash?: string;
   }> {
     this.logger.log('🚀 Starting LLMWhisperer extraction...');
     const extractionStartTime = Date.now();
     
     try {
-      this.logger.log(`📥 Processing PDF with LLMWhisperer: ${document.url}`);
+      this.logger.log(`📥 Processing PDF with LLMWhisperer V2: ${document.url}`);
       
       const result = await this.llmWhispererService.processDocument(document.url);
       
       const extractionTime = Date.now() - extractionStartTime;
+      
+      // Check if we got a whisper_hash (async flow)
+      if (result.whisper_hash) {
+        this.logger.warn(`⚠️ LLMWhisperer returned whisper_hash: ${result.whisper_hash}`);
+        this.logger.warn(`📝 This indicates async processing flow - will need to implement polling`);
+        
+        return {
+          text: '',
+          extractionTime,
+          metadata: result.result?.metadata || {},
+          whisperHash: result.whisper_hash
+        };
+      }
       
       // Get text from markdown or text field
       const extractedText = result.result.markdown || result.result.text || '';
@@ -164,7 +202,7 @@ export class DocumentProcessorLLMWhisperer {
       if (error.message?.includes('timeout')) {
         errorMessage = 'LLMWhisperer processing timeout (3 minutes). Document may be too complex.';
       } else if (error.message?.includes('401')) {
-        errorMessage = 'Invalid LLMWhisperer API key. Please check configuration.';
+        errorMessage = 'Invalid LLMWhisperer API key or authentication method. Please check configuration.';
       } else if (error.message?.includes('429')) {
         errorMessage = 'LLMWhisperer rate limit exceeded. Please try again later.';
       } else if (error.message?.includes('file_url')) {
