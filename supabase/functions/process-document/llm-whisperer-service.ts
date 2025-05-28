@@ -26,7 +26,7 @@ export class LLMWhispererService {
   private apiKey: string;
   private baseUrl: string;
 
-  constructor(apiKey: string, baseUrl: string = 'https://api.llmwhisperer.unstract.com/v1') {
+  constructor(apiKey: string, baseUrl: string = 'https://llmwhisperer-api.us-central.unstract.com/api/v2') {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
   }
