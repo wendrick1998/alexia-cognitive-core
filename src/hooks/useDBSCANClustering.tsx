@@ -64,7 +64,7 @@ export function useDBSCANClustering() {
           userId: user.id,
           parameters: {
             eps,
-            minPoints,
+            min_points: minPoints, // Fixed: using min_points instead of minPoints
             useEmbeddings,
             distanceMetric: 'cosine'
           }
@@ -84,7 +84,7 @@ export function useDBSCANClustering() {
         noise_points: data.noisePoints || 0,
         silhouette_score: data.silhouetteScore || 0,
         execution_time: executionTime,
-        parameters: { eps, minPoints }
+        parameters: { eps, min_points: minPoints } // Fixed: using min_points
       });
 
       console.log(`✅ DBSCAN completed: ${data.totalClusters} clusters in ${executionTime}ms`);
