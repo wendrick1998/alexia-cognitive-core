@@ -32,6 +32,29 @@ export function useConversations() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const loadConversations = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+
+      setConversations(data as Conversation[]);
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as conversas",
+        variant: "destructive",
+      });
+    }
+  };
+
   const createConversation = async (projectId?: string): Promise<Conversation | null> => {
     if (!user) return null;
 
@@ -62,6 +85,37 @@ export function useConversations() {
         variant: "destructive",
       });
       return null;
+    }
+  };
+
+  const deleteConversation = async (conversationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('id', conversationId);
+
+      if (error) throw error;
+
+      setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+      
+      // Se a conversa deletada era a atual, limpar
+      if (currentConversation?.id === conversationId) {
+        setCurrentConversation(null);
+        setMessages([]);
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Conversa excluída com sucesso",
+      });
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a conversa",
+        variant: "destructive",
+      });
     }
   };
 
@@ -96,14 +150,39 @@ export function useConversations() {
     return await createConversation(projectId);
   };
 
+  const updateConversationTimestamp = async (conversationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationId);
+
+      if (error) throw error;
+
+      // Atualizar localmente também
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, updated_at: new Date().toISOString() }
+            : conv
+        ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      );
+    } catch (error) {
+      console.error('Error updating conversation timestamp:', error);
+    }
+  };
+
   return {
     conversations,
     currentConversation,
     messages,
     loading,
+    loadConversations,
     createConversation,
+    deleteConversation,
     loadMessages,
     getCurrentOrCreateConversation,
-    setCurrentConversation
+    setCurrentConversation,
+    updateConversationTimestamp
   };
 }
