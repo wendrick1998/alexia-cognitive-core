@@ -162,7 +162,7 @@ export function useCognitiveSystem() {
         access_count: result.access_count,
         project_id: undefined,
         conversation_id: undefined,
-        metadata: {},
+        metadata: result.metadata || {},
         created_at: result.created_at,
         updated_at: result.updated_at
       }));
@@ -269,7 +269,13 @@ export function useCognitiveSystem() {
           relevance_score: node.relevance_score,
           created_at: node.created_at
         })),
-        neuralActivation: neural.activationPatterns,
+        neuralActivation: neural.activationPatterns.map(pattern => ({
+          node_id: pattern.node_id,
+          activation_strength: pattern.activation_strength,
+          propagation_depth: pattern.propagation_depth,
+          connected_count: pattern.connected_count,
+          last_boost: pattern.last_boost
+        })),
         timestamp: new Date().toISOString()
       };
 
@@ -279,7 +285,7 @@ export function useCognitiveSystem() {
           user_id: user.id,
           name,
           description,
-          snapshot_data: snapshotData,
+          snapshot_data: snapshotData as any,
           focus_level: cognitiveState.focusLevel,
           cognitive_load: cognitiveState.cognitiveLoad
         })
@@ -369,7 +375,7 @@ export function useCognitiveSystem() {
         access_count: node.access_count,
         project_id: undefined,
         conversation_id: undefined,
-        metadata: {},
+        metadata: node.metadata || {},
         created_at: node.created_at,
         updated_at: node.updated_at
       }));
