@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -188,7 +187,9 @@ export function useCognitiveSystem() {
         ...insight,
         insight_type: insight.insight_type as CognitiveInsight['insight_type'],
         status: insight.status as CognitiveInsight['status'],
-        related_nodes: Array.isArray(insight.related_nodes) ? insight.related_nodes : []
+        related_nodes: Array.isArray(insight.related_nodes) 
+          ? insight.related_nodes.map(node => String(node)) 
+          : []
       }));
 
       setCognitiveState(prev => ({
@@ -243,17 +244,21 @@ export function useCognitiveSystem() {
     if (!user) return null;
 
     try {
-      // Serialize the cognitive state properly for JSON storage
+      // Serialize everything as plain JSON-compatible objects
       const snapshotData = {
         cognitiveState: {
-          currentMode: cognitiveState.currentMode,
+          currentMode: {
+            type: cognitiveState.currentMode.type,
+            description: cognitiveState.currentMode.description,
+            active: cognitiveState.currentMode.active
+          },
           cognitiveLoad: cognitiveState.cognitiveLoad,
           focusLevel: cognitiveState.focusLevel
         },
         activeNodes: cognitiveState.activeNodes.map(node => ({
           id: node.id,
           content: node.content,
-          title: node.title,
+          title: node.title || null,
           node_type: node.node_type,
           relevance_score: node.relevance_score,
           created_at: node.created_at
