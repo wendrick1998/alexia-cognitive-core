@@ -17,9 +17,10 @@ export interface LLMWhispererProcessingResult {
   processingRate: number;
   successRate: number;
   extractionMethod: string;
+  extractionQuality: number;
   pages: number;
   ocrUsed: boolean;
-  whisperHash?: string; // For async flow detection
+  whisperHash?: string;
 }
 
 export class DocumentProcessorLLMWhisperer {
@@ -44,27 +45,9 @@ export class DocumentProcessorLLMWhisperer {
     
     const { text, extractionTime, metadata, whisperHash } = await this.extractTextWithLLMWhisperer(document);
     
-    // If we got a whisper_hash instead of direct text, we need to handle async flow
-    if (whisperHash && !text) {
-      this.logger.warn(`⚠️ Received whisper_hash: ${whisperHash} - Async flow detected, will need to implement polling`);
-      
-      // For now, mark as processing and return the whisper_hash for further investigation
-      return {
-        success: false,
-        chunksCreated: 0,
-        chunksFailed: 0,
-        processingTimeMs: Date.now() - startTime,
-        extractionTimeMs: extractionTime,
-        chunkingTimeMs: 0,
-        textLength: 0,
-        averageEmbeddingTimeMs: 0,
-        processingRate: 0,
-        successRate: 0,
-        extractionMethod: 'LLMWhisperer',
-        pages: metadata.pages || 0,
-        ocrUsed: metadata.ocr_used || false,
-        whisperHash
-      };
+    // Check if we got valid text
+    if (!text || text.trim().length === 0) {
+      throw new Error('LLMWhisperer não retornou texto válido após processamento completo');
     }
     
     const { chunksCreated, chunksFailed, chunkingTime, totalEmbeddingTime } = 
@@ -105,6 +88,7 @@ export class DocumentProcessorLLMWhisperer {
       processingRate: parseFloat(processingRate.toFixed(2)),
       successRate: parseFloat(successRate.toFixed(1)),
       extractionMethod: 'LLMWhisperer',
+      extractionQuality: 95,
       pages: metadata.pages || 0,
       ocrUsed: metadata.ocr_used || false,
       whisperHash
@@ -141,72 +125,64 @@ export class DocumentProcessorLLMWhisperer {
     metadata: any;
     whisperHash?: string;
   }> {
-    this.logger.log('🚀 Starting LLMWhisperer extraction...');
+    this.logger.log('🚀 Starting LLMWhisperer extraction with async polling...');
     const extractionStartTime = Date.now();
     
     try {
       this.logger.log(`📥 Processing PDF with LLMWhisperer V2: ${document.url}`);
       
+      // This will now handle the full async flow internally
       const result = await this.llmWhispererService.processDocument(document.url);
       
       const extractionTime = Date.now() - extractionStartTime;
       
-      // Check if we got a whisper_hash (async flow)
-      if (result.whisper_hash) {
-        this.logger.warn(`⚠️ LLMWhisperer returned whisper_hash: ${result.whisper_hash}`);
-        this.logger.warn(`📝 This indicates async processing flow - will need to implement polling`);
-        
-        return {
-          text: '',
-          extractionTime,
-          metadata: result.result?.metadata || {},
-          whisperHash: result.whisper_hash
-        };
-      }
-      
       // Get text from markdown or text field
-      const extractedText = result.result.markdown || result.result.text || '';
+      const extractedText = result.result?.markdown || result.result?.text || '';
       
       if (!extractedText || extractedText.trim().length === 0) {
-        throw new Error('LLMWhisperer returned empty text');
+        throw new Error('LLMWhisperer returned empty text after async processing');
       }
 
       if (extractedText.length < 10) {
         throw new Error('Extracted text too short for processing (minimum 10 characters)');
       }
 
-      this.logger.success(`✅ LLMWhisperer extraction completed in ${extractionTime}ms`);
+      this.logger.success(`✅ LLMWhisperer async extraction completed in ${extractionTime}ms`);
       this.logger.stats(`📝 Text extracted: ${extractedText.length} characters`);
-      this.logger.stats(`📄 Pages processed: ${result.result.metadata.pages || 'unknown'}`);
-      this.logger.stats(`🔍 OCR used: ${result.result.metadata.ocr_used ? 'Yes' : 'No'}`);
+      this.logger.stats(`📄 Pages processed: ${result.result?.metadata.pages || 'unknown'}`);
+      this.logger.stats(`🔍 OCR used: ${result.result?.metadata.ocr_used ? 'Yes' : 'No'}`);
+      this.logger.stats(`🔗 Whisper hash: ${result.whisper_hash || 'N/A'}`);
       
       // Update document with extraction info
       await this.updateDocumentExtractionInfo(
         document.id, 
         'LLMWhisperer', 
         95, // High quality score for LLMWhisperer
-        result.result.metadata
+        result.result?.metadata || {}
       );
 
       return {
         text: extractedText,
         extractionTime,
-        metadata: result.result.metadata
+        metadata: result.result?.metadata || {},
+        whisperHash: result.whisper_hash
       };
       
     } catch (error) {
-      this.logger.error('❌ LLMWhisperer extraction failed:', error);
+      this.logger.error('❌ LLMWhisperer async extraction failed:', error);
       
       let errorMessage = error.message;
       
-      if (error.message?.includes('timeout')) {
-        errorMessage = 'LLMWhisperer processing timeout (3 minutes). Document may be too complex.';
-      } else if (error.message?.includes('401')) {
-        errorMessage = 'Invalid LLMWhisperer API key or authentication method. Please check configuration.';
-      } else if (error.message?.includes('429')) {
+      if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
+        errorMessage = 'LLMWhisperer processing timeout. Document may be too complex or server overloaded.';
+      } else if (error.message?.includes('401') || error.message?.includes('inválida')) {
+        errorMessage = 'Invalid LLMWhisperer API key. Please check your API key configuration.';
+      } else if (error.message?.includes('429') || error.message?.includes('limite')) {
         errorMessage = 'LLMWhisperer rate limit exceeded. Please try again later.';
-      } else if (error.message?.includes('file_url')) {
-        errorMessage = 'Document URL not accessible by LLMWhisperer. Check file permissions.';
+      } else if (error.message?.includes('file_url') || error.message?.includes('URL')) {
+        errorMessage = 'Document URL not accessible by LLMWhisperer. Check file permissions and URL accessibility.';
+      } else if (error.message?.includes('polling') || error.message?.includes('tentativas')) {
+        errorMessage = 'LLMWhisperer async processing timeout. Document processing took too long.';
       }
       
       throw new Error(errorMessage);
