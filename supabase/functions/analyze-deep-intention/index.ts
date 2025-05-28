@@ -1,106 +1,127 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
+import { corsHeaders } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
-serve(async (req) => {
+interface IntentionAnalysisRequest {
+  input: string;
+  context: any;
+  userId: string;
+}
+
+async function callOpenAI(messages: any[], temperature: number = 0.7) {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openaiApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages,
+      temperature,
+      max_tokens: 1000
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+async function analyzeDeepIntention(input: string, context: any = {}) {
+  const analysisPrompt = `
+Você é um analisador de intenções avançado. Analise profundamente a seguinte entrada do usuário e extraia:
+
+1. INTENÇÃO EXPLÍCITA: O que o usuário disse diretamente
+2. NECESSIDADES IMPLÍCITAS: O que o usuário realmente precisa (pode ser diferente)
+3. CONTEXTO EMOCIONAL: Estado emocional detectado
+4. NÍVEL DE URGÊNCIA: baixo/médio/alto
+5. COMPLEXIDADE: 0.0-1.0 (simples a muito complexo)
+6. AGENTES SUGERIDOS: Quais agentes cognitivos seriam ideais
+7. NECESSIDADES ANTECIPADAS: O que o usuário pode precisar depois
+
+ENTRADA: "${input}"
+CONTEXTO: ${JSON.stringify(context)}
+
+Responda em JSON estruturado:
+{
+  "explicitIntent": "...",
+  "implicitNeeds": ["...", "..."],
+  "emotionalContext": "neutral|excited|frustrated|confused|urgent",
+  "urgencyLevel": "low|medium|high",
+  "complexity": 0.0-1.0,
+  "suggestedAgents": ["analytical-agent", "creative-agent", "technical-agent", "integration-agent"],
+  "anticipatedNeeds": ["...", "..."],
+  "reasoningChain": "Explicação do raciocínio..."
+}`;
+
+  const response = await callOpenAI([
+    { role: 'system', content: analysisPrompt },
+    { role: 'user', content: input }
+  ], 0.3);
+
+  try {
+    return JSON.parse(response);
+  } catch (error) {
+    // Fallback if JSON parsing fails
+    return {
+      explicitIntent: input,
+      implicitNeeds: [],
+      emotionalContext: 'neutral',
+      urgencyLevel: 'medium',
+      complexity: 0.5,
+      suggestedAgents: ['analytical-agent'],
+      anticipatedNeeds: [],
+      reasoningChain: 'Análise simplificada devido a erro de parsing'
+    };
+  }
+}
+
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { input, context, userId } = await req.json();
-    
-    if (!input) {
+    const { input, context, userId }: IntentionAnalysisRequest = await req.json();
+
+    if (!input || !userId) {
       return new Response(
-        JSON.stringify({ error: 'input is required' }),
+        JSON.stringify({ error: 'input and userId are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Analyzing deep intention for user: ${userId}`);
-    console.log(`Input: ${input.substring(0, 200)}...`);
+    console.log(`🎯 Analisando intenção profunda para usuário: ${userId}`);
+    console.log(`📝 Input: "${input.substring(0, 100)}..."`);
 
-    const analysisPrompt = `Analyze the following user input deeply and extract multiple layers of meaning:
+    const analysis = await analyzeDeepIntention(input, context);
 
-INPUT: "${input}"
-CONTEXT: ${JSON.stringify(context)}
-
-Please analyze and return a JSON object with:
-1. explicitIntent: What the user explicitly asked for
-2. implicitNeeds: Underlying needs that weren't explicitly mentioned
-3. emotionalContext: Emotional tone (happy, frustrated, urgent, curious, etc.)
-4. urgencyLevel: high, medium, or low
-5. complexity: Number between 0-1 representing task complexity
-6. suggestedAgents: Array of agent types needed (analytical-agent, creative-agent, technical-agent, integration-agent)
-7. anticipatedNeeds: What the user might need next based on this request
-
-Respond only with valid JSON.`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an advanced intention analysis system. Analyze user inputs to understand multiple layers of meaning and intent.'
-          },
-          {
-            role: 'user',
-            content: analysisPrompt
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.3
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    let analysis;
-    
-    try {
-      analysis = JSON.parse(data.choices[0].message.content);
-    } catch (parseError) {
-      console.error('Error parsing analysis JSON:', parseError);
-      // Fallback analysis
-      analysis = {
-        explicitIntent: input,
-        implicitNeeds: [],
-        emotionalContext: 'neutral',
-        urgencyLevel: 'medium',
-        complexity: 0.5,
-        suggestedAgents: ['analytical-agent'],
-        anticipatedNeeds: []
-      };
-    }
-
-    console.log('Deep intention analysis completed:', analysis);
+    console.log(`✅ Análise completa:`, analysis);
 
     return new Response(
-      JSON.stringify(analysis),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: true, ...analysis }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in analyze-deep-intention function:', error);
+    console.error('❌ Erro na análise de intenção:', error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'Internal server error',
+        success: false 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

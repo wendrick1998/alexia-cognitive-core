@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { useChatProcessor } from "@/hooks/useChatProcessor";
@@ -8,7 +7,7 @@ import ConversationSidebar from "./ConversationSidebar";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
-import CognitiveInterface from "./cognitive/CognitiveInterface";
+import EnhancedCognitiveInterface from "./cognitive/EnhancedCognitiveInterface";
 import { ChatLoadingSkeleton } from "./chat/ChatSkeleton";
 
 const Chat = () => {
@@ -161,16 +160,16 @@ const Chat = () => {
                 isCreatingNew 
                   ? "Criando nova conversa..." 
                   : currentConversation 
-                    ? "Digite sua mensagem... (Use @deep-think, @connect, @evolve, @simulate para comandos especiais)"
+                    ? "Digite sua mensagem... (Use @deep-think, @connect, @evolve, @simulate para comandos multi-agente)"
                     : "Comece uma nova conversa..."
               }
             />
           </div>
 
-          {/* Cognitive Interface - Right Panel */}
+          {/* Enhanced Cognitive Interface - Right Panel */}
           {showCognitiveInterface && (
-            <div className="w-80 border-l border-gray-200 overflow-y-auto">
-              <CognitiveInterface />
+            <div className="w-96 border-l border-gray-200 overflow-y-auto">
+              <EnhancedCognitiveInterface />
             </div>
           )}
         </div>
@@ -178,7 +177,8 @@ const Chat = () => {
         {/* Cognitive Interface Toggle */}
         <button
           onClick={() => setShowCognitiveInterface(!showCognitiveInterface)}
-          className="fixed bottom-20 right-4 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-10"
+          className="fixed bottom-20 right-4 w-12 h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-10"
+          title="Sistema Multi-Agente Cognitivo"
         >
           🧠
         </button>
