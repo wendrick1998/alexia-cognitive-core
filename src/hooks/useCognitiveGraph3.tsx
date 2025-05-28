@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -235,11 +234,7 @@ export function useCognitiveGraph3() {
     if (!user) return;
 
     try {
-      // Refresh materialized view first
-      await supabase.rpc('refresh_materialized_view', { 
-        view_name: 'cognitive_evolution_stats' 
-      });
-
+      // Query the materialized view directly instead of using refresh function
       const { data, error } = await supabase
         .from('cognitive_evolution_stats')
         .select('*')
