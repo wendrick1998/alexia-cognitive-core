@@ -133,6 +133,31 @@ serve(async (req) => {
 
     console.log(`Found ${documentChunks.length} document chunks and ${memoryChunks.length} memory chunks`);
 
+    // ===== ENHANCED DIAGNOSTIC LOGGING =====
+    
+    // Log retrieved chunks with clear delimiters
+    console.log('\n🔍 ===== INÍCIO CHUNKS RECUPERADOS =====');
+    
+    const retrievedChunksData = {
+      document_chunks: documentChunks.map((chunk: any) => ({
+        content: chunk.content,
+        document_name: chunk.document_name || 'Documento sem nome',
+        similarity_score: chunk.similarity,
+        chunk_type: 'document'
+      })),
+      memory_chunks: memoryChunks.map((memory: any) => ({
+        content: memory.content,
+        source: memory.source || 'Sistema',
+        similarity_score: memory.similarity,
+        chunk_type: 'memory'
+      })),
+      total_chunks: documentChunks.length + memoryChunks.length,
+      query: user_message
+    };
+    
+    console.log(JSON.stringify(retrievedChunksData, null, 2));
+    console.log('🔍 ===== FIM CHUNKS RECUPERADOS =====\n');
+
     // Step 3: Build context for LLM
     let contextText = '';
     
@@ -157,6 +182,21 @@ serve(async (req) => {
     }
 
     const fullPrompt = `${contextText}Pergunta do Usuário: ${user_message}\n\nResposta de Alex iA:`;
+
+    // Log complete prompt with clear delimiters
+    console.log('\n🤖 ===== INÍCIO PROMPT COMPLETO PARA LLM =====');
+    
+    const promptData = {
+      system_message: 'Você é Alex iA, um assistente IA prestativo. Responda à pergunta do usuário baseando-se estritamente no contexto fornecido. Se a informação não estiver no contexto, diga que não encontrou a informação nos documentos atuais. Seja claro, conciso e útil.',
+      retrieved_context: contextText,
+      user_question: user_message,
+      full_prompt: fullPrompt,
+      prompt_length: fullPrompt.length,
+      model_used: 'gpt-4o-mini'
+    };
+    
+    console.log(JSON.stringify(promptData, null, 2));
+    console.log('🤖 ===== FIM PROMPT COMPLETO PARA LLM =====\n');
 
     console.log('=== PROMPT COMPLETO PARA LLM ===');
     console.log('Tamanho total do prompt:', fullPrompt.length, 'caracteres');
