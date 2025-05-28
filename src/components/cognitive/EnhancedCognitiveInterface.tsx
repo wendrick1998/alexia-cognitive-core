@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useCognitiveSystem } from '@/hooks/useCognitiveSystem';
 import { useNeuralSystem } from '@/hooks/useNeuralSystem';
@@ -12,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import NeuralVisualization from './NeuralVisualization';
 import MemoryConsolidationPanel from './MemoryConsolidationPanel';
+import CognitiveGraph3Panel from './CognitiveGraph3Panel';
 
 interface EnhancedCognitiveInterfaceProps {
   className?: string;
@@ -257,7 +257,7 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
           <div>
             <h2 className="text-xl font-semibold">Sistema Cognitivo Neural Avançado</h2>
             <p className="text-sm text-gray-600">
-              Sprint 3: Memory Consolidation + Priming + Cache Preditivo |
+              Cognitive Graph 3.0: Memory Consolidation + Multi-Embeddings + Cluster Discovery |
               Carga: {Math.round(cognitiveState.cognitiveLoad * 100)}% | 
               Foco: {Math.round(cognitiveState.focusLevel * 100)}% |
               Ativação: {activationPatterns.length} padrões
@@ -265,8 +265,9 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
           </div>
         </div>
 
-        <Tabs defaultValue="search" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+        <Tabs defaultValue="graph3" className="w-full">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="graph3">Graph 3.0</TabsTrigger>
             <TabsTrigger value="search">Busca Neural</TabsTrigger>
             <TabsTrigger value="clustering">Clustering</TabsTrigger>
             <TabsTrigger value="consolidation">Consolidação</TabsTrigger>
@@ -274,6 +275,10 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
             <TabsTrigger value="insights">Insights</TabsTrigger>
             <TabsTrigger value="metrics">Métricas</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="graph3" className="mt-4">
+            <CognitiveGraph3Panel />
+          </TabsContent>
           
           <TabsContent value="search" className="mt-4">
             {renderAdvancedSearch()}
@@ -342,10 +347,10 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => createCognitiveSnapshot('Snapshot Neural Sprint 3', 'Snapshot com funcionalidades avançadas Sprint 3')}
+            onClick={() => createCognitiveSnapshot('Snapshot Cognitive Graph 3.0', 'Advanced neural architecture with memory consolidation')}
             className="w-full"
           >
-            📸 Criar Snapshot Cognitivo Sprint 3
+            📸 Criar Snapshot Cognitive Graph 3.0
           </Button>
         </div>
       </div>

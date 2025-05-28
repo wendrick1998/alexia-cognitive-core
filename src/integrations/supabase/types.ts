@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      cognitive_clusters: {
+        Row: {
+          centroid_embedding: string | null
+          cluster_type: string | null
+          coherence_score: number | null
+          created_at: string | null
+          density_score: number | null
+          discovery_method: string | null
+          id: string
+          last_validated_at: string | null
+          member_nodes: string[] | null
+          metadata: Json | null
+          temporal_stability: number | null
+          user_id: string
+        }
+        Insert: {
+          centroid_embedding?: string | null
+          cluster_type?: string | null
+          coherence_score?: number | null
+          created_at?: string | null
+          density_score?: number | null
+          discovery_method?: string | null
+          id?: string
+          last_validated_at?: string | null
+          member_nodes?: string[] | null
+          metadata?: Json | null
+          temporal_stability?: number | null
+          user_id: string
+        }
+        Update: {
+          centroid_embedding?: string | null
+          cluster_type?: string | null
+          coherence_score?: number | null
+          created_at?: string | null
+          density_score?: number | null
+          discovery_method?: string | null
+          id?: string
+          last_validated_at?: string | null
+          member_nodes?: string[] | null
+          metadata?: Json | null
+          temporal_stability?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cognitive_connections: {
         Row: {
           auto_generated: boolean | null
@@ -134,21 +179,27 @@ export type Database = {
           activation_strength: number | null
           base_activation: number | null
           connected_nodes: string[] | null
+          consolidation_score: number | null
           content: string
           conversation_id: string | null
           created_at: string | null
           decay_rate: number | null
           embedding_conceptual: string | null
+          embedding_contextual: string | null
           embedding_general: string | null
           embedding_relational: string | null
+          embedding_semantic: string | null
           id: string
           last_accessed_at: string | null
+          last_consolidation_at: string | null
+          memory_type: string | null
           metadata: Json | null
           node_type: Database["public"]["Enums"]["cognitive_node_type"]
           parent_node_id: string | null
           project_id: string | null
           propagation_depth: number | null
           relevance_score: number | null
+          replay_count: number | null
           root_session_id: string | null
           status: Database["public"]["Enums"]["node_status"] | null
           title: string | null
@@ -160,21 +211,27 @@ export type Database = {
           activation_strength?: number | null
           base_activation?: number | null
           connected_nodes?: string[] | null
+          consolidation_score?: number | null
           content: string
           conversation_id?: string | null
           created_at?: string | null
           decay_rate?: number | null
           embedding_conceptual?: string | null
+          embedding_contextual?: string | null
           embedding_general?: string | null
           embedding_relational?: string | null
+          embedding_semantic?: string | null
           id?: string
           last_accessed_at?: string | null
+          last_consolidation_at?: string | null
+          memory_type?: string | null
           metadata?: Json | null
           node_type: Database["public"]["Enums"]["cognitive_node_type"]
           parent_node_id?: string | null
           project_id?: string | null
           propagation_depth?: number | null
           relevance_score?: number | null
+          replay_count?: number | null
           root_session_id?: string | null
           status?: Database["public"]["Enums"]["node_status"] | null
           title?: string | null
@@ -186,21 +243,27 @@ export type Database = {
           activation_strength?: number | null
           base_activation?: number | null
           connected_nodes?: string[] | null
+          consolidation_score?: number | null
           content?: string
           conversation_id?: string | null
           created_at?: string | null
           decay_rate?: number | null
           embedding_conceptual?: string | null
+          embedding_contextual?: string | null
           embedding_general?: string | null
           embedding_relational?: string | null
+          embedding_semantic?: string | null
           id?: string
           last_accessed_at?: string | null
+          last_consolidation_at?: string | null
+          memory_type?: string | null
           metadata?: Json | null
           node_type?: Database["public"]["Enums"]["cognitive_node_type"]
           parent_node_id?: string | null
           project_id?: string | null
           propagation_depth?: number | null
           relevance_score?: number | null
+          replay_count?: number | null
           root_session_id?: string | null
           status?: Database["public"]["Enums"]["node_status"] | null
           title?: string | null
@@ -585,6 +648,45 @@ export type Database = {
           },
         ]
       }
+      memory_consolidation_sessions: {
+        Row: {
+          completed_at: string | null
+          connections_strengthened: number | null
+          consolidation_quality: number | null
+          id: string
+          metadata: Json | null
+          nodes_processed: number | null
+          patterns_discovered: number | null
+          session_type: string | null
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          connections_strengthened?: number | null
+          consolidation_quality?: number | null
+          id?: string
+          metadata?: Json | null
+          nodes_processed?: number | null
+          patterns_discovered?: number | null
+          session_type?: string | null
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          connections_strengthened?: number | null
+          consolidation_quality?: number | null
+          id?: string
+          metadata?: Json | null
+          nodes_processed?: number | null
+          patterns_discovered?: number | null
+          session_type?: string | null
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       memory_embeddings: {
         Row: {
           content: string
@@ -705,6 +807,42 @@ export type Database = {
           },
         ]
       }
+      short_term_memory: {
+        Row: {
+          buffer_position: number
+          cognitive_context: Json | null
+          created_at: string | null
+          emotional_valence: number | null
+          expires_at: string | null
+          id: string
+          importance_score: number | null
+          interaction_data: Json
+          user_id: string
+        }
+        Insert: {
+          buffer_position: number
+          cognitive_context?: Json | null
+          created_at?: string | null
+          emotional_valence?: number | null
+          expires_at?: string | null
+          id?: string
+          importance_score?: number | null
+          interaction_data: Json
+          user_id: string
+        }
+        Update: {
+          buffer_position?: number
+          cognitive_context?: Json | null
+          created_at?: string | null
+          emotional_valence?: number | null
+          expires_at?: string | null
+          id?: string
+          importance_score?: number | null
+          interaction_data?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       thought_sessions: {
         Row: {
           achievements: Json | null
@@ -824,6 +962,19 @@ export type Database = {
         }
         Relationships: []
       }
+      cognitive_evolution_stats: {
+        Row: {
+          avg_activation: number | null
+          avg_consolidation: number | null
+          concept_diversity: number | null
+          last_activity: string | null
+          long_term_memories: number | null
+          recent_nodes: number | null
+          total_nodes: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       auto_connect_similar_nodes: {
@@ -837,6 +988,10 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      cleanup_expired_short_term_memory: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       cognitive_search: {
         Args: {
@@ -856,6 +1011,18 @@ export type Database = {
           access_count: number
           created_at: string
         }[]
+      }
+      consolidate_memory_session: {
+        Args: { p_user_id: string; p_threshold_hours?: number }
+        Returns: string
+      }
+      discover_cognitive_clusters: {
+        Args: {
+          p_user_id: string
+          p_min_cluster_size?: number
+          p_similarity_threshold?: number
+        }
+        Returns: number
       }
       halfvec_avg: {
         Args: { "": number[] }
