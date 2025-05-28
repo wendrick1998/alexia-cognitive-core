@@ -20,7 +20,7 @@ export interface LLMWhispererProcessingResult {
   extractionQuality: number;
   pages: number;
   ocrUsed: boolean;
-  whisperHash?: string;
+  whisperHash: string;
 }
 
 export class DocumentProcessorLLMWhisperer {
@@ -43,9 +43,25 @@ export class DocumentProcessorLLMWhisperer {
 
     const document = await this.getAndValidateDocument(documentId);
     
-    const { text, extractionTime, metadata, whisperHash } = await this.extractTextWithLLMWhisperer(document);
+    // Download do arquivo do Supabase Storage
+    const fileBuffer = await this.downloadFileFromStorage(document.url);
     
-    // Check if we got valid text
+    // Salvar whisper_hash inicial e atualizar status
+    await this.updateDocumentStatus(documentId, 'aguardando_llmwhisperer', null);
+    
+    // Processar com LLMWhisperer usando fluxo assíncrono completo
+    const { text, extractionTime, metadata, whisperHash } = await this.processWithLLMWhispererV2(
+      fileBuffer, 
+      document.title || 'document.pdf'
+    );
+    
+    // Salvar whisper_hash final no documento
+    await this.updateDocumentMetadata(documentId, { 
+      llmwhisperer_hash: whisperHash,
+      llmwhisperer_metadata: metadata
+    });
+    
+    // Verificar se obtivemos texto válido
     if (!text || text.trim().length === 0) {
       throw new Error('LLMWhisperer não retornou texto válido após processamento completo');
     }
@@ -72,8 +88,8 @@ export class DocumentProcessorLLMWhisperer {
       processingRate,
       textLength: text.length,
       successRate,
-      extractionQuality: 95, // LLMWhisperer provides high quality
-      extractionMethod: 'LLMWhisperer'
+      extractionQuality: 95,
+      extractionMethod: 'LLMWhisperer V2'
     });
 
     return {
@@ -87,10 +103,10 @@ export class DocumentProcessorLLMWhisperer {
       averageEmbeddingTimeMs: Math.round(avgEmbeddingTime),
       processingRate: parseFloat(processingRate.toFixed(2)),
       successRate: parseFloat(successRate.toFixed(1)),
-      extractionMethod: 'LLMWhisperer',
+      extractionMethod: 'LLMWhisperer V2',
       extractionQuality: 95,
       pages: metadata.pages || 0,
-      ocrUsed: metadata.ocr_used || false,
+      ocrUsed: true,
       whisperHash
     };
   }
@@ -119,105 +135,163 @@ export class DocumentProcessorLLMWhisperer {
     return document;
   }
 
-  private async extractTextWithLLMWhisperer(document: any): Promise<{
+  private async downloadFileFromStorage(fileUrl: string): Promise<ArrayBuffer> {
+    this.logger.log(`📥 Baixando arquivo do Supabase Storage: ${fileUrl}`);
+    
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Timeout no download, abortando...');
+        controller.abort();
+      }, 120000); // 2 minutos timeout para download
+      
+      const response = await fetch(fileUrl, { 
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Alex-IA-Document-Processor/3.0'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`Falha no download: ${response.status} ${response.statusText}`);
+      }
+
+      const fileBuffer = await response.arrayBuffer();
+      this.logger.log(`✅ Arquivo baixado: ${fileBuffer.byteLength} bytes`);
+      
+      return fileBuffer;
+      
+    } catch (error) {
+      this.logger.error('❌ Erro no download do arquivo:', error);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Timeout no download do arquivo (2 minutos)');
+      }
+      
+      throw new Error(`Erro ao baixar arquivo: ${error.message}`);
+    }
+  }
+
+  private async processWithLLMWhispererV2(
+    fileBuffer: ArrayBuffer, 
+    fileName: string
+  ): Promise<{
     text: string;
     extractionTime: number;
     metadata: any;
-    whisperHash?: string;
+    whisperHash: string;
   }> {
-    this.logger.log('🚀 Starting LLMWhisperer extraction with async polling...');
+    this.logger.log('🚀 Iniciando processamento LLMWhisperer V2 com fluxo assíncrono completo...');
     const extractionStartTime = Date.now();
     
     try {
-      this.logger.log(`📥 Processing PDF with LLMWhisperer V2: ${document.url}`);
+      this.logger.log(`📄 Processando PDF: ${fileName} (${fileBuffer.byteLength} bytes)`);
       
-      // This will now handle the full async flow internally
-      const result = await this.llmWhispererService.processDocument(document.url);
+      // Usar configurações otimizadas para Edge Function
+      const maxPollingAttempts = 10; // 10 tentativas
+      const pollingInterval = 6000; // 6 segundos entre tentativas (total ~60s de polling)
+      
+      const result = await this.llmWhispererService.processDocumentWithPolling(
+        fileBuffer,
+        fileName,
+        maxPollingAttempts,
+        pollingInterval
+      );
       
       const extractionTime = Date.now() - extractionStartTime;
       
-      // Get text from markdown or text field
-      const extractedText = result.result?.markdown || result.result?.text || '';
-      
-      if (!extractedText || extractedText.trim().length === 0) {
-        throw new Error('LLMWhisperer returned empty text after async processing');
+      if (!result.text || result.text.trim().length === 0) {
+        throw new Error('LLMWhisperer V2 retornou texto vazio');
       }
 
-      if (extractedText.length < 10) {
-        throw new Error('Extracted text too short for processing (minimum 10 characters)');
+      if (result.text.length < 10) {
+        throw new Error('Texto extraído muito curto para processamento (mínimo 10 caracteres)');
       }
 
-      this.logger.success(`✅ LLMWhisperer async extraction completed in ${extractionTime}ms`);
-      this.logger.stats(`📝 Text extracted: ${extractedText.length} characters`);
-      this.logger.stats(`📄 Pages processed: ${result.result?.metadata.pages || 'unknown'}`);
-      this.logger.stats(`🔍 OCR used: ${result.result?.metadata.ocr_used ? 'Yes' : 'No'}`);
-      this.logger.stats(`🔗 Whisper hash: ${result.whisper_hash || 'N/A'}`);
+      this.logger.success(`✅ LLMWhisperer V2 processamento concluído em ${extractionTime}ms`);
+      this.logger.stats(`📝 Texto extraído: ${result.text.length} caracteres`);
+      this.logger.stats(`📄 Páginas processadas: ${result.metadata.pages || 'desconhecido'}`);
+      this.logger.stats(`🔗 Whisper hash: ${result.whisperHash}`);
       
-      // Update document with extraction info
-      await this.updateDocumentExtractionInfo(
-        document.id, 
-        'LLMWhisperer', 
-        95, // High quality score for LLMWhisperer
-        result.result?.metadata || {}
-      );
-
       return {
-        text: extractedText,
+        text: result.text,
         extractionTime,
-        metadata: result.result?.metadata || {},
-        whisperHash: result.whisper_hash
+        metadata: result.metadata,
+        whisperHash: result.whisperHash
       };
       
     } catch (error) {
-      this.logger.error('❌ LLMWhisperer async extraction failed:', error);
+      this.logger.error('❌ LLMWhisperer V2 processamento falhou:', error);
       
       let errorMessage = error.message;
       
       if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
-        errorMessage = 'LLMWhisperer processing timeout. Document may be too complex or server overloaded.';
+        errorMessage = 'LLMWhisperer V2 timeout. Documento pode ser muito complexo ou servidor sobrecarregado.';
       } else if (error.message?.includes('401') || error.message?.includes('inválida')) {
-        errorMessage = 'Invalid LLMWhisperer API key. Please check your API key configuration.';
+        errorMessage = 'Chave API LLMWhisperer inválida. Verifique a configuração da chave API.';
       } else if (error.message?.includes('429') || error.message?.includes('limite')) {
-        errorMessage = 'LLMWhisperer rate limit exceeded. Please try again later.';
-      } else if (error.message?.includes('file_url') || error.message?.includes('URL')) {
-        errorMessage = 'Document URL not accessible by LLMWhisperer. Check file permissions and URL accessibility.';
-      } else if (error.message?.includes('polling') || error.message?.includes('tentativas')) {
-        errorMessage = 'LLMWhisperer async processing timeout. Document processing took too long.';
+        errorMessage = 'Limite de taxa LLMWhisperer excedido. Tente novamente mais tarde.';
+      } else if (error.message?.includes('falhou')) {
+        errorMessage = 'Processamento LLMWhisperer falhou. Documento pode estar corrompido ou em formato não suportado.';
       }
       
       throw new Error(errorMessage);
     }
   }
 
-  private async updateDocumentExtractionInfo(
-    documentId: string, 
-    method: string, 
-    quality: number,
-    metadata: any
-  ) {
+  private async updateDocumentStatus(documentId: string, status: string, whisperHash: string | null) {
     try {
-      const { updateDocumentExtractionInfo } = await import('./database-service.ts');
-      await updateDocumentExtractionInfo(documentId, method, quality);
-      
-      // Update document metadata with LLMWhisperer info
-      const { supabase } = await import('https://esm.sh/@supabase/supabase-js@2.49.8');
-      const client = supabase(
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.49.8');
+      const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      await client
+      const updateData: any = {
+        status_processing: status,
+        updated_at: new Date().toISOString()
+      };
+
+      if (whisperHash) {
+        updateData.metadata = {
+          llmwhisperer_hash: whisperHash
+        };
+      }
+
+      await supabase
+        .from('documents')
+        .update(updateData)
+        .eq('id', documentId);
+
+      this.logger.log(`📝 Status atualizado para: ${status}`);
+    } catch (error) {
+      this.logger.warn('Falha ao atualizar status do documento:', error);
+    }
+  }
+
+  private async updateDocumentMetadata(documentId: string, metadata: any) {
+    try {
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.49.8');
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      await supabase
         .from('documents')
         .update({
           metadata: {
-            llmwhisperer: metadata,
+            ...metadata,
             extraction_timestamp: new Date().toISOString()
           }
         })
         .eq('id', documentId);
 
+      this.logger.log(`📝 Metadados atualizados`);
     } catch (error) {
-      this.logger.warn('Failed to update document extraction info:', error);
+      this.logger.warn('Falha ao atualizar metadados do documento:', error);
     }
   }
 
@@ -231,19 +305,17 @@ export class DocumentProcessorLLMWhisperer {
     chunkingTime: number;
     totalEmbeddingTime: number;
   }> {
-    this.logger.log('🔧 Creating optimized chunks from LLMWhisperer output...');
+    this.logger.log('🔧 Criando chunks otimizados do resultado LLMWhisperer V2...');
     const chunkingStartTime = Date.now();
     
-    // Clean existing chunks first
     await this.cleanExistingChunks(documentId);
     
     let processedChunks = 0;
     let totalEmbeddingTime = 0;
     let failedChunks = 0;
     
-    // Use larger chunk size for high-quality LLMWhisperer output
     const chunks = splitTextIntoChunks(text, 1500, 200);
-    this.logger.log(`📦 Created ${chunks.length} chunks for processing`);
+    this.logger.log(`📦 Criados ${chunks.length} chunks para processamento`);
     
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
@@ -251,9 +323,8 @@ export class DocumentProcessorLLMWhisperer {
       try {
         const chunkStartTime = Date.now();
         
-        this.logger.log(`🔄 Processing chunk ${i + 1}/${chunks.length}: ${chunk.content.length} chars`);
+        this.logger.log(`🔄 Processando chunk ${i + 1}/${chunks.length}: ${chunk.content.length} chars`);
         
-        // Generate embedding with retry logic
         let embedding;
         let embeddingTime = 0;
         
@@ -272,13 +343,12 @@ export class DocumentProcessorLLMWhisperer {
         
         totalEmbeddingTime += embeddingTime;
         
-        // Enhanced chunk metadata with LLMWhisperer info
         const chunkData = {
           chunk_index: i,
           content: chunk.content,
           metadata: {
             ...chunk.metadata,
-            extraction_method: 'LLMWhisperer',
+            extraction_method: 'LLMWhisperer V2',
             extraction_quality: 95,
             llmwhisperer_metadata: metadata,
             processing_timestamp: new Date().toISOString(),
@@ -290,21 +360,19 @@ export class DocumentProcessorLLMWhisperer {
         
         processedChunks++;
         const chunkTime = Date.now() - chunkStartTime;
-        this.logger.success(`✅ Chunk ${i + 1} processed in ${chunkTime}ms (embedding: ${embeddingTime}ms)`);
+        this.logger.success(`✅ Chunk ${i + 1} processado em ${chunkTime}ms (embedding: ${embeddingTime}ms)`);
         
-        // Progress logging every 5 chunks
         if (processedChunks % 5 === 0) {
           const progress = ((processedChunks / chunks.length) * 100).toFixed(1);
-          this.logger.progress(`📈 Progress: ${processedChunks}/${chunks.length} chunks (${progress}%)`);
+          this.logger.progress(`📈 Progresso: ${processedChunks}/${chunks.length} chunks (${progress}%)`);
         }
         
       } catch (chunkError) {
         failedChunks++;
-        this.logger.error(`❌ Error processing chunk ${i + 1}:`, chunkError);
+        this.logger.error(`❌ Erro processando chunk ${i + 1}:`, chunkError);
         
-        // Continue processing other chunks, don't fail completely
-        if (failedChunks > chunks.length * 0.5) { // Stop if >50% failures
-          throw new Error(`Too many chunk failures (${failedChunks}/${chunks.length}). Last error: ${chunkError.message}`);
+        if (failedChunks > chunks.length * 0.5) {
+          throw new Error(`Muitas falhas de chunks (${failedChunks}/${chunks.length}). Último erro: ${chunkError.message}`);
         }
       }
     }
@@ -312,10 +380,10 @@ export class DocumentProcessorLLMWhisperer {
     const chunkingTime = Date.now() - chunkingStartTime;
     
     if (processedChunks === 0) {
-      throw new Error('No chunks were successfully created from the extracted text');
+      throw new Error('Nenhum chunk foi criado com sucesso do texto extraído');
     }
 
-    this.logger.success(`🎉 Chunking completed: ${processedChunks} successful, ${failedChunks} failed`);
+    this.logger.success(`🎉 Chunking concluído: ${processedChunks} sucessos, ${failedChunks} falhas`);
 
     return {
       chunksCreated: processedChunks,
@@ -333,16 +401,16 @@ export class DocumentProcessorLLMWhisperer {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      this.logger.log('🧹 Cleaning existing chunks...');
+      this.logger.log('🧹 Limpando chunks existentes...');
       
       await supabase
         .from('document_sections')
         .delete()
         .eq('document_id', documentId);
 
-      this.logger.log('✅ Existing chunks cleaned');
+      this.logger.log('✅ Chunks existentes limpos');
     } catch (error) {
-      this.logger.warn('Failed to clean existing chunks:', error);
+      this.logger.warn('Falha ao limpar chunks existentes:', error);
     }
   }
 }

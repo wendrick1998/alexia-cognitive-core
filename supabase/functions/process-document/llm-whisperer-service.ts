@@ -1,39 +1,22 @@
 
-// LLMWhisperer API integration service
-export interface LLMWhispererRequest {
-  file_url: string;
-  output_format: 'markdown' | 'text';
-  language: string;
-  ocr: boolean;
-}
-
-export interface LLMWhispererResponse {
+// LLMWhisperer V2 API integration service following official documentation
+export interface LLMWhispererSubmissionResponse {
+  whisper_hash: string;
   status: string;
-  result?: {
-    text?: string;
-    markdown?: string;
-    metadata: {
-      pages: number;
-      ocr_used: boolean;
-      processing_time_ms: number;
-      [key: string]: any;
-    };
-  };
   message?: string;
-  whisper_hash?: string; // For async flow detection
 }
 
 export interface LLMWhispererStatusResponse {
-  status: 'processing' | 'processed' | 'failed';
+  status: 'processing' | 'processed' | 'failed' | 'accepted';
   message?: string;
   whisper_hash: string;
 }
 
 export interface LLMWhispererRetrieveResponse {
   result_text: string;
-  metadata: {
-    pages: number;
-    processing_time_ms: number;
+  metadata?: {
+    pages?: number;
+    processing_time_ms?: number;
     [key: string]: any;
   };
   whisper_hash: string;
@@ -48,10 +31,9 @@ export class LLMWhispererService {
     this.baseUrl = baseUrl;
   }
 
-  async processDocument(fileUrl: string): Promise<LLMWhispererResponse> {
-    console.log(`🔄 Iniciando processamento LLMWhisperer para: ${fileUrl}`);
+  async submitDocument(fileBuffer: ArrayBuffer, fileName: string = 'document.pdf'): Promise<LLMWhispererSubmissionResponse> {
+    console.log(`🔄 Submetendo documento para LLMWhisperer V2: ${fileName}`);
     
-    // Debug: Verificar se a chave API está disponível (mascarada)
     if (!this.apiKey) {
       console.error('❌ Chave API do LLMWhisperer não encontrada');
       throw new Error('LLMWhisperer API key não configurada');
@@ -60,39 +42,38 @@ export class LLMWhispererService {
     const maskedKey = this.apiKey.substring(0, 8) + '...' + this.apiKey.substring(this.apiKey.length - 4);
     console.log(`🔑 Usando chave API (mascarada): ${maskedKey}`);
     console.log(`🌐 URL da API: ${this.baseUrl}/whisper`);
-    
-    const request: LLMWhispererRequest = {
-      file_url: fileUrl,
-      output_format: 'markdown',
-      language: 'pt',
-      ocr: true
-    };
-
-    console.log('📋 Payload LLMWhisperer:', JSON.stringify(request, null, 2));
+    console.log(`📄 Tamanho do arquivo: ${fileBuffer.byteLength} bytes`);
 
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
-        console.log('⏰ Timeout LLMWhisperer, abortando...');
+        console.log('⏰ Timeout na submissão LLMWhisperer, abortando...');
         controller.abort();
-      }, 180000); // 3 minutos timeout
+      }, 60000); // 1 minuto timeout para submissão
+
+      // Preparar URL com query parameters conforme documentação oficial
+      const url = new URL(`${this.baseUrl}/whisper`);
+      url.searchParams.set('output_format', 'markdown');
+      url.searchParams.set('lang', 'pt');
+      url.searchParams.set('ocr', 'true');
+
+      console.log('📤 URL completa:', url.toString());
+      console.log('📋 Query parameters:', Object.fromEntries(url.searchParams));
 
       const headers = {
         'unstract-key': this.apiKey,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Content-Type': 'application/octet-stream'
       };
 
       console.log('📤 Headers da requisição (chave mascarada):', {
         'unstract-key': maskedKey,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Content-Type': 'application/octet-stream'
       });
 
-      const response = await fetch(`${this.baseUrl}/whisper`, {
+      const response = await fetch(url.toString(), {
         method: 'POST',
         headers,
-        body: JSON.stringify(request),
+        body: fileBuffer,
         signal: controller.signal
       });
 
@@ -106,7 +87,6 @@ export class LLMWhispererService {
         console.error(`❌ Erro LLMWhisperer: ${response.status} ${response.statusText}`);
         console.error(`📄 Resposta de erro: ${errorText}`);
         
-        // Tentar parsear o erro para obter mais detalhes
         let errorDetails = errorText;
         try {
           const errorJson = JSON.parse(errorText);
@@ -115,9 +95,8 @@ export class LLMWhispererService {
           console.log('⚠️ Não foi possível parsear a resposta de erro como JSON');
         }
         
-        // Tratamento específico para diferentes tipos de erro
         if (response.status === 401) {
-          throw new Error(`Chave API inválida ou inativa. Verifique sua assinatura do LLMWhisperer. Detalhes: ${errorDetails}`);
+          throw new Error(`Chave API inválida ou inativa. Detalhes: ${errorDetails}`);
         } else if (response.status === 403) {
           throw new Error(`Acesso negado. Verifique as permissões da sua chave API. Detalhes: ${errorDetails}`);
         } else if (response.status === 429) {
@@ -129,127 +108,157 @@ export class LLMWhispererService {
         }
       }
 
-      const result: LLMWhispererResponse = await response.json();
-      console.log(`✅ LLMWhisperer requisição enviada com sucesso`);
-      
-      // Check for async flow (status 202 with whisper_hash)
-      if (response.status === 202 && result.whisper_hash) {
-        console.log(`🔄 Fluxo assíncrono detectado com whisper_hash: ${result.whisper_hash}`);
-        console.log(`📝 Resposta completa:`, JSON.stringify(result, null, 2));
-        
-        // Poll for completion
-        const finalResult = await this.pollForCompletion(result.whisper_hash);
-        return finalResult;
+      // Verificar se o status é 202 (Accepted) conforme documentação
+      if (response.status !== 202) {
+        throw new Error(`Resposta inesperada da API LLMWhisperer. Esperado status 202, recebido: ${response.status}`);
       }
 
-      // Direct result (synchronous flow)
-      console.log(`📊 Metadados: ${JSON.stringify(result.result?.metadata || {}, null, 2)}`);
+      const result: LLMWhispererSubmissionResponse = await response.json();
+      console.log(`✅ Documento submetido com sucesso`);
+      console.log(`🔗 Whisper hash: ${result.whisper_hash}`);
+      console.log(`📝 Resposta completa:`, JSON.stringify(result, null, 2));
 
-      if (!result.result?.markdown && !result.result?.text) {
+      if (!result.whisper_hash) {
+        throw new Error('LLMWhisperer não retornou whisper_hash válido');
+      }
+
+      return result;
+
+    } catch (error) {
+      console.error('❌ Erro na submissão LLMWhisperer:', error);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Timeout na submissão LLMWhisperer (1 minuto)');
+      }
+      
+      throw error;
+    }
+  }
+
+  async checkStatus(whisperHash: string): Promise<LLMWhispererStatusResponse> {
+    console.log(`📊 Verificando status para whisper_hash: ${whisperHash}`);
+    
+    try {
+      const url = new URL(`${this.baseUrl}/whisper-status`);
+      url.searchParams.set('whisper_hash', whisperHash);
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'unstract-key': this.apiKey
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Erro ao verificar status: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Erro ao verificar status: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const result: LLMWhispererStatusResponse = await response.json();
+      console.log(`📋 Status atual: ${result.status}`);
+      
+      if (result.message) {
+        console.log(`💬 Mensagem: ${result.message}`);
+      }
+
+      return result;
+
+    } catch (error) {
+      console.error(`❌ Erro ao verificar status:`, error);
+      throw error;
+    }
+  }
+
+  async retrieveResult(whisperHash: string, textOnly: boolean = true): Promise<LLMWhispererRetrieveResponse> {
+    console.log(`📥 Recuperando resultado para whisper_hash: ${whisperHash}`);
+    
+    try {
+      const url = new URL(`${this.baseUrl}/whisper-retrieve`);
+      url.searchParams.set('whisper_hash', whisperHash);
+      url.searchParams.set('text_only', textOnly.toString());
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'unstract-key': this.apiKey
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Erro ao recuperar resultado: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Erro ao recuperar resultado: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const result: LLMWhispererRetrieveResponse = await response.json();
+      console.log(`✅ Resultado recuperado com sucesso`);
+      console.log(`📝 Tamanho do texto: ${result.result_text?.length || 0} caracteres`);
+      
+      if (result.metadata) {
+        console.log(`📊 Metadados:`, JSON.stringify(result.metadata, null, 2));
+      }
+
+      if (!result.result_text) {
         throw new Error('LLMWhisperer não retornou texto válido');
       }
 
       return result;
 
     } catch (error) {
-      console.error('❌ Erro no processamento LLMWhisperer:', error);
-      
-      if (error.name === 'AbortError') {
-        throw new Error('Timeout no processamento LLMWhisperer (3 minutos)');
-      }
-      
-      // Re-throw com a mensagem original se já for um erro tratado
+      console.error(`❌ Erro ao recuperar resultado:`, error);
       throw error;
     }
   }
 
-  async pollForCompletion(whisperHash: string): Promise<LLMWhispererResponse> {
+  async processDocumentWithPolling(
+    fileBuffer: ArrayBuffer, 
+    fileName: string = 'document.pdf',
+    maxPollingAttempts: number = 12,
+    pollingInterval: number = 5000
+  ): Promise<{ text: string; metadata: any; whisperHash: string }> {
+    console.log(`🚀 Iniciando processamento completo com polling para: ${fileName}`);
+    console.log(`⚙️ Configurações: maxTentativas=${maxPollingAttempts}, intervalo=${pollingInterval}ms`);
+    
+    // 1. Submeter documento
+    const submission = await this.submitDocument(fileBuffer, fileName);
+    const whisperHash = submission.whisper_hash;
+    
     console.log(`🔄 Iniciando polling para whisper_hash: ${whisperHash}`);
     
-    const maxAttempts = 60; // 10 minutos máximo (10 segundos entre tentativas)
-    const pollInterval = 10000; // 10 segundos
-    
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        console.log(`📊 Polling tentativa ${attempt}/${maxAttempts} para ${whisperHash}`);
+    // 2. Polling de status
+    for (let attempt = 1; attempt <= maxPollingAttempts; attempt++) {
+      console.log(`📊 Polling tentativa ${attempt}/${maxPollingAttempts}`);
+      
+      const status = await this.checkStatus(whisperHash);
+      
+      if (status.status === 'processed') {
+        console.log(`✅ Processamento concluído! Recuperando resultado...`);
         
-        const statusResponse = await this.getStatus(whisperHash);
-        console.log(`📋 Status atual: ${statusResponse.status}`);
+        // 3. Recuperar resultado
+        const result = await this.retrieveResult(whisperHash, false); // false para obter metadados
         
-        if (statusResponse.status === 'processed') {
-          console.log(`✅ Processamento concluído! Retrieving resultado...`);
-          const retrieveResponse = await this.retrieveResult(whisperHash);
-          
-          return {
-            status: 'completed',
-            result: {
-              markdown: retrieveResponse.result_text,
-              text: retrieveResponse.result_text,
-              metadata: {
-                pages: retrieveResponse.metadata.pages || 0,
-                ocr_used: true,
-                processing_time_ms: retrieveResponse.metadata.processing_time_ms || 0,
-                ...retrieveResponse.metadata
-              }
-            },
-            whisper_hash: whisperHash
-          };
-        } else if (statusResponse.status === 'failed') {
-          throw new Error(`Processamento LLMWhisperer falhou: ${statusResponse.message || 'Erro desconhecido'}`);
+        return {
+          text: result.result_text,
+          metadata: result.metadata || {},
+          whisperHash
+        };
+      } else if (status.status === 'failed') {
+        throw new Error(`Processamento LLMWhisperer falhou: ${status.message || 'Erro desconhecido'}`);
+      } else if (status.status === 'processing' || status.status === 'accepted') {
+        if (attempt < maxPollingAttempts) {
+          console.log(`⏳ Status: ${status.status}. Aguardando ${pollingInterval/1000}s antes da próxima verificação...`);
+          await new Promise(resolve => setTimeout(resolve, pollingInterval));
         }
-        
-        // Still processing, wait before next attempt
-        if (attempt < maxAttempts) {
-          console.log(`⏳ Aguardando ${pollInterval/1000}s antes da próxima verificação...`);
-          await new Promise(resolve => setTimeout(resolve, pollInterval));
+      } else {
+        console.warn(`⚠️ Status desconhecido: ${status.status}`);
+        if (attempt < maxPollingAttempts) {
+          await new Promise(resolve => setTimeout(resolve, pollingInterval));
         }
-        
-      } catch (error) {
-        console.error(`❌ Erro no polling tentativa ${attempt}:`, error);
-        
-        if (attempt === maxAttempts) {
-          throw new Error(`Timeout no polling após ${maxAttempts} tentativas: ${error.message}`);
-        }
-        
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
       }
     }
     
-    throw new Error(`Timeout no processamento LLMWhisperer após ${maxAttempts * pollInterval / 1000}s`);
-  }
-
-  async getStatus(whisperHash: string): Promise<LLMWhispererStatusResponse> {
-    const response = await fetch(`${this.baseUrl}/whisper-status?whisper_hash=${whisperHash}`, {
-      method: 'GET',
-      headers: {
-        'unstract-key': this.apiKey,
-        'Accept': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Erro ao verificar status: ${response.status} ${response.statusText} - ${errorText}`);
-    }
-
-    return await response.json();
-  }
-
-  async retrieveResult(whisperHash: string): Promise<LLMWhispererRetrieveResponse> {
-    const response = await fetch(`${this.baseUrl}/whisper-retrieve?whisper_hash=${whisperHash}&text_only=false`, {
-      method: 'GET',
-      headers: {
-        'unstract-key': this.apiKey,
-        'Accept': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Erro ao recuperar resultado: ${response.status} ${response.statusText} - ${errorText}`);
-    }
-
-    return await response.json();
+    // Timeout no polling
+    throw new Error(`Timeout no processamento LLMWhisperer após ${maxPollingAttempts} tentativas (${(maxPollingAttempts * pollingInterval) / 1000}s)`);
   }
 }
