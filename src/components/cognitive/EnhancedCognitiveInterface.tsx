@@ -26,12 +26,13 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
     createCognitiveSnapshot
   } = useCognitiveSystem();
   
+  const neuralSystem = useNeuralSystem();
   const { 
-    neural,
     memoryConsolidations,
     primingContexts,
-    predictiveCache
-  } = useNeuralSystem();
+    predictiveCache,
+    activationPatterns
+  } = neuralSystem;
 
   const { 
     bm25Search, 
@@ -69,7 +70,7 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
           results = await fuzzySearch(searchQuery, 10);
           break;
         case 'neural':
-          results = await neural.neuralSearch(searchQuery, 'general', 10);
+          results = await neuralSystem.neuralSearch(searchQuery, 'general', 10);
           break;
       }
       
@@ -240,7 +241,7 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
       <Card>
         <CardContent className="p-4 text-center">
           <div className="text-2xl font-bold text-blue-600">
-            {neural.activationPatterns.length}
+            {activationPatterns.length}
           </div>
           <div className="text-sm text-gray-600">Padrões Neurais</div>
         </CardContent>
@@ -259,7 +260,7 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
               Sprint 3: Memory Consolidation + Priming + Cache Preditivo |
               Carga: {Math.round(cognitiveState.cognitiveLoad * 100)}% | 
               Foco: {Math.round(cognitiveState.focusLevel * 100)}% |
-              Ativação: {neural.activationPatterns.length} padrões
+              Ativação: {activationPatterns.length} padrões
             </p>
           </div>
         </div>

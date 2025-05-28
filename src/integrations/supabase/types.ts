@@ -51,7 +51,21 @@ export type Database = {
             foreignKeyName: "cognitive_connections_source_node_id_fkey"
             columns: ["source_node_id"]
             isOneToOne: false
+            referencedRelation: "active_neural_network"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_connections_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
             referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_connections_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "active_neural_network"
             referencedColumns: ["id"]
           },
           {
@@ -117,9 +131,13 @@ export type Database = {
       cognitive_nodes: {
         Row: {
           access_count: number | null
+          activation_strength: number | null
+          base_activation: number | null
+          connected_nodes: string[] | null
           content: string
           conversation_id: string | null
           created_at: string | null
+          decay_rate: number | null
           embedding_conceptual: string | null
           embedding_general: string | null
           embedding_relational: string | null
@@ -129,6 +147,7 @@ export type Database = {
           node_type: Database["public"]["Enums"]["cognitive_node_type"]
           parent_node_id: string | null
           project_id: string | null
+          propagation_depth: number | null
           relevance_score: number | null
           root_session_id: string | null
           status: Database["public"]["Enums"]["node_status"] | null
@@ -138,9 +157,13 @@ export type Database = {
         }
         Insert: {
           access_count?: number | null
+          activation_strength?: number | null
+          base_activation?: number | null
+          connected_nodes?: string[] | null
           content: string
           conversation_id?: string | null
           created_at?: string | null
+          decay_rate?: number | null
           embedding_conceptual?: string | null
           embedding_general?: string | null
           embedding_relational?: string | null
@@ -150,6 +173,7 @@ export type Database = {
           node_type: Database["public"]["Enums"]["cognitive_node_type"]
           parent_node_id?: string | null
           project_id?: string | null
+          propagation_depth?: number | null
           relevance_score?: number | null
           root_session_id?: string | null
           status?: Database["public"]["Enums"]["node_status"] | null
@@ -159,9 +183,13 @@ export type Database = {
         }
         Update: {
           access_count?: number | null
+          activation_strength?: number | null
+          base_activation?: number | null
+          connected_nodes?: string[] | null
           content?: string
           conversation_id?: string | null
           created_at?: string | null
+          decay_rate?: number | null
           embedding_conceptual?: string | null
           embedding_general?: string | null
           embedding_relational?: string | null
@@ -171,6 +199,7 @@ export type Database = {
           node_type?: Database["public"]["Enums"]["cognitive_node_type"]
           parent_node_id?: string | null
           project_id?: string | null
+          propagation_depth?: number | null
           relevance_score?: number | null
           root_session_id?: string | null
           status?: Database["public"]["Enums"]["node_status"] | null
@@ -184,6 +213,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_nodes_parent_node_id_fkey"
+            columns: ["parent_node_id"]
+            isOneToOne: false
+            referencedRelation: "active_neural_network"
             referencedColumns: ["id"]
           },
           {
@@ -755,9 +791,49 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      active_neural_network: {
+        Row: {
+          activation_strength: number | null
+          connected_nodes: string[] | null
+          content: string | null
+          created_at: string | null
+          id: string | null
+          last_accessed_at: string | null
+          node_type: Database["public"]["Enums"]["cognitive_node_type"] | null
+          title: string | null
+        }
+        Insert: {
+          activation_strength?: number | null
+          connected_nodes?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          last_accessed_at?: string | null
+          node_type?: Database["public"]["Enums"]["cognitive_node_type"] | null
+          title?: string | null
+        }
+        Update: {
+          activation_strength?: number | null
+          connected_nodes?: string[] | null
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          last_accessed_at?: string | null
+          node_type?: Database["public"]["Enums"]["cognitive_node_type"] | null
+          title?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      auto_connect_similar_nodes: {
+        Args: {
+          node_id: string
+          similarity_threshold?: number
+          max_connections?: number
+        }
+        Returns: undefined
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
@@ -865,6 +941,28 @@ export type Database = {
           title: string
         }[]
       }
+      neural_cognitive_search: {
+        Args: {
+          p_user_id: string
+          p_query_embedding: string
+          p_search_type?: string
+          p_limit?: number
+          p_similarity_threshold?: number
+          p_boost_activation?: boolean
+        }
+        Returns: {
+          id: string
+          content: string
+          title: string
+          node_type: Database["public"]["Enums"]["cognitive_node_type"]
+          relevance_score: number
+          similarity: number
+          access_count: number
+          created_at: string
+          activation_strength: number
+          combined_score: number
+        }[]
+      }
       search_cognitive_memories: {
         Args: {
           p_query_embedding: string
@@ -892,6 +990,14 @@ export type Database = {
       sparsevec_typmod_in: {
         Args: { "": unknown[] }
         Returns: number
+      }
+      spread_activation: {
+        Args: {
+          source_node_id: string
+          activation_boost?: number
+          max_depth?: number
+        }
+        Returns: undefined
       }
       vector_avg: {
         Args: { "": number[] }

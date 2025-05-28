@@ -389,8 +389,13 @@ export function useNeuralSystem() {
 
     try {
       const { data, error } = await supabase
-        .from('active_neural_network')
+        .from('cognitive_nodes')
         .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .gte('activation_strength', 0.1)
+        .order('activation_strength', { ascending: false })
+        .order('last_accessed_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
@@ -400,17 +405,17 @@ export function useNeuralSystem() {
         content: node.content,
         title: node.title,
         node_type: node.node_type,
-        relevance_score: 1.0,
-        activation_strength: node.activation_strength,
+        relevance_score: node.relevance_score,
+        activation_strength: node.activation_strength || 0.5,
         connected_nodes: node.connected_nodes || [],
-        access_count: 0,
-        base_activation: 0.1,
-        decay_rate: 0.95,
-        propagation_depth: 3,
+        access_count: node.access_count,
+        base_activation: node.base_activation || 0.1,
+        decay_rate: node.decay_rate || 0.95,
+        propagation_depth: node.propagation_depth || 3,
         last_accessed_at: node.last_accessed_at,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        metadata: {}
+        created_at: node.created_at,
+        updated_at: node.updated_at,
+        metadata: node.metadata || {}
       }));
     } catch (error) {
       console.error('❌ Error loading active network:', error);
@@ -436,7 +441,7 @@ export function useNeuralSystem() {
         node_id: node.id,
         activation_strength: node.activation_strength || 0.5,
         propagation_depth: 3,
-        connected_count: Array.isArray(node.connected_nodes) ? node.connected_nodes.length : 0, // Fixed: properly handle array
+        connected_count: Array.isArray(node.connected_nodes) ? node.connected_nodes.length : 0,
         last_boost: node.last_accessed_at
       }));
 
@@ -499,7 +504,8 @@ export function useNeuralSystem() {
           activation_strength: 1.0,
           base_activation: 0.1,
           decay_rate: 0.95,
-          propagation_depth: 3
+          propagation_depth: 3,
+          connected_nodes: []
         })
         .select()
         .single();
@@ -598,7 +604,7 @@ export function useNeuralSystem() {
               edges.push({
                 source: node.id,
                 target: connectedId,
-                strength: (node.activation_strength + targetNode.activation_strength) / 2
+                strength: ((node.activation_strength || 0) + (targetNode.activation_strength || 0)) / 2
               });
             }
           });
