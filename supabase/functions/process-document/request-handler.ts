@@ -32,16 +32,24 @@ export class RequestHandler {
     let documentId: string | undefined;
     
     try {
-      // Enhanced environment validation
+      // Enhanced environment validation with detailed logging
+      console.log('🔍 Verificando variáveis de ambiente...');
+      
       if (!this.openAIApiKey) {
         logger.error('OpenAI API key não configurada');
         throw new Error('OpenAI API key não configurada no ambiente');
       }
+      
+      const maskedOpenAIKey = this.openAIApiKey.substring(0, 8) + '...' + this.openAIApiKey.substring(this.openAIApiKey.length - 4);
+      console.log(`✅ OpenAI API key encontrada (mascarada): ${maskedOpenAIKey}`);
 
       if (!this.llmWhispererApiKey) {
         logger.error('LLMWhisperer API key não configurada');
         throw new Error('LLMWhisperer API key não configurada no ambiente');
       }
+      
+      const maskedLLMKey = this.llmWhispererApiKey.substring(0, 8) + '...' + this.llmWhispererApiKey.substring(this.llmWhispererApiKey.length - 4);
+      console.log(`✅ LLMWhisperer API key encontrada (mascarada): ${maskedLLMKey}`);
       
       // Parse and validate request
       const requestBody = await req.json();

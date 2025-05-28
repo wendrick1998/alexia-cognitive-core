@@ -1,5 +1,4 @@
 
-
 // LLMWhisperer API integration service
 export interface LLMWhispererRequest {
   file_url: string;
@@ -36,6 +35,16 @@ export class LLMWhispererService {
   async processDocument(fileUrl: string): Promise<LLMWhispererResponse> {
     console.log(`🔄 Iniciando processamento LLMWhisperer para: ${fileUrl}`);
     
+    // Debug: Verificar se a chave API está disponível (mascarada)
+    if (!this.apiKey) {
+      console.error('❌ Chave API do LLMWhisperer não encontrada');
+      throw new Error('LLMWhisperer API key não configurada');
+    }
+    
+    const maskedKey = this.apiKey.substring(0, 8) + '...' + this.apiKey.substring(this.apiKey.length - 4);
+    console.log(`🔑 Usando chave API (mascarada): ${maskedKey}`);
+    console.log(`🌐 URL da API: ${this.baseUrl}/whisper`);
+    
     const request: LLMWhispererRequest = {
       file_url: fileUrl,
       output_format: 'markdown',
@@ -52,24 +61,56 @@ export class LLMWhispererService {
         controller.abort();
       }, 180000); // 3 minutos timeout
 
+      const headers = {
+        'unstract-key': this.apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+
+      console.log('📤 Headers da requisição (chave mascarada):', {
+        'unstract-key': maskedKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      });
+
       const response = await fetch(`${this.baseUrl}/whisper`, {
         method: 'POST',
-        headers: {
-          'unstract-key': this.apiKey,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers,
         body: JSON.stringify(request),
         signal: controller.signal
       });
 
       clearTimeout(timeoutId);
 
+      console.log(`📥 Status da resposta: ${response.status} ${response.statusText}`);
+      console.log(`📋 Headers da resposta:`, Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`❌ Erro LLMWhisperer: ${response.status} ${response.statusText}`);
         console.error(`📄 Resposta de erro: ${errorText}`);
-        throw new Error(`LLMWhisperer API error: ${response.status} ${response.statusText} - ${errorText}`);
+        
+        // Tentar parsear o erro para obter mais detalhes
+        let errorDetails = errorText;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorDetails = errorJson.message || errorText;
+        } catch (parseError) {
+          console.log('⚠️ Não foi possível parsear a resposta de erro como JSON');
+        }
+        
+        // Tratamento específico para diferentes tipos de erro
+        if (response.status === 401) {
+          throw new Error(`Chave API inválida ou inativa. Verifique sua assinatura do LLMWhisperer. Detalhes: ${errorDetails}`);
+        } else if (response.status === 403) {
+          throw new Error(`Acesso negado. Verifique as permissões da sua chave API. Detalhes: ${errorDetails}`);
+        } else if (response.status === 429) {
+          throw new Error(`Limite de taxa excedido. Aguarde antes de tentar novamente. Detalhes: ${errorDetails}`);
+        } else if (response.status >= 500) {
+          throw new Error(`Erro interno do servidor LLMWhisperer. Tente novamente mais tarde. Detalhes: ${errorDetails}`);
+        } else {
+          throw new Error(`LLMWhisperer API error: ${response.status} ${response.statusText} - ${errorDetails}`);
+        }
       }
 
       const result: LLMWhispererResponse = await response.json();
@@ -95,8 +136,8 @@ export class LLMWhispererService {
         throw new Error('Timeout no processamento LLMWhisperer (3 minutos)');
       }
       
+      // Re-throw com a mensagem original se já for um erro tratado
       throw error;
     }
   }
 }
-
