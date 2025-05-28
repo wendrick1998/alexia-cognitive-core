@@ -23,17 +23,8 @@ const Chat = () => {
   
   const { processing, processMessage } = useChatProcessor();
 
-  // Efeito otimizado para carregamento de mensagens
-  useEffect(() => {
-    const loadConversationMessages = async () => {
-      if (currentConversation?.id && !conversationState.isNavigating) {
-        console.log(`🔄 Carregando mensagens da conversa: ${currentConversation.id}`);
-        await loadMessages(currentConversation.id);
-      }
-    };
-    
-    loadConversationMessages();
-  }, [currentConversation?.id, loadMessages, conversationState.isNavigating]);
+  // Remover o useEffect que causava carregamentos duplicados
+  // O carregamento agora é feito diretamente em navigateToConversation
 
   const handleSendMessage = async (messageText: string) => {
     let conversation = currentConversation;

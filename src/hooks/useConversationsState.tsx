@@ -8,6 +8,7 @@ export interface ConversationState {
   isLoadingMessages: boolean;
   lastInteractionTime: string | null;
   hasUnsavedChanges: boolean;
+  pendingConversationId: string | null;
 }
 
 export function useConversationsState() {
@@ -16,11 +17,16 @@ export function useConversationsState() {
     isCreatingNew: false,
     isLoadingMessages: false,
     lastInteractionTime: null,
-    hasUnsavedChanges: false
+    hasUnsavedChanges: false,
+    pendingConversationId: null
   });
 
-  const setNavigating = useCallback((isNavigating: boolean) => {
-    setConversationState(prev => ({ ...prev, isNavigating }));
+  const setNavigating = useCallback((isNavigating: boolean, conversationId?: string) => {
+    setConversationState(prev => ({ 
+      ...prev, 
+      isNavigating,
+      pendingConversationId: isNavigating ? (conversationId || null) : null
+    }));
   }, []);
 
   const setCreatingNew = useCallback((isCreatingNew: boolean) => {
@@ -43,12 +49,21 @@ export function useConversationsState() {
     setConversationState(prev => ({ ...prev, hasUnsavedChanges: hasChanges }));
   }, []);
 
+  const clearPendingNavigation = useCallback(() => {
+    setConversationState(prev => ({ 
+      ...prev, 
+      isNavigating: false, 
+      pendingConversationId: null 
+    }));
+  }, []);
+
   return {
     conversationState,
     setNavigating,
     setCreatingNew,
     setLoadingMessages,
     updateLastInteraction,
-    markUnsavedChanges
+    markUnsavedChanges,
+    clearPendingNavigation
   };
 }

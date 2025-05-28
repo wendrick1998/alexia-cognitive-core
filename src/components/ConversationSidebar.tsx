@@ -80,11 +80,13 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
   }, [user]);
 
   const handleNewConversation = async () => {
+    console.log('🆕 Nova conversa solicitada via sidebar');
     await createAndNavigateToNewConversation();
     setActiveTab('all');
   };
 
   const handleSelectConversation = async (conversation: any) => {
+    console.log(`🎯 Conversa selecionada via sidebar: ${conversation.id}`);
     await navigateToConversation(conversation);
   };
 
@@ -150,6 +152,9 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
   const recentConversations = conversations.slice(0, 5);
   const favoriteConversations = conversations.filter(conv => conv.is_favorite);
 
+  // Determinar se deve desabilitar interações durante navegação
+  const isDisabled = conversationState.isNavigating || conversationState.isCreatingNew;
+
   if (!isOpen) return null;
 
   return (
@@ -178,7 +183,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         
         <Button
           onClick={handleNewConversation}
-          disabled={conversationState.isCreatingNew}
+          disabled={isDisabled}
           className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:scale-105 disabled:scale-100 disabled:opacity-70"
           size="sm"
         >
@@ -205,14 +210,14 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 rounded-xl border-slate-200 focus:border-blue-500"
-            disabled={isLoadingConversations}
+            disabled={isLoadingConversations || isDisabled}
           />
         </div>
         
         <div className="flex items-center space-x-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-xl" disabled={isLoadingConversations}>
+              <Button variant="outline" size="sm" className="rounded-xl" disabled={isLoadingConversations || isDisabled}>
                 <Filter className="w-4 h-4 mr-2" />
                 Filtrar
               </Button>
@@ -238,7 +243,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-xl" disabled={isLoadingConversations}>
+              <Button variant="outline" size="sm" className="rounded-xl" disabled={isLoadingConversations || isDisabled}>
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -279,9 +284,9 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-3 m-4 mb-0">
-          <TabsTrigger value="all" disabled={isLoadingConversations}>Todas</TabsTrigger>
-          <TabsTrigger value="categories" disabled={isLoadingConversations}>Categorias</TabsTrigger>
-          <TabsTrigger value="recent" disabled={isLoadingConversations}>Recentes</TabsTrigger>
+          <TabsTrigger value="all" disabled={isLoadingConversations || isDisabled}>Todas</TabsTrigger>
+          <TabsTrigger value="categories" disabled={isLoadingConversations || isDisabled}>Categorias</TabsTrigger>
+          <TabsTrigger value="recent" disabled={isLoadingConversations || isDisabled}>Recentes</TabsTrigger>
         </TabsList>
 
         {/* All Conversations Tab */}
@@ -320,7 +325,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
                     onFavorite={handleFavoriteConversation}
                     onArchive={handleArchiveConversation}
                     onDelete={handleDeleteConversation}
-                    disabled={conversationState.isNavigating}
+                    disabled={isDisabled}
                   />
                 ))
               )}
@@ -378,7 +383,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
                         onFavorite={handleFavoriteConversation}
                         onArchive={handleArchiveConversation}
                         onDelete={handleDeleteConversation}
-                        disabled={conversationState.isNavigating}
+                        disabled={isDisabled}
                       />
                     ))
                   )}
@@ -406,7 +411,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
                         onFavorite={handleFavoriteConversation}
                         onArchive={handleArchiveConversation}
                         onDelete={handleDeleteConversation}
-                        disabled={conversationState.isNavigating}
+                        disabled={isDisabled}
                       />
                     ))
                   )}
