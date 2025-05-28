@@ -183,9 +183,17 @@ export function useCognitiveSystem() {
 
       if (error) throw error;
 
+      // Transform database records to match our interface
+      const transformedInsights: CognitiveInsight[] = (data || []).map(insight => ({
+        ...insight,
+        insight_type: insight.insight_type as CognitiveInsight['insight_type'],
+        status: insight.status as CognitiveInsight['status'],
+        related_nodes: Array.isArray(insight.related_nodes) ? insight.related_nodes : []
+      }));
+
       setCognitiveState(prev => ({
         ...prev,
-        pendingInsights: data || []
+        pendingInsights: transformedInsights
       }));
     } catch (error) {
       console.error('❌ Erro ao carregar insights:', error);
@@ -235,9 +243,21 @@ export function useCognitiveSystem() {
     if (!user) return null;
 
     try {
+      // Serialize the cognitive state properly for JSON storage
       const snapshotData = {
-        cognitiveState,
-        activeNodes: cognitiveState.activeNodes,
+        cognitiveState: {
+          currentMode: cognitiveState.currentMode,
+          cognitiveLoad: cognitiveState.cognitiveLoad,
+          focusLevel: cognitiveState.focusLevel
+        },
+        activeNodes: cognitiveState.activeNodes.map(node => ({
+          id: node.id,
+          content: node.content,
+          title: node.title,
+          node_type: node.node_type,
+          relevance_score: node.relevance_score,
+          created_at: node.created_at
+        })),
         timestamp: new Date().toISOString()
       };
 
