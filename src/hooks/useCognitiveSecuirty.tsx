@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -336,7 +337,7 @@ export function useCognitiveSecurity() {
     } catch (error) {
       await logAccess(action, `context:${contextId}`, false, { 
         ...metadata, 
-        error: error.message 
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
       throw error;
     }
