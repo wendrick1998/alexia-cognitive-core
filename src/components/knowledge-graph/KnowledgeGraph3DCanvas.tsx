@@ -59,7 +59,7 @@ const Node3D: React.FC<Node3DProps> = ({
       >
         <sphereGeometry args={[node.size, 16, 16]} />
         <meshStandardMaterial 
-          color={node.color} 
+          color={node.color}
           transparent 
           opacity={opacity}
           emissive={isSelected ? node.color : '#000000'}
@@ -105,7 +105,6 @@ const Edge3D: React.FC<Edge3DProps> = ({ edge, nodes, isVisible }) => {
       points={points}
       color={`rgba(255, 255, 255, ${edge.strength * 0.5})`}
       lineWidth={edge.width}
-      transparent
     />
   );
 };
@@ -134,7 +133,7 @@ const Cluster3D: React.FC<Cluster3DProps> = ({ cluster, isVisible }) => {
       >
         <sphereGeometry args={[cluster.nodes.length * 0.5, 8, 8]} />
         <meshBasicMaterial 
-          color={cluster.color} 
+          color={cluster.color}
           transparent 
           opacity={0.1}
           wireframe

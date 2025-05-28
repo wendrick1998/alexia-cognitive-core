@@ -99,7 +99,7 @@ export function useHybridRAG() {
       // Use existing cognitive_search function instead of non-existent graph_traversal_search
       const { data, error } = await supabase.rpc('cognitive_search', {
         p_user_id: user.id,
-        p_query_embedding: [], // Empty for now, should be generated from query
+        p_query_embedding: null, // Use null instead of empty array for vector type
         p_search_type: 'general',
         p_limit: 10,
         p_similarity_threshold: 0.5
