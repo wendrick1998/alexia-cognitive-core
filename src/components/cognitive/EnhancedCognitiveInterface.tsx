@@ -3,6 +3,7 @@ import { useCognitiveSystem } from '@/hooks/useCognitiveSystem';
 import { useNeuralSystem } from '@/hooks/useNeuralSystem';
 import { useBM25Search } from '@/hooks/useBM25Search';
 import { useDBSCANClustering } from '@/hooks/useDBSCANClustering';
+import { useCognitiveOrchestrator } from '@/hooks/useCognitiveOrchestrator';
 import { Brain, Network, Lightbulb, Zap, Search, Eye, BarChart3, Sparkles, Activity, Clock, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,6 +50,10 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
     metrics: clusterMetrics,
     isProcessing: isClusteringProcessing 
   } = useDBSCANClustering();
+
+  const {
+    agents
+  } = useCognitiveOrchestrator();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
