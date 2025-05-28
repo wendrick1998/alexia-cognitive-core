@@ -53,6 +53,8 @@ export function useConversations() {
     loading,
     searchQuery,
     setSearchQuery,
+    setMessages,
+    setCurrentConversation,
     loadConversations,
     loadCategories,
     createConversation,
@@ -63,7 +65,6 @@ export function useConversations() {
     createCategory,
     loadMessages,
     getCurrentOrCreateConversation,
-    setCurrentConversation,
     updateConversationTimestamp
   };
 }
