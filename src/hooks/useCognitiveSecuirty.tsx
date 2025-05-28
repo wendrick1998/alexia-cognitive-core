@@ -398,34 +398,6 @@ export function useCognitiveSecurity() {
     return anomalies;
   }, []);
 
-  // Generate security report
-  const generateSecurityReport = useCallback(() => {
-    const anomalies = detectAnomalies();
-    const now = Date.now();
-    const dayAgo = now - 86400000;
-    
-    const dailyLogs = auditBuffer.current.filter(
-      log => log.timestamp.getTime() > dayAgo
-    );
-
-    return {
-      timestamp: new Date(),
-      period: '24 hours',
-      metrics: {
-        ...metrics,
-        encryptionCoverage: securityContexts.filter(c => c.encryption).length / 
-          Math.max(1, securityContexts.length),
-        complianceScore: Math.max(0, 1 - (metrics.failedAttempts / Math.max(1, metrics.totalAccesses)))
-      },
-      anomalies,
-      topActions: dailyLogs.reduce((acc, log) => {
-        acc[log.action] = (acc[log.action] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
-      recommendations: generateSecurityRecommendations(anomalies, metrics)
-    };
-  }, [detectAnomalies, metrics, securityContexts]);
-
   // Generate security recommendations
   const generateSecurityRecommendations = useCallback((
     anomalies: any[],
@@ -455,6 +427,34 @@ export function useCognitiveSecurity() {
 
     return recommendations;
   }, []);
+
+  // Generate security report
+  const generateSecurityReport = useCallback(() => {
+    const anomalies = detectAnomalies();
+    const now = Date.now();
+    const dayAgo = now - 86400000;
+    
+    const dailyLogs = auditBuffer.current.filter(
+      log => log.timestamp.getTime() > dayAgo
+    );
+
+    return {
+      timestamp: new Date(),
+      period: '24 hours',
+      metrics: {
+        ...metrics,
+        encryptionCoverage: securityContexts.filter(c => c.encryption).length / 
+          Math.max(1, securityContexts.length),
+        complianceScore: Math.max(0, 1 - (metrics.failedAttempts / Math.max(1, metrics.totalAccesses)))
+      },
+      anomalies,
+      topActions: dailyLogs.reduce((acc, log) => {
+        acc[log.action] = (acc[log.action] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      recommendations: generateSecurityRecommendations(anomalies, metrics)
+    };
+  }, [detectAnomalies, metrics, securityContexts, generateSecurityRecommendations]);
 
   // Periodic security monitoring
   useEffect(() => {
