@@ -9,28 +9,82 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      conversation_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          position: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          position?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          position?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
+          category_id: string | null
           created_at: string | null
           id: string
+          is_archived: boolean | null
+          is_favorite: boolean | null
+          last_message_preview: string | null
+          message_count: number | null
+          name: string | null
           project_id: string | null
           session_id: string
+          tags: string[] | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          category_id?: string | null
           created_at?: string | null
           id?: string
+          is_archived?: boolean | null
+          is_favorite?: boolean | null
+          last_message_preview?: string | null
+          message_count?: number | null
+          name?: string | null
           project_id?: string | null
           session_id: string
+          tags?: string[] | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          category_id?: string | null
           created_at?: string | null
           id?: string
+          is_archived?: boolean | null
+          is_favorite?: boolean | null
+          last_message_preview?: string | null
+          message_count?: number | null
+          name?: string | null
           project_id?: string | null
           session_id?: string
+          tags?: string[] | null
           updated_at?: string | null
           user_id?: string
         }
@@ -47,6 +101,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_conversations_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_categories"
             referencedColumns: ["id"]
           },
         ]
