@@ -1,7 +1,6 @@
-
 // Text processing and cleaning utilities
 export function cleanAndValidateText(text: string): string {
-  console.log('🧹 Iniciando limpeza e validação avançada do texto...');
+  console.log('🧹 Iniciando limpeza e validação aprimorada do texto...');
   
   if (!text || text.trim().length === 0) {
     throw new Error('Texto vazio fornecido para limpeza');
@@ -29,9 +28,9 @@ export function cleanAndValidateText(text: string): string {
     .replace(/\\\[/g, '[')
     .replace(/\\\]/g, ']');
   
-  // Remove obviously corrupted sequences but preserve valid special characters
+  // More permissive character filtering - keep numbers, punctuation, accents
   cleaned = cleaned
-    .replace(/[^\w\s\.\,\!\?\;\:\-\(\)\[\]\"\'À-ÿ\u00C0-\u017F\u0100-\u017F\u1E00-\u1EFF0-9%$€£¥©®™°±×÷]/g, ' ')
+    .replace(/[^\w\s\.\,\!\?\;\:\-\(\)\[\]\"\'À-ÿ\u00C0-\u017F\u0100-\u017F\u1E00-\u1EFF0-9%$€£¥©®™°±×÷\/\&\@\#]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   
@@ -48,7 +47,8 @@ export function cleanAndValidateText(text: string): string {
   console.log(`📝 Palavras válidas encontradas: ${words.length}`);
   console.log(`📋 Amostra do texto limpo (300 chars): "${cleaned.substring(0, 300)}"`);
   
-  if (quality < 0.15) {
+  // More permissive quality threshold
+  if (quality < 0.1) {
     console.warn(`⚠️ Qualidade do texto baixa (${(quality * 100).toFixed(1)}%), mas prosseguindo...`);
   }
   
@@ -70,42 +70,46 @@ export function calculateTextQuality(text: string): number {
   const words = cleanText.split(/\s+/).filter(w => w.length > 0);
   const sentences = cleanText.split(/[.!?]+/).filter(s => s.trim().length > 0);
   
-  // Contadores de caracteres válidos expandidos
+  // Contadores de caracteres válidos expandidos (mais permissivo)
   const alphaChars = (cleanText.match(/[a-zA-ZÀ-ÿ\u00C0-\u017F]/g) || []).length;
   const numericChars = (cleanText.match(/[0-9]/g) || []).length;
-  const punctuationChars = (cleanText.match(/[.,!?;:()\-"'\[\]]/g) || []).length;
+  const punctuationChars = (cleanText.match(/[.,!?;:()\-"'\[\]\/\&\@\#%]/g) || []).length;
   const spaceChars = (cleanText.match(/\s/g) || []).length;
   
   const validChars = alphaChars + numericChars + punctuationChars + spaceChars;
-  const readabilityRatio = validChars / totalChars;
+  const readabilityRatio = Math.min(1, validChars / totalChars);
   
-  // Palavras válidas (incluindo números e hífens)
-  const validWords = words.filter(w => /^[a-zA-ZÀ-ÿ\u00C0-\u017F0-9\-']{2,}$/.test(w));
+  // Palavras válidas (incluindo números e hífens) - mais permissivo
+  const validWords = words.filter(w => /^[a-zA-ZÀ-ÿ\u00C0-\u017F0-9\-'\.\/\&]{2,}$/.test(w));
   const wordValidityRatio = words.length > 0 ? validWords.length / words.length : 0;
   
-  // Densidade de palavras
+  // Densidade de palavras - mais permissiva
   const wordDensity = totalChars > 0 ? words.length / totalChars : 0;
   
   // Diversidade de caracteres
   const uniqueChars = new Set(cleanText.toLowerCase()).size;
   
-  // Cálculo da qualidade (0-1)
-  let quality = readabilityRatio * 0.6; // 60% peso para legibilidade
-  quality += wordValidityRatio * 0.25; // 25% peso para validez das palavras
+  // Cálculo da qualidade (0-1) - mais permissivo
+  let quality = readabilityRatio * 0.5; // 50% peso para legibilidade
+  quality += wordValidityRatio * 0.3; // 30% peso para validez das palavras
   
-  // Bônus para densidade apropriada (0.1-0.3 é bom)
-  if (wordDensity >= 0.1 && wordDensity <= 0.3) {
-    quality += 0.1;
+  // Bônus para densidade apropriada (0.05-0.5 é bom) - mais permissivo
+  if (wordDensity >= 0.05 && wordDensity <= 0.5) {
+    quality += 0.15;
+  } else {
+    quality += Math.max(0, 0.15 - Math.abs(wordDensity - 0.15) * 0.5);
   }
   
-  // Bônus para diversidade de caracteres
-  if (uniqueChars > 15) {
+  // Bônus para diversidade de caracteres - mais permissivo
+  if (uniqueChars > 10) {
     quality += 0.05;
+  } else if (uniqueChars > 5) {
+    quality += 0.025;
   }
   
-  // Penalidades reduzidas
-  if (totalChars < 20) quality *= 0.7; // Menos penalidade para texto curto
-  if (words.length < 5) quality *= 0.8; // Menos penalidade para poucas palavras
+  // Penalidades muito reduzidas
+  if (totalChars < 20) quality *= 0.9; // Menos penalidade para texto curto
+  if (words.length < 5) quality *= 0.95; // Menos penalidade para poucas palavras
   
   // Bônus para texto substancial
   if (totalChars > 100 && words.length > 15) quality += 0.05;

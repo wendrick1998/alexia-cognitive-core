@@ -1,9 +1,11 @@
 
 import { calculateTextQuality, cleanAndValidateText } from './text-processor.ts';
 import { 
+  extractWithPDFJS,
   extractWithEnhancedPdfParse, 
   extractWithNativePDFParser, 
   extractWithStreamDecompression, 
+  extractWithCleanExtraction,
   extractWithRawTextSearch,
   ExtractionResult 
 } from './extraction-strategies.ts';
@@ -25,16 +27,16 @@ export interface ExtractionResult {
 export class UltimatePDFExtractor {
   
   async extractText(pdfBuffer: Uint8Array): Promise<ExtractionResult> {
-    console.log('🔍 Iniciando extração robusta de PDF com estratégias priorizadas...');
+    console.log('🚀 Iniciando extração robusta de PDF com estratégias otimizadas...');
     console.log(`📊 Tamanho do buffer: ${pdfBuffer.length} bytes (${(pdfBuffer.length / 1024 / 1024).toFixed(2)} MB)`);
     
     // Estratégias ordenadas por probabilidade de sucesso e qualidade
     const strategies = [
+      { name: 'pdfjs-dist', method: this.tryPDFJS.bind(this) },
       { name: 'pdf-parse-enhanced', method: this.tryEnhancedPdfParse.bind(this) },
       { name: 'native-pdf-parser', method: this.tryNativePDFParser.bind(this) },
       { name: 'stream-decompression', method: this.tryStreamDecompression.bind(this) },
       { name: 'clean-extraction', method: this.tryCleanExtraction.bind(this) },
-      { name: 'aggressive-extraction', method: this.tryAggressiveExtraction.bind(this) },
       { name: 'raw-text-search', method: this.tryRawTextSearch.bind(this) }
     ];
 
@@ -66,8 +68,8 @@ export class UltimatePDFExtractor {
           console.log(`   🎯 Qualidade: ${enhancedQuality.toFixed(1)}%`);
           console.log(`   📋 Amostra: "${result.metadata.textSample}"`);
           
-          // Se qualidade alta, usar imediatamente
-          if (enhancedQuality >= 75) {
+          // Se qualidade excelente, usar imediatamente
+          if (enhancedQuality >= 80) {
             console.log(`🎉 Qualidade excelente alcançada com ${strategy.name}!`);
             return this.finalizeResult(result);
           }
@@ -79,7 +81,7 @@ export class UltimatePDFExtractor {
           }
           
           // Se qualidade boa o suficiente, interromper
-          if (enhancedQuality >= 60) {
+          if (enhancedQuality >= 65) {
             console.log(`✅ Qualidade satisfatória alcançada com ${strategy.name}!`);
             break;
           }
@@ -104,6 +106,22 @@ export class UltimatePDFExtractor {
     }
 
     throw new Error(`Todas as estratégias de extração falharam. Buffer: ${pdfBuffer.length} bytes`);
+  }
+  
+  private async tryPDFJS(pdfBuffer: Uint8Array): Promise<ExtractionResult> {
+    const arrayBuffer = pdfBuffer.buffer.slice(pdfBuffer.byteOffset, pdfBuffer.byteOffset + pdfBuffer.byteLength);
+    const result = await extractWithPDFJS(arrayBuffer);
+    return {
+      text: result.text,
+      quality: 0, // Será calculado depois
+      method: 'pdfjs-dist',
+      metadata: {
+        pages: result.metadata?.pages || 1,
+        totalChars: result.text.length,
+        validWords: this.countValidWords(result.text),
+        processedPages: result.metadata?.processedPages || 0
+      }
+    };
   }
   
   private async tryEnhancedPdfParse(pdfBuffer: Uint8Array): Promise<ExtractionResult> {
@@ -151,6 +169,21 @@ export class UltimatePDFExtractor {
     };
   }
   
+  private async tryCleanExtraction(pdfBuffer: Uint8Array): Promise<ExtractionResult> {
+    const arrayBuffer = pdfBuffer.buffer.slice(pdfBuffer.byteOffset, pdfBuffer.byteOffset + pdfBuffer.byteLength);
+    const result = await extractWithCleanExtraction(arrayBuffer);
+    return {
+      text: result.text,
+      quality: 0, // Será calculado depois
+      method: 'clean-extraction',
+      metadata: {
+        pages: result.metadata?.textBlocks || 1,
+        totalChars: result.text.length,
+        validWords: this.countValidWords(result.text)
+      }
+    };
+  }
+  
   private async tryRawTextSearch(pdfBuffer: Uint8Array): Promise<ExtractionResult> {
     const arrayBuffer = pdfBuffer.buffer.slice(pdfBuffer.byteOffset, pdfBuffer.byteOffset + pdfBuffer.byteLength);
     const result = await extractWithRawTextSearch(arrayBuffer);
@@ -163,79 +196,6 @@ export class UltimatePDFExtractor {
         totalChars: result.text.length,
         validWords: this.countValidWords(result.text),
         encoding: result.metadata?.encoding
-      }
-    };
-  }
-  
-  private async tryCleanExtraction(pdfBuffer: Uint8Array): Promise<ExtractionResult> {
-    const pdfString = new TextDecoder('latin1').decode(pdfBuffer);
-    let extractedText = '';
-    
-    // Encontrar blocos de texto (BT...ET) com melhor parsing
-    const textBlocks = pdfString.match(/BT[\s\S]*?ET/g) || [];
-    
-    for (const block of textBlocks) {
-      // Extrair texto entre parênteses + Tj/TJ
-      const tjMatches = block.match(/\(([^)]+)\)\s*T[jJ]/g) || [];
-      
-      for (const match of tjMatches) {
-        const text = match.match(/\(([^)]+)\)/)?.[1];
-        if (text && text.length > 1 && !this.isMetadata(text)) {
-          extractedText += this.decodePDFString(text) + ' ';
-        }
-      }
-      
-      // Extrair arrays TJ com melhor parsing
-      const tjArrays = block.match(/\[(.*?)\]\s*TJ/g) || [];
-      for (const arr of tjArrays) {
-        const parts = arr.match(/\(([^)]+)\)/g) || [];
-        for (const part of parts) {
-          const text = part.slice(1, -1);
-          if (text && text.length > 1 && !this.isMetadata(text)) {
-            extractedText += this.decodePDFString(text) + ' ';
-          }
-        }
-      }
-    }
-    
-    return {
-      text: extractedText,
-      quality: 0, // Será calculado depois
-      method: 'clean-extraction',
-      metadata: {
-        pages: textBlocks.length,
-        totalChars: extractedText.length,
-        validWords: this.countValidWords(extractedText)
-      }
-    };
-  }
-  
-  private async tryAggressiveExtraction(pdfBuffer: Uint8Array): Promise<ExtractionResult> {
-    const pdfString = new TextDecoder('latin1').decode(pdfBuffer);
-    let extractedText = '';
-    
-    // Buscar por qualquer texto entre parênteses, mesmo fora de blocos BT/ET
-    const allTextMatches = pdfString.match(/\([^)]{2,}\)/g) || [];
-    
-    for (const match of allTextMatches) {
-      const text = match.slice(1, -1); // Remove os parênteses
-      if (text && text.length > 1) {
-        const decoded = this.decodePDFString(text);
-        // Filtrar apenas se parece com texto legível
-        if (this.looksLikeText(decoded)) {
-          extractedText += decoded + ' ';
-        }
-      }
-    }
-    
-    return {
-      text: extractedText,
-      quality: 0, // Será calculado depois
-      method: 'aggressive-extraction',
-      metadata: {
-        pages: 1,
-        totalChars: extractedText.length,
-        validWords: this.countValidWords(extractedText)
       }
     };
   }
@@ -258,72 +218,65 @@ export class UltimatePDFExtractor {
     const spaceChars = (cleanText.match(/\s/g) || []).length;
     
     const validChars = alphaChars + numericChars + punctuationChars + spaceChars;
-    const readabilityRatio = validChars / totalChars;
+    const readabilityRatio = Math.min(1, validChars / totalChars);
     
     // Palavras válidas (incluindo números)
-    const validWords = words.filter(w => /^[a-zA-ZÀ-ÿ0-9\-']+$/.test(w));
+    const validWords = words.filter(w => /^[a-zA-ZÀ-ÿ0-9\-'\.]+$/.test(w));
     const wordValidityRatio = words.length > 0 ? validWords.length / words.length : 0;
     
-    // Densidade de texto (palavras por caractere)
+    // Densidade de texto (palavras por caractere) - mais permissiva
     const wordDensity = totalChars > 0 ? words.length / totalChars : 0;
-    const optimalDensity = wordDensity > 0.1 && wordDensity < 0.3; // Entre 10-30% é bom
+    const densityScore = wordDensity > 0.05 && wordDensity < 0.5 ? 1 : Math.max(0, 1 - Math.abs(wordDensity - 0.15) * 5);
     
-    // Estrutura de sentenças
-    const avgWordsPerSentence = sentences.length > 0 ? words.length / sentences.length : 0;
-    const sentenceStructure = avgWordsPerSentence > 3 && avgWordsPerSentence < 50; // Sentenças razoáveis
+    // Estrutura de sentenças - mais permissiva
+    const avgWordsPerSentence = sentences.length > 0 ? words.length / sentences.length : words.length;
+    const sentenceScore = avgWordsPerSentence > 2 && avgWordsPerSentence < 100 ? 1 : 0.5;
     
-    // Diversidade de caracteres
+    // Diversidade de caracteres - mais permissiva
     const uniqueChars = new Set(cleanText.toLowerCase()).size;
-    const charDiversity = uniqueChars > 15; // Boa diversidade
+    const diversityScore = uniqueChars > 10 ? 1 : uniqueChars / 10;
     
-    // Cálculo da pontuação (0-100)
+    // Cálculo da pontuação (0-100) - menos penalizante
     let score = 0;
     
-    // Legibilidade (40 pontos)
-    score += readabilityRatio * 40;
+    // Legibilidade (35 pontos)
+    score += readabilityRatio * 35;
     
     // Validez das palavras (25 pontos)
     score += wordValidityRatio * 25;
     
     // Densidade de palavras (15 pontos)
-    if (optimalDensity) score += 15;
-    else score += Math.max(0, 15 - Math.abs(wordDensity - 0.2) * 100);
+    score += densityScore * 15;
     
     // Estrutura de sentenças (10 pontos)
-    if (sentenceStructure) score += 10;
-    else if (sentences.length > 0) score += 5;
+    score += sentenceScore * 10;
     
-    // Diversidade de caracteres (5 pontos)
-    if (charDiversity) score += 5;
+    // Diversidade de caracteres (10 pontos)
+    score += diversityScore * 10;
     
-    // Penalidades
-    if (totalChars < 50) score *= 0.5; // Texto muito curto
-    if (words.length < 10) score *= 0.6; // Poucas palavras
+    // Bônus para texto substancial (5 pontos)
+    if (totalChars > 100 && words.length > 20) score += 5;
     
-    // Bônus para texto substancial
-    if (totalChars > 500 && words.length > 50) score += 5;
-    if (totalChars > 2000 && words.length > 200) score += 5;
+    // Penalidades reduzidas
+    if (totalChars < 50) score *= 0.8; // Menos penalidade para texto curto
+    if (words.length < 10) score *= 0.9; // Menos penalidade para poucas palavras
     
-    return Math.max(0, Math.min(100, score));
+    return Math.max(5, Math.min(100, score)); // Mínimo de 5%
   }
   
   private generateTextSample(text: string): string {
     if (!text || text.length === 0) return "texto vazio";
     
     const cleanText = text.trim();
-    if (cleanText.length <= 100) return cleanText;
+    if (cleanText.length <= 150) return cleanText;
     
     // Primeira parte (100 chars)
     const beginning = cleanText.substring(0, 100);
     
-    // Meio (50 chars)
-    const midPoint = Math.floor(cleanText.length / 2);
-    const middle = cleanText.substring(midPoint - 25, midPoint + 25);
-    
     // Final (50 chars)
-    const end = cleanText.substring(cleanText.length - 50);
+    const end = cleanText.substring(Math.max(0, cleanText.length - 50));
     
-    return `INÍCIO: "${beginning}" ... MEIO: "${middle}" ... FIM: "${end}"`;
+    return `INÍCIO: "${beginning}" ... FIM: "${end}"`;
   }
   
   private finalizeResult(result: ExtractionResult): ExtractionResult {
@@ -351,45 +304,8 @@ export class UltimatePDFExtractor {
     };
   }
   
-  private looksLikeText(text: string): boolean {
-    if (!text || text.length < 2) return false;
-    
-    // Verificar se contém caracteres legíveis suficientes
-    const alphaNumCount = (text.match(/[a-zA-ZÀ-ÿ0-9]/g) || []).length;
-    const totalCount = text.length;
-    const ratio = alphaNumCount / totalCount;
-    
-    // Pelo menos 40% deve ser alfanumérico
-    return ratio > 0.4;
-  }
-  
-  private isMetadata(text: string): boolean {
-    const patterns = [
-      /^(Type|Font|PDF|Creator|Producer|Title|Author|Subject|Keywords)/i,
-      /FontDescriptor|BaseFont|MediaBox|CropBox|BleedBox/i,
-      /^[A-Z]{2,}[a-z]+[A-Z]/,
-      /^\d+\s+\d+\s+R$/,
-      /^[0-9\s\.]+$/,
-      /^[A-Z]+$/,
-      /obj|endobj|stream|endstream/i
-    ];
-    return patterns.some(p => p.test(text.trim()));
-  }
-  
-  private decodePDFString(str: string): string {
-    return str
-      .replace(/\\n/g, ' ')
-      .replace(/\\r/g, ' ')
-      .replace(/\\\(/g, '(')
-      .replace(/\\\)/g, ')')
-      .replace(/\\\\/g, '\\')
-      .replace(/\\t/g, ' ')
-      .replace(/\\\[/g, '[')
-      .replace(/\\\]/g, ']');
-  }
-  
   private countValidWords(text: string): number {
-    return text.split(/\s+/).filter(w => /^[a-zA-ZÀ-ÿ0-9\-']{2,}$/.test(w)).length;
+    return text.split(/\s+/).filter(w => /^[a-zA-ZÀ-ÿ0-9\-'\.]{2,}$/.test(w)).length;
   }
 }
 
