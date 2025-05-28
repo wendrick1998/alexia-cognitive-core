@@ -1,5 +1,5 @@
 
-import { DocumentProcessor } from './document-processor.ts';
+import { DocumentProcessorLLMWhisperer } from './document-processor-llmwhisperer.ts';
 import { ProcessingLogger } from './logger.ts';
 import { ErrorHandler } from './error-handler.ts';
 
@@ -10,9 +10,11 @@ const corsHeaders = {
 
 export class RequestHandler {
   private openAIApiKey: string;
+  private llmWhispererApiKey: string;
 
   constructor() {
     this.openAIApiKey = Deno.env.get('OPENAI_API_KEY') || '';
+    this.llmWhispererApiKey = Deno.env.get('LLM_WHISPERER_API_KEY') || '';
   }
 
   async handleRequest(req: Request): Promise<Response> {
@@ -35,6 +37,11 @@ export class RequestHandler {
         logger.error('OpenAI API key não configurada');
         throw new Error('OpenAI API key não configurada no ambiente');
       }
+
+      if (!this.llmWhispererApiKey) {
+        logger.error('LLMWhisperer API key não configurada');
+        throw new Error('LLMWhisperer API key não configurada no ambiente');
+      }
       
       // Parse and validate request
       const requestBody = await req.json();
@@ -48,16 +55,16 @@ export class RequestHandler {
         );
       }
 
-      logger.log(`🎯 Processando documento: ${documentId}`);
+      logger.log(`🎯 Processando documento com LLMWhisperer: ${documentId}`);
       
-      // Process the document
-      const processor = new DocumentProcessor(logger, this.openAIApiKey);
+      // Process the document with LLMWhisperer
+      const processor = new DocumentProcessorLLMWhisperer(logger, this.openAIApiKey, this.llmWhispererApiKey);
       const result = await processor.processDocument(documentId);
 
       return new Response(
         JSON.stringify({ 
           ...result,
-          message: `Documento processado com sucesso`,
+          message: `Documento processado com sucesso via LLMWhisperer`,
           requestId
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
