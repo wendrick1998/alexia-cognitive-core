@@ -109,7 +109,7 @@ export function useNeuralSystem() {
       if (error) throw error;
 
       // Transform results to match NeuralSearchResult interface
-      const transformedResults: NeuralSearchResult[] = (data || []).map(result => ({
+      const transformedResults: NeuralSearchResult[] = (data || []).map((result: any) => ({
         id: result.id,
         content: result.content,
         title: result.title,
@@ -169,7 +169,7 @@ export function useNeuralSystem() {
 
       if (error) throw error;
 
-      const consolidations: MemoryConsolidation[] = data.consolidations || [];
+      const consolidations: MemoryConsolidation[] = data?.consolidations || [];
       setMemoryConsolidations(consolidations);
 
       console.log(`✅ Memory consolidation completed: ${consolidations.length} patterns found`);

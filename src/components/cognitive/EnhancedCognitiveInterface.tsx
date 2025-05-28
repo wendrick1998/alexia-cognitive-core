@@ -26,13 +26,13 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
     createCognitiveSnapshot
   } = useCognitiveSystem();
   
-  const neuralSystem = useNeuralSystem();
-  const { 
+  const {
     memoryConsolidations,
     primingContexts,
     predictiveCache,
-    activationPatterns
-  } = neuralSystem;
+    activationPatterns,
+    neuralSearch
+  } = useNeuralSystem();
 
   const { 
     bm25Search, 
@@ -70,7 +70,7 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
           results = await fuzzySearch(searchQuery, 10);
           break;
         case 'neural':
-          results = await neuralSystem.neuralSearch(searchQuery, 'general', 10);
+          results = await neuralSearch(searchQuery, 'general', 10);
           break;
       }
       
