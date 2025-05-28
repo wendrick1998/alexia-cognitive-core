@@ -43,6 +43,7 @@ interface ChatCardProps {
   onFavorite: (id: string, favorite: boolean) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
+  disabled?: boolean;
 }
 
 const ChatCard = ({
@@ -53,6 +54,7 @@ const ChatCard = ({
   onFavorite,
   onArchive,
   onDelete,
+  disabled = false,
 }: ChatCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(conversation.name || "");
@@ -79,8 +81,12 @@ const ChatCard = ({
   return (
     <>
       <div
-        onClick={onClick}
-        className={`group relative p-4 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] border-2 ${
+        onClick={disabled ? undefined : onClick}
+        className={`group relative p-4 rounded-xl transition-all duration-200 border-2 ${
+          disabled 
+            ? 'opacity-50 cursor-not-allowed' 
+            : 'cursor-pointer hover:scale-[1.02]'
+        } ${
           isActive
             ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-lg'
             : 'hover:bg-slate-50 border-transparent hover:border-slate-200 hover:shadow-md'
@@ -110,6 +116,7 @@ const ChatCard = ({
                 className="h-6 text-sm font-medium border-none p-0 focus-visible:ring-0"
                 autoFocus
                 onClick={(e) => e.stopPropagation()}
+                disabled={disabled}
               />
             ) : (
               <h3 className={`text-sm font-medium truncate ${
@@ -130,22 +137,24 @@ const ChatCard = ({
                 variant="ghost"
                 size="sm"
                 className="opacity-0 group-hover:opacity-100 w-6 h-6 p-0 text-slate-400 hover:text-slate-600 transition-opacity"
+                disabled={disabled}
               >
                 <MoreVertical className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => setIsEditing(true)}>
+              <DropdownMenuItem onClick={() => setIsEditing(true)} disabled={disabled}>
                 <Edit3 className="w-4 h-4 mr-2" />
                 Renomear
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => onFavorite(conversation.id, !conversation.is_favorite)}
+                disabled={disabled}
               >
                 <Star className="w-4 h-4 mr-2" />
                 {conversation.is_favorite ? 'Remover favorito' : 'Favoritar'}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onArchive(conversation.id)}>
+              <DropdownMenuItem onClick={() => onArchive(conversation.id)} disabled={disabled}>
                 <Archive className="w-4 h-4 mr-2" />
                 Arquivar
               </DropdownMenuItem>
@@ -153,6 +162,7 @@ const ChatCard = ({
               <DropdownMenuItem 
                 onClick={() => setShowDeleteDialog(true)}
                 className="text-red-600 focus:text-red-600"
+                disabled={disabled}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Excluir
