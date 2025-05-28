@@ -4,7 +4,8 @@ import { useNeuralSystem } from '@/hooks/useNeuralSystem';
 import { useBM25Search } from '@/hooks/useBM25Search';
 import { useDBSCANClustering } from '@/hooks/useDBSCANClustering';
 import { useCognitiveOrchestrator } from '@/hooks/useCognitiveOrchestrator';
-import { Brain, Network, Lightbulb, Zap, Search, Eye, BarChart3, Sparkles, Activity, Clock, TrendingUp, Users } from 'lucide-react';
+import { useBlackboardSystem } from '@/hooks/useBlackboardSystem';
+import { Brain, Network, Lightbulb, Zap, Search, Eye, BarChart3, Sparkles, Activity, Clock, TrendingUp, Users, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ import NeuralVisualization from './NeuralVisualization';
 import MemoryConsolidationPanel from './MemoryConsolidationPanel';
 import CognitiveGraph3Panel from './CognitiveGraph3Panel';
 import MultiAgentDashboard from './MultiAgentDashboard';
+import BlackboardDashboard from './BlackboardDashboard';
 
 interface EnhancedCognitiveInterfaceProps {
   className?: string;
@@ -55,9 +57,18 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
     agents
   } = useCognitiveOrchestrator();
 
+  const {
+    processWithBlackboard,
+    getBlackboardStatus,
+    isInitialized: isBlackboardInitialized
+  } = useBlackboardSystem();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [activeSearchType, setActiveSearchType] = useState<'bm25' | 'hybrid' | 'fuzzy' | 'neural'>('neural');
+  const [activeSearchType, setActiveSearchType] = useState<'bm25' | 'hybrid' | 'fuzzy' | 'neural' | 'blackboard'>('neural');
+  const [blackboardQuery, setBlackboardQuery] = useState('');
+  const [isBlackboardProcessing, setIsBlackboardProcessing] = useState(false);
+  const [blackboardResult, setBlackboardResult] = useState<any>(null);
 
   const handleAdvancedSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -78,11 +89,32 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
         case 'neural':
           results = await neuralSearch(searchQuery, 'general', 10);
           break;
+        case 'blackboard':
+          await handleBlackboardSearch();
+          return;
       }
       
       setSearchResults(results);
     } catch (error) {
       console.error('Search error:', error);
+    }
+  };
+
+  const handleBlackboardSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsBlackboardProcessing(true);
+    try {
+      const result = await processWithBlackboard(
+        searchQuery,
+        { source: 'enhanced-search', type: 'complex-query' },
+        ['logical-reasoning', 'creativity', 'validation', 'synthesis']
+      );
+      setBlackboardResult(result);
+    } catch (error) {
+      console.error('Blackboard search error:', error);
+    } finally {
+      setIsBlackboardProcessing(false);
     }
   };
 
@@ -96,31 +128,96 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Busca avançada com algoritmos neurais..."
+          placeholder="Busca avançada com algoritmos neurais + Blackboard..."
           onKeyPress={(e) => e.key === 'Enter' && handleAdvancedSearch()}
         />
         <Button 
           onClick={handleAdvancedSearch}
-          disabled={isSearching || !searchQuery.trim()}
+          disabled={isSearching || isBlackboardProcessing || !searchQuery.trim()}
         >
-          <Search className="w-4 h-4" />
+          {isBlackboardProcessing ? <Cpu className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
         </Button>
       </div>
 
-      <div className="flex gap-2">
-        {(['bm25', 'hybrid', 'fuzzy', 'neural'] as const).map((type) => (
+      <div className="flex gap-2 flex-wrap">
+        {(['bm25', 'hybrid', 'fuzzy', 'neural', 'blackboard'] as const).map((type) => (
           <Button
             key={type}
             variant={activeSearchType === type ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveSearchType(type)}
           >
-            {type.toUpperCase()}
+            {type === 'blackboard' ? (
+              <span className="flex items-center gap-1">
+                <Cpu className="w-3 h-3" />
+                BLACKBOARD
+              </span>
+            ) : (
+              type.toUpperCase()
+            )}
           </Button>
         ))}
       </div>
 
-      {searchResults.length > 0 && (
+      {/* Blackboard Results */}
+      {blackboardResult && activeSearchType === 'blackboard' && (
+        <Card className="border border-purple-200 bg-purple-50/30">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-purple-600" />
+              Resultado Blackboard (Processamento Paralelo)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div>
+                <Badge variant={blackboardResult.success ? "default" : "destructive"}>
+                  {blackboardResult.success ? "Sucesso" : "Falha"}
+                </Badge>
+                {blackboardResult.result.confidence && (
+                  <span className="ml-2 text-sm text-gray-600">
+                    Confiança: {(blackboardResult.result.confidence * 100).toFixed(0)}%
+                  </span>
+                )}
+              </div>
+              
+              {blackboardResult.result.result && (
+                <div className="bg-white p-3 rounded border">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    {blackboardResult.result.result}
+                  </p>
+                </div>
+              )}
+              
+              {blackboardResult.partialResults && blackboardResult.partialResults.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2 text-sm">
+                    Contribuições dos Agentes ({blackboardResult.partialResults.length}):
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {blackboardResult.partialResults.map((partial: any, index: number) => (
+                      <div key={index} className="bg-gray-50 p-2 rounded text-xs">
+                        <Badge variant="outline" className="mb-1">
+                          {partial.ksId}
+                        </Badge>
+                        <p className="text-gray-600">
+                          {typeof partial.result?.result === 'string' 
+                            ? partial.result.result.substring(0, 200) + '...'
+                            : 'Resultado estruturado'
+                          }
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Traditional Search Results */}
+      {searchResults.length > 0 && activeSearchType !== 'blackboard' && (
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {searchResults.map((result, index) => (
             <Card key={result.id || index} className="p-3">
@@ -255,6 +352,8 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
     </div>
   );
 
+  const blackboardStatus = getBlackboardStatus();
+
   return (
     <div className={`bg-white rounded-lg border border-gray-200 ${className}`}>
       <div className="p-6">
@@ -263,17 +362,19 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
           <div>
             <h2 className="text-xl font-semibold">Sistema Cognitivo Neural Avançado</h2>
             <p className="text-sm text-gray-600">
-              Cognitive Graph 3.0 + Multi-Agent Orchestrator | 
+              Cognitive Graph 3.0 + Multi-Agent Orchestrator + Blackboard Architecture | 
               Carga: {Math.round(cognitiveState.cognitiveLoad * 100)}% | 
               Foco: {Math.round(cognitiveState.focusLevel * 100)}% |
               Ativação: {activationPatterns.length} padrões | 
-              Agentes: {agents.filter(a => a.available).length}/{agents.length} ativos
+              Agentes: {agents.filter(a => a.available).length}/{agents.length} ativos |
+              Blackboard: {isBlackboardInitialized ? 'ON' : 'OFF'} ({blackboardStatus.totalEntries} entradas)
             </p>
           </div>
         </div>
 
-        <Tabs defaultValue="multiagent" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+        <Tabs defaultValue="blackboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-9">
+            <TabsTrigger value="blackboard">Blackboard</TabsTrigger>
             <TabsTrigger value="multiagent">Multi-Agent</TabsTrigger>
             <TabsTrigger value="graph3">Graph 3.0</TabsTrigger>
             <TabsTrigger value="search">Busca Neural</TabsTrigger>
@@ -283,6 +384,10 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
             <TabsTrigger value="insights">Insights</TabsTrigger>
             <TabsTrigger value="metrics">Métricas</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="blackboard" className="mt-4">
+            <BlackboardDashboard />
+          </TabsContent>
           
           <TabsContent value="multiagent" className="mt-4">
             <MultiAgentDashboard />
@@ -359,10 +464,10 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => createCognitiveSnapshot('Snapshot Multi-Agent System', 'Snapshot completo do sistema multi-agente cognitivo')}
+            onClick={() => createCognitiveSnapshot('Snapshot Blackboard System', 'Snapshot completo do sistema Blackboard + Multi-Agente cognitivo')}
             className="w-full"
           >
-            📸 Criar Snapshot Sistema Multi-Agente
+            📸 Criar Snapshot Sistema Blackboard + Multi-Agente
           </Button>
         </div>
       </div>
