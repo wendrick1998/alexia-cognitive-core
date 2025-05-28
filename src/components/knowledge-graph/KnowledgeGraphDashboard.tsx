@@ -442,7 +442,7 @@ const KnowledgeGraphDashboard: React.FC = () => {
                     <Slider
                       value={[timeline.speed]}
                       onValueChange={([value]) => 
-                        setTimeline(prev => ({ ...prev, speed: value }))
+                        updateTimeline({ speed: value })
                       }
                       min={0.1}
                       max={5}

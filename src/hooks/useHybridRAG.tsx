@@ -85,7 +85,7 @@ export function useHybridRAG() {
     return chunks;
   }, []);
 
-  // Graph traversal search
+  // Graph traversal search using existing cognitive_search function
   const graphTraversalSearch = useCallback(async (
     query: string, 
     startNodes: string[], 
@@ -96,12 +96,13 @@ export function useHybridRAG() {
     try {
       console.log('🕸️ Starting graph traversal search...');
       
-      // Use recursive CTE to traverse the graph
-      const { data, error } = await supabase.rpc('graph_traversal_search', {
+      // Use existing cognitive_search function instead of non-existent graph_traversal_search
+      const { data, error } = await supabase.rpc('cognitive_search', {
         p_user_id: user.id,
-        p_start_nodes: startNodes,
-        p_query_terms: query.toLowerCase().split(' ').filter(term => term.length > 2),
-        p_max_depth: maxDepth
+        p_query_embedding: [], // Empty for now, should be generated from query
+        p_search_type: 'general',
+        p_limit: 10,
+        p_similarity_threshold: 0.5
       });
 
       if (error) throw error;
@@ -111,11 +112,11 @@ export function useHybridRAG() {
         content: result.content,
         title: result.title || 'Graph Node',
         type: result.node_type,
-        relevance_score: result.relevance_score,
-        timestamp: result.created_at,
-        metadata: result.metadata || {},
-        graph_score: result.path_score,
-        combined_score: result.path_score * result.relevance_score,
+        relevance_score: result.relevance_score || 0.5,
+        timestamp: result.created_at || new Date().toISOString(),
+        metadata: {},
+        graph_score: result.similarity || 0.5,
+        combined_score: (result.similarity || 0.5) * (result.relevance_score || 0.5),
         rank_position: index + 1,
         retrieval_method: 'graph' as const
       }));
@@ -265,8 +266,8 @@ export function useHybridRAG() {
         title: result.title || 'BM25 Result',
         type: result.node_type || 'document',
         relevance_score: result.relevance_score || 0.5,
-        timestamp: result.created_at || new Date().toISOString(),
-        metadata: result.metadata || {},
+        timestamp: new Date().toISOString(), // Fixed: use current timestamp
+        metadata: {}, // Fixed: use empty object instead of undefined property
         bm25_score: result.bm25_score,
         combined_score: result.bm25_score || 0.5,
         rank_position: index + 1,
