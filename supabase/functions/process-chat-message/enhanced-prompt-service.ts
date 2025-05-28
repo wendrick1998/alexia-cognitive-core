@@ -5,6 +5,11 @@ import type { ConversationHistory } from './conversation-service.ts';
 export function buildEnhancedSystemPrompt(): string {
   return `Você é Alex iA, um assistente de inteligência artificial especializado e conversacionalmente inteligente. Suas diretrizes principais são:
 
+PRIORIDADE DE CONTEXTO:
+- SEMPRE priorize o "Histórico da Conversa Atual" ao formular suas respostas
+- Use este histórico para entender referências, pronomes e continuações de tópicos
+- Mantenha a coerência e continuidade com as respostas anteriores da sessão
+
 ANÁLISE E SÍNTESE:
 - Analise cuidadosamente TODOS os trechos de contexto fornecidos, tanto de documentos quanto de memórias cognitivas
 - Sintetize informações complementares de múltiplas fontes quando relevante para a pergunta
@@ -13,14 +18,14 @@ ANÁLISE E SÍNTESE:
 
 COMPLETUDE E PRECISÃO:
 - Seja o mais completo possível com base no contexto fornecido
-- Se a informação não estiver no contexto, diga claramente que não encontrou nos documentos/memórias atuais
+- Se a informação não estiver no contexto da conversa atual, documentos ou memórias, diga claramente que não encontrou nos recursos atuais
 - Quando apropriado, cite o documento ou fonte de onde extraiu a informação principal
 - Evite escolher arbitrariamente entre opções válidas - apresente as alternativas
 
 CONTINUIDADE CONVERSACIONAL:
-- Considere o histórico da conversa para entender referências e contexto
-- Mantenha a coerência com respostas anteriores
 - Reconheça quando uma pergunta é de acompanhamento e conecte com o tópico anterior
+- Use pronomes e referências do histórico da conversa para dar respostas mais naturais
+- Demonstre que você "lembra" do que foi discutido na sessão atual
 
 COMUNICAÇÃO:
 - Seja claro, objetivo e útil
@@ -29,7 +34,7 @@ COMUNICAÇÃO:
 - Demonstre quando está fazendo conexões entre diferentes fontes de informação`;
 }
 
-export function buildEnhancedContextPrompt(
+export function buildActiveSessionPrompt(
   documentChunks: DocumentChunk[],
   memoryChunks: MemoryChunk[],
   conversationHistory: ConversationHistory[],
@@ -37,69 +42,74 @@ export function buildEnhancedContextPrompt(
 ): string {
   let contextText = '';
 
-  // Contexto da conversa anterior (se houver)
+  // 1. PRIORIDADE MÁXIMA: Histórico da sessão atual
   if (conversationHistory.length > 0) {
-    contextText += buildConversationContext(conversationHistory);
+    contextText += buildActiveSessionContext(conversationHistory);
   }
 
-  // Usar apenas os top 3 chunks mais similares para o contexto do LLM
+  // 2. Contexto adicional de documentos (top 3 mais relevantes)
   const topDocumentChunks = documentChunks.slice(0, 3);
-  const topMemoryChunks = memoryChunks.slice(0, 2);
-  
   if (topDocumentChunks.length > 0) {
-    contextText += 'Contexto dos Documentos:\n';
+    contextText += '## Contexto Adicional de Documentos/Memória Longa (Resultado da Busca Semântica):\n';
     topDocumentChunks.forEach((chunk: any, index: number) => {
       const documentName = chunk.document_name || chunk.title || 'Documento sem título';
-      contextText += `---\n[Trecho ${index + 1} de "${documentName}" - Similaridade: ${(chunk.similarity * 100).toFixed(1)}%]\n${chunk.content}\n`;
+      contextText += `Fonte: ${documentName} - Similaridade: ${(chunk.similarity * 100).toFixed(1)}%\n`;
+      contextText += `Conteúdo: ${chunk.content}\n---\n`;
     });
-    contextText += '---\n\n';
   }
 
+  // 3. Contexto de memórias cognitivas (top 2 mais relevantes)
+  const topMemoryChunks = memoryChunks.slice(0, 2);
   if (topMemoryChunks.length > 0) {
-    contextText += 'Memórias e Insights Relevantes:\n';
+    if (topDocumentChunks.length === 0) {
+      contextText += '## Contexto Adicional de Documentos/Memória Longa (Resultado da Busca Semântica):\n';
+    }
     topMemoryChunks.forEach((memory: any, index: number) => {
       const sourceLabel = memory.source === 'chat_derived_insight' ? 'Insight de Conversa' : 
                          memory.source === 'user_feedback' ? 'Feedback do Usuário' : 
-                         memory.source || 'Sistema';
-      contextText += `---\n[Memória ${index + 1} - ${sourceLabel} - Similaridade: ${(memory.similarity * 100).toFixed(1)}%]\n${memory.content}\n`;
+                         memory.source || 'Memória Cognitiva';
+      contextText += `Fonte: ${sourceLabel} - Similaridade: ${(memory.similarity * 100).toFixed(1)}%\n`;
+      contextText += `Conteúdo: ${memory.content}\n---\n`;
     });
-    contextText += '---\n\n';
   }
 
-  if (!contextText || (!topDocumentChunks.length && !topMemoryChunks.length)) {
-    contextText = 'Nenhum contexto relevante encontrado nos documentos ou memórias para esta pergunta específica.\n\n';
+  if (!topDocumentChunks.length && !topMemoryChunks.length) {
+    contextText += '## Contexto Adicional de Documentos/Memória Longa:\nNenhum contexto relevante encontrado nos documentos ou memórias para esta pergunta específica.\n\n';
   }
 
-  // Instruções específicas baseadas no tipo de pergunta
-  const analysisInstructions = buildAnalysisInstructions(userMessage, topDocumentChunks.length, topMemoryChunks.length);
-  if (analysisInstructions) {
-    contextText += analysisInstructions;
-  }
+  // 4. Pergunta atual
+  contextText += `## Pergunta Atual do Usuário:\n${userMessage}\n\n## Resposta de Alex iA:`;
 
   return contextText;
 }
 
-function buildConversationContext(history: ConversationHistory[]): string {
+function buildActiveSessionContext(history: ConversationHistory[]): string {
   if (history.length === 0) return '';
 
-  let context = '📝 Contexto da Conversa Anterior:\n';
+  let context = '## Histórico da Conversa Atual:\n';
+  
+  // Reverter para ordem cronológica correta (mais antiga primeiro)
   history.reverse().forEach((interaction, index) => {
-    context += `---\n`;
-    context += `[Interação ${index + 1}]\n`;
     context += `Usuário: ${interaction.user_message}\n`;
-    context += `Alex iA: ${interaction.ai_response.substring(0, 200)}${interaction.ai_response.length > 200 ? '...' : ''}\n`;
+    context += `Alex iA: ${interaction.ai_response}\n`;
+    if (index < history.length - 1) context += '\n';
   });
-  context += '---\n\n';
-
+  
+  context += '\n';
   return context;
 }
 
 function buildAnalysisInstructions(
   userMessage: string, 
   docChunksCount: number, 
-  memoryChunksCount: number
+  memoryChunksCount: number,
+  hasConversationHistory: boolean
 ): string {
   let instructions = '';
+
+  if (hasConversationHistory) {
+    instructions += '🧠 INSTRUÇÃO ESPECIAL: Você tem acesso ao histórico da conversa atual. Use-o para entender referências e manter continuidade.\n\n';
+  }
 
   // Detectar tipo de pergunta
   if (/compare|comparação|diferença|versus/i.test(userMessage)) {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -96,9 +96,11 @@ export function useConversationsData() {
     }
   };
 
-  const loadMessages = async (conversationId: string) => {
+  const loadMessages = useCallback(async (conversationId: string) => {
     try {
       setLoading(true);
+      console.log(`📥 Carregando mensagens para conversa: ${conversationId}`);
+      
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -107,6 +109,7 @@ export function useConversationsData() {
 
       if (error) throw error;
 
+      console.log(`✅ ${data.length} mensagens carregadas para a conversa`);
       setMessages(data as Message[]);
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -118,12 +121,19 @@ export function useConversationsData() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
+  // Carregar dados do usuário quando ele fizer login
   useEffect(() => {
     if (user) {
       loadCategories();
       loadConversations();
+    } else {
+      // Limpar dados quando usuário sair
+      setConversations([]);
+      setCategories([]);
+      setCurrentConversation(null);
+      setMessages([]);
     }
   }, [user]);
 

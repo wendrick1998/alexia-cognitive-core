@@ -17,23 +17,24 @@ const Chat = () => {
     createConversation,
     getCurrentOrCreateConversation,
     loadMessages,
-    updateConversationTimestamp 
+    updateConversationTimestamp,
+    setCurrentConversation,
+    setMessages
   } = useConversations();
   
   const { processing, processMessage } = useChatProcessor();
 
+  // Carregar mensagens sempre que a conversa atual mudar
   useEffect(() => {
-    const initializeConversation = async () => {
-      if (!currentConversation) {
-        const conversation = await getCurrentOrCreateConversation();
-        if (conversation) {
-          await loadMessages(conversation.id);
-        }
+    const loadConversationMessages = async () => {
+      if (currentConversation?.id) {
+        console.log(`🔄 Carregando mensagens da conversa: ${currentConversation.id}`);
+        await loadMessages(currentConversation.id);
       }
     };
     
-    initializeConversation();
-  }, []);
+    loadConversationMessages();
+  }, [currentConversation?.id, loadMessages]);
 
   const handleSendMessage = async (messageText: string) => {
     const conversation = await getCurrentOrCreateConversation();
@@ -43,12 +44,22 @@ const Chat = () => {
     
     if (response) {
       await updateConversationTimestamp(conversation.id);
+      // Recarregar mensagens para mostrar a nova interação
       await loadMessages(conversation.id);
     }
   };
 
   const handleNewConversation = async () => {
-    await createConversation();
+    console.log(`🆕 Iniciando nova conversa - limpando contexto atual`);
+    // Limpar estado atual
+    setCurrentConversation(null);
+    setMessages([]);
+    
+    // Criar nova conversa
+    const newConversation = await createConversation();
+    if (newConversation) {
+      console.log(`✅ Nova conversa criada: ${newConversation.id}`);
+    }
   };
 
   return (
