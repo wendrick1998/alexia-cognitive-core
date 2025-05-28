@@ -9,9 +9,15 @@ interface ChatInputProps {
   processing: boolean;
   currentConversation: Conversation | null;
   onSendMessage: (message: string) => void;
+  placeholder?: string;
 }
 
-const ChatInput = ({ processing, currentConversation, onSendMessage }: ChatInputProps) => {
+const ChatInput = ({ 
+  processing, 
+  currentConversation, 
+  onSendMessage, 
+  placeholder = "Faça uma pergunta sobre seus documentos..." 
+}: ChatInputProps) => {
   const [inputValue, setInputValue] = useState("");
 
   const handleSendMessage = () => {
@@ -37,7 +43,7 @@ const ChatInput = ({ processing, currentConversation, onSendMessage }: ChatInput
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Faça uma pergunta sobre seus documentos..."
+              placeholder={placeholder}
               className="pr-4 py-4 text-base rounded-2xl border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 bg-white/90 backdrop-blur-sm shadow-lg text-slate-800 placeholder:text-slate-500"
               disabled={processing}
             />

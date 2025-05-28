@@ -6,6 +6,7 @@ import ConversationSidebar from "./ConversationSidebar";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
+import { ChatLoadingSkeleton } from "./chat/ChatSkeleton";
 
 const Chat = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -14,31 +15,34 @@ const Chat = () => {
     currentConversation, 
     messages, 
     loading, 
-    createConversation,
-    getCurrentOrCreateConversation,
+    conversationState,
+    createAndNavigateToNewConversation,
     loadMessages,
     updateConversationTimestamp,
-    setCurrentConversation,
-    setMessages
   } = useConversations();
   
   const { processing, processMessage } = useChatProcessor();
 
-  // Carregar mensagens sempre que a conversa atual mudar
+  // Efeito otimizado para carregamento de mensagens
   useEffect(() => {
     const loadConversationMessages = async () => {
-      if (currentConversation?.id) {
+      if (currentConversation?.id && !conversationState.isNavigating) {
         console.log(`🔄 Carregando mensagens da conversa: ${currentConversation.id}`);
         await loadMessages(currentConversation.id);
       }
     };
     
     loadConversationMessages();
-  }, [currentConversation?.id, loadMessages]);
+  }, [currentConversation?.id, loadMessages, conversationState.isNavigating]);
 
   const handleSendMessage = async (messageText: string) => {
-    const conversation = await getCurrentOrCreateConversation();
-    if (!conversation) return;
+    let conversation = currentConversation;
+    
+    // Se não há conversa atual, criar uma nova automaticamente
+    if (!conversation) {
+      conversation = await createAndNavigateToNewConversation();
+      if (!conversation) return;
+    }
 
     const response = await processMessage(messageText, conversation.id);
     
@@ -50,17 +54,12 @@ const Chat = () => {
   };
 
   const handleNewConversation = async () => {
-    console.log(`🆕 Iniciando nova conversa - limpando contexto atual`);
-    // Limpar estado atual
-    setCurrentConversation(null);
-    setMessages([]);
-    
-    // Criar nova conversa
-    const newConversation = await createConversation();
-    if (newConversation) {
-      console.log(`✅ Nova conversa criada: ${newConversation.id}`);
-    }
+    console.log(`🆕 Iniciando nova conversa premium...`);
+    await createAndNavigateToNewConversation();
   };
+
+  // Estados de carregamento com UX premium
+  const isLoadingState = loading || conversationState.isNavigating || conversationState.isLoadingMessages;
 
   return (
     <div className="flex-1 flex bg-gradient-to-br from-slate-50 via-white to-blue-50/30 min-h-screen">
@@ -75,18 +74,29 @@ const Chat = () => {
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onNewConversation={handleNewConversation}
+          isCreatingNew={conversationState.isCreatingNew}
+          isNavigating={conversationState.isNavigating}
         />
 
-        <ChatMessages
-          messages={messages}
-          loading={loading}
-          processing={processing}
-        />
+        {isLoadingState ? (
+          <ChatLoadingSkeleton />
+        ) : (
+          <ChatMessages
+            messages={messages}
+            loading={false}
+            processing={processing}
+          />
+        )}
 
         <ChatInput
-          processing={processing}
+          processing={processing || conversationState.isCreatingNew}
           currentConversation={currentConversation}
           onSendMessage={handleSendMessage}
+          placeholder={
+            conversationState.isCreatingNew 
+              ? "Iniciando nova conversa..." 
+              : "Faça uma pergunta sobre seus documentos..."
+          }
         />
       </div>
     </div>

@@ -29,12 +29,14 @@ import {
   Clock,
   Folder,
   TrendingUp,
-  Settings
+  Settings,
+  Loader2
 } from "lucide-react";
 import { useConversations } from "@/hooks/useConversations";
 import { useAuth } from "@/hooks/useAuth";
 import CategoryManager from "./CategoryManager";
 import ChatCard from "./ChatCard";
+import { ConversationCardSkeleton } from "./chat/ChatSkeleton";
 
 interface ConversationSidebarProps {
   isOpen: boolean;
@@ -52,14 +54,14 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
     currentConversation,
     searchQuery,
     setSearchQuery,
-    createConversation,
+    conversationState,
+    createAndNavigateToNewConversation,
+    navigateToConversation,
     updateConversation,
     deleteConversation,
     archiveConversation,
     favoriteConversation,
     createCategory,
-    setCurrentConversation,
-    loadMessages,
     loadConversations,
     loadCategories
   } = useConversations();
@@ -67,24 +69,23 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
   const [sortBy, setSortBy] = useState<SortOption>('updated');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [activeTab, setActiveTab] = useState('all');
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
 
   useEffect(() => {
     if (user) {
-      loadConversations();
-      loadCategories();
+      setIsLoadingConversations(true);
+      Promise.all([loadConversations(), loadCategories()])
+        .finally(() => setIsLoadingConversations(false));
     }
   }, [user]);
 
   const handleNewConversation = async () => {
-    const newConv = await createConversation();
-    if (newConv) {
-      setActiveTab('all');
-    }
+    await createAndNavigateToNewConversation();
+    setActiveTab('all');
   };
 
   const handleSelectConversation = async (conversation: any) => {
-    setCurrentConversation(conversation);
-    await loadMessages(conversation.id);
+    await navigateToConversation(conversation);
   };
 
   const handleRenameConversation = async (id: string, name: string) => {
@@ -161,6 +162,9 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
               <MessageCircle className="w-4 h-4 text-white" />
             </div>
             <h2 className="text-xl font-bold text-slate-800">Conversas</h2>
+            {conversationState.isNavigating && (
+              <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+            )}
           </div>
           <Button
             variant="ghost"
@@ -174,11 +178,21 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         
         <Button
           onClick={handleNewConversation}
-          className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:scale-105"
+          disabled={conversationState.isCreatingNew}
+          className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:scale-105 disabled:scale-100 disabled:opacity-70"
           size="sm"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Conversa
+          {conversationState.isCreatingNew ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Criando...
+            </>
+          ) : (
+            <>
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Conversa
+            </>
+          )}
         </Button>
       </div>
 
@@ -191,13 +205,14 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 rounded-xl border-slate-200 focus:border-blue-500"
+            disabled={isLoadingConversations}
           />
         </div>
         
         <div className="flex items-center space-x-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-xl">
+              <Button variant="outline" size="sm" className="rounded-xl" disabled={isLoadingConversations}>
                 <Filter className="w-4 h-4 mr-2" />
                 Filtrar
               </Button>
@@ -223,7 +238,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-xl">
+              <Button variant="outline" size="sm" className="rounded-xl" disabled={isLoadingConversations}>
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -264,16 +279,21 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-3 m-4 mb-0">
-          <TabsTrigger value="all">Todas</TabsTrigger>
-          <TabsTrigger value="categories">Categorias</TabsTrigger>
-          <TabsTrigger value="recent">Recentes</TabsTrigger>
+          <TabsTrigger value="all" disabled={isLoadingConversations}>Todas</TabsTrigger>
+          <TabsTrigger value="categories" disabled={isLoadingConversations}>Categorias</TabsTrigger>
+          <TabsTrigger value="recent" disabled={isLoadingConversations}>Recentes</TabsTrigger>
         </TabsList>
 
         {/* All Conversations Tab */}
         <TabsContent value="all" className="flex-1 mt-0">
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-2">
-              {filteredConversations.length === 0 ? (
+              {isLoadingConversations ? (
+                // Mostrar skeletons durante carregamento
+                Array.from({ length: 3 }).map((_, index) => (
+                  <ConversationCardSkeleton key={index} />
+                ))
+              ) : filteredConversations.length === 0 ? (
                 <div className="text-center py-12 text-slate-500">
                   <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     {searchQuery ? (
@@ -300,6 +320,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
                     onFavorite={handleFavoriteConversation}
                     onArchive={handleArchiveConversation}
                     onDelete={handleDeleteConversation}
+                    disabled={conversationState.isNavigating}
                   />
                 ))
               )}
@@ -310,17 +331,25 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         {/* Categories Tab */}
         <TabsContent value="categories" className="flex-1 mt-0">
           <ScrollArea className="flex-1 p-4">
-            <CategoryManager
-              categories={categories}
-              conversations={conversations}
-              currentConversation={currentConversation}
-              onSelectConversation={handleSelectConversation}
-              onCreateCategory={handleCreateCategory}
-              onRenameConversation={handleRenameConversation}
-              onFavoriteConversation={handleFavoriteConversation}
-              onArchiveConversation={handleArchiveConversation}
-              onDeleteConversation={handleDeleteConversation}
-            />
+            {isLoadingConversations ? (
+              <div className="space-y-2">
+                {Array.from({ length: 2 }).map((_, index) => (
+                  <ConversationCardSkeleton key={index} />
+                ))}
+              </div>
+            ) : (
+              <CategoryManager
+                categories={categories}
+                conversations={conversations}
+                currentConversation={currentConversation}
+                onSelectConversation={handleSelectConversation}
+                onCreateCategory={handleCreateCategory}
+                onRenameConversation={handleRenameConversation}
+                onFavoriteConversation={handleFavoriteConversation}
+                onArchiveConversation={handleArchiveConversation}
+                onDeleteConversation={handleDeleteConversation}
+              />
+            )}
           </ScrollArea>
         </TabsContent>
 
@@ -334,18 +363,25 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
                   Favoritas ({favoriteConversations.length})
                 </h3>
                 <div className="space-y-2">
-                  {favoriteConversations.slice(0, 3).map((conversation) => (
-                    <ChatCard
-                      key={conversation.id}
-                      conversation={conversation}
-                      isActive={currentConversation?.id === conversation.id}
-                      onClick={() => handleSelectConversation(conversation)}
-                      onRename={handleRenameConversation}
-                      onFavorite={handleFavoriteConversation}
-                      onArchive={handleArchiveConversation}
-                      onDelete={handleDeleteConversation}
-                    />
-                  ))}
+                  {isLoadingConversations ? (
+                    Array.from({ length: 2 }).map((_, index) => (
+                      <ConversationCardSkeleton key={index} />
+                    ))
+                  ) : (
+                    favoriteConversations.slice(0, 3).map((conversation) => (
+                      <ChatCard
+                        key={conversation.id}
+                        conversation={conversation}
+                        isActive={currentConversation?.id === conversation.id}
+                        onClick={() => handleSelectConversation(conversation)}
+                        onRename={handleRenameConversation}
+                        onFavorite={handleFavoriteConversation}
+                        onArchive={handleArchiveConversation}
+                        onDelete={handleDeleteConversation}
+                        disabled={conversationState.isNavigating}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -355,18 +391,25 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
                   Recentes
                 </h3>
                 <div className="space-y-2">
-                  {recentConversations.map((conversation) => (
-                    <ChatCard
-                      key={conversation.id}
-                      conversation={conversation}
-                      isActive={currentConversation?.id === conversation.id}
-                      onClick={() => handleSelectConversation(conversation)}
-                      onRename={handleRenameConversation}
-                      onFavorite={handleFavoriteConversation}
-                      onArchive={handleArchiveConversation}
-                      onDelete={handleDeleteConversation}
-                    />
-                  ))}
+                  {isLoadingConversations ? (
+                    Array.from({ length: 3 }).map((_, index) => (
+                      <ConversationCardSkeleton key={index} />
+                    ))
+                  ) : (
+                    recentConversations.map((conversation) => (
+                      <ChatCard
+                        key={conversation.id}
+                        conversation={conversation}
+                        isActive={currentConversation?.id === conversation.id}
+                        onClick={() => handleSelectConversation(conversation)}
+                        onRename={handleRenameConversation}
+                        onFavorite={handleFavoriteConversation}
+                        onArchive={handleArchiveConversation}
+                        onDelete={handleDeleteConversation}
+                        disabled={conversationState.isNavigating}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -378,15 +421,21 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
       <div className="p-4 border-t border-slate-200/60 bg-slate-50/50">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-lg font-bold text-slate-800">{conversations.length}</div>
+            <div className="text-lg font-bold text-slate-800">
+              {isLoadingConversations ? '-' : conversations.length}
+            </div>
             <div className="text-xs text-slate-500">Conversas</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-slate-800">{favoriteConversations.length}</div>
+            <div className="text-lg font-bold text-slate-800">
+              {isLoadingConversations ? '-' : favoriteConversations.length}
+            </div>
             <div className="text-xs text-slate-500">Favoritas</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-slate-800">{categories.length}</div>
+            <div className="text-lg font-bold text-slate-800">
+              {isLoadingConversations ? '-' : categories.length}
+            </div>
             <div className="text-xs text-slate-500">Categorias</div>
           </div>
         </div>
