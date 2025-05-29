@@ -33,6 +33,9 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+
+    /* Font size system */
+    --base-font-size: 16px;
   }
 
   .dark {
@@ -89,12 +92,32 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  /* Accessibility High Contrast */
+  .high-contrast {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --border: 0 0% 0%;
+    --primary: 240 100% 50%;
+  }
+
+  .high-contrast.dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --border: 0 0% 100%;
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+  
+  html {
+    font-size: var(--base-font-size);
+    scroll-behavior: smooth;
+  }
+  
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
@@ -102,6 +125,7 @@
     -moz-osx-font-smoothing: grayscale;
     background: #000000;
     color: rgba(255, 255, 255, 0.9);
+    
     /* iOS safe area support */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
@@ -114,16 +138,84 @@
     background: #000000;
     color: rgba(255, 255, 255, 0.95);
   }
+
+  /* Reduced Motion */
+  .reduced-motion * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Focus Indicators */
+  .focus-visible-enabled *:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .oled .focus-visible-enabled *:focus-visible {
+    outline-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.oled ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.oled ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Selection Colors */
+::selection {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+}
+
+::-moz-selection {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+}
+
+.oled ::selection {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.oled ::-moz-selection {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 /* OLED Optimizations */
-.oled .glass-card {
+.glass-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(10px);
 }
 
-.oled .glass-card:hover {
+.glass-card:hover {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.08);
 }
@@ -297,27 +389,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom selection styles */
-::selection {
-  background: rgba(99, 102, 241, 0.3);
-  color: white;
-}
-
-::-moz-selection {
-  background: rgba(99, 102, 241, 0.3);
-  color: white;
-}
-
-.oled ::selection {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.oled ::-moz-selection {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
 /* iOS-style rubber band scrolling */
 .rubber-band-scroll {
   overscroll-behavior: contain;
@@ -398,4 +469,33 @@
 /* Theme transition */
 .theme-transition * {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease !important;
+}
+
+/* Performance optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-auto {
+  will-change: auto;
+}
+
+/* Battery saving mode */
+.battery-saving-mode * {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+  will-change: auto !important;
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .glass-card {
+    background: white !important;
+    border: 1px solid #ddd !important;
+  }
 }

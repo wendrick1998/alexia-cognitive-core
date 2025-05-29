@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import MultiPaneLayout from "../components/layout/MultiPaneLayout";
@@ -8,8 +9,9 @@ import MemoryManager from "../components/MemoryManager";
 import DocumentsManager from "../components/DocumentsManager";
 import SemanticSearch from "../components/SemanticSearch";
 import { Button } from "@/components/ui/button";
-import { SplitSquareHorizontal, X } from "lucide-react";
+import { SplitSquareHorizontal } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PageTransition } from "@/components/ui/transitions";
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState("dashboard");
@@ -26,22 +28,26 @@ const Index = () => {
   };
 
   const renderContent = (section: string) => {
-    switch (section) {
-      case "dashboard":
-        return <Dashboard />;
-      case "chat":
-        return <Chat />;
-      case "memory":
-        return <MemoryManager />;
-      case "documents":
-        return <DocumentsManager />;
-      case "search":
-        return <SemanticSearch />;
-      case "actions":
-        return <ProjectsManager />;
-      default:
-        return <Dashboard />;
-    }
+    const content = (() => {
+      switch (section) {
+        case "dashboard":
+          return <Dashboard />;
+        case "chat":
+          return <Chat />;
+        case "memory":
+          return <MemoryManager />;
+        case "documents":
+          return <DocumentsManager />;
+        case "search":
+          return <SemanticSearch />;
+        case "actions":
+          return <ProjectsManager />;
+        default:
+          return <Dashboard />;
+      }
+    })();
+
+    return <PageTransition>{content}</PageTransition>;
   };
 
   const getSectionTitle = (section: string) => {
