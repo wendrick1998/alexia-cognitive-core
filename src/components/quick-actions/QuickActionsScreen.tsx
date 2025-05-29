@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -12,7 +11,8 @@ import {
   TrendingUp,
   Settings,
   X,
-  Copy
+  Copy,
+  Focus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -80,6 +80,19 @@ const QuickActionsScreen = ({
           title: "Sincronização",
           description: "Sincronizando dados com a nuvem...",
         });
+      }
+    },
+    {
+      id: 'focus-mode',
+      icon: Focus,
+      label: 'Focus Mode',
+      color: 'from-slate-500 to-gray-700',
+      action: () => {
+        onClose(); // Close quick actions first
+        setTimeout(() => {
+          // Trigger focus mode through parent component
+          window.dispatchEvent(new CustomEvent('activate-focus-mode'));
+        }, 300);
       }
     },
     {

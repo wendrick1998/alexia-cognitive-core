@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +16,8 @@ import {
 import MessageCardRevamped from './chat/MessageCardRevamped';
 import AppSidebar from './AppSidebar';
 import FloatingActionButton from './chat/FloatingActionButton';
+import FocusMode from './focus/FocusMode';
+import { useFocusMode } from '@/hooks/useFocusMode';
 
 interface ChatProps {
   // Add any props here
@@ -47,6 +48,7 @@ const Chat = () => {
   
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const { isActive: isFocusModeActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
 
   // Auto scroll to bottom when new messages are added
   useEffect(() => {
@@ -217,6 +219,13 @@ const Chat = () => {
           description: isVoiceMode ? "Voltando ao modo texto" : "Agora você pode falar com a AlexIA",
         });
         break;
+      case 'focus-mode':
+        activateFocusMode();
+        toast({
+          title: "Focus Mode Ativado",
+          description: "Modo de escrita minimalista ativado",
+        });
+        break;
       case 'screenshot':
         toast({
           title: "Screenshot",
@@ -234,88 +243,154 @@ const Chat = () => {
     }
   };
 
+  // Handle focus mode message sending
+  const handleFocusModeMessage = async (message: string) => {
+    if (!message.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    // Get current conversation or create new
+    let conversation = currentConversation;
+    if (!conversation) {
+      conversation = await createConversation();
+      if (!conversation) {
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // Add user message to conversation
+    const userMessage = {
+      id: uuidv4(),
+      conversation_id: conversation.id,
+      role: 'user' as const,
+      content: message,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    // Add message to local state
+    setMessages(prev => [...prev, userMessage]);
+
+    // Generate AI response
+    const aiMessage = await generateAIResponse(conversation.id, message);
+    if (aiMessage) {
+      setMessages(prev => [...prev, aiMessage]);
+    }
+
+    setIsLoading(false);
+  };
+
+  // Listen for focus mode activation from quick actions
+  useEffect(() => {
+    const handleActivateFocusMode = () => {
+      activateFocusMode();
+      toast({
+        title: "Focus Mode Ativado",
+        description: "Modo de escrita minimalista ativado. Triple-tap para ativar novamente.",
+      });
+    };
+
+    window.addEventListener('activate-focus-mode', handleActivateFocusMode);
+    
+    return () => {
+      window.removeEventListener('activate-focus-mode', handleActivateFocusMode);
+    };
+  }, [activateFocusMode, toast]);
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
-      {/* Chat Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Message List */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {currentConversation ? (
-            messages?.map((message, index) => (
-              <MessageCardRevamped key={message.id} message={message} index={index} />
-            ))
-          ) : (
-            <div className="text-center text-slate-500 dark:text-slate-400 mt-6">
-              Selecione uma conversa para começar a conversar.
-            </div>
-          )}
-          
-          {/* Loading Indicator */}
-          {isLoading && (
-            <div className="flex items-center space-x-3 max-w-md mx-auto mb-6 animate-fade-in">
-              <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-500 dark:to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Mic className="w-5 h-5 text-white animate-pulse" />
-                </div>
+    <>
+      <div className="flex h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+        {/* Chat Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Message List */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {currentConversation ? (
+              messages?.map((message, index) => (
+                <MessageCardRevamped key={message.id} message={message} index={index} />
+              ))
+            ) : (
+              <div className="text-center text-slate-500 dark:text-slate-400 mt-6">
+                Selecione uma conversa para começar a conversar.
               </div>
-              <div className="space-y-2">
-                <div className="w-64 h-4 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-                <div className="w-48 h-3 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-              </div>
-            </div>
-          )}
-
-          {/* Scroll Anchor */}
-          <div ref={chatBottomRef} />
-        </div>
-
-        {/* Input Area */}
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-700/50 p-4">
-          <div className="relative flex items-center space-x-3">
-            {/* Cancel Button */}
-            {isLoading && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={cancelGeneration}
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full hover:bg-red-500/10 dark:hover:bg-red-500/20"
-              >
-                <XCircle className="w-5 h-5 text-red-500" />
-              </Button>
             )}
             
-            {/* Input Field */}
-            <Input
-              type="text"
-              placeholder="Digite sua mensagem..."
-              value={inputMessage}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              disabled={isLoading}
-              className="flex-1 rounded-full py-2.5 pl-12 pr-4 shadow-sm focus-visible:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
-            />
-            
-            {/* Send Button */}
-            <Button 
-              onClick={sendMessage} 
-              disabled={isLoading || !inputMessage.trim()}
-              className="rounded-full shadow-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
-            >
-              <Send className="w-4 h-4" />
-              <span className="sr-only">Enviar</span>
-            </Button>
+            {/* Loading Indicator */}
+            {isLoading && (
+              <div className="flex items-center space-x-3 max-w-md mx-auto mb-6 animate-fade-in">
+                <div className="relative flex-shrink-0">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-500 dark:to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <Mic className="w-5 h-5 text-white animate-pulse" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="w-64 h-4 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                  <div className="w-48 h-3 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                </div>
+              </div>
+            )}
+
+            {/* Scroll Anchor */}
+            <div ref={chatBottomRef} />
+          </div>
+
+          {/* Input Area */}
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-700/50 p-4">
+            <div className="relative flex items-center space-x-3">
+              {/* Cancel Button */}
+              {isLoading && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={cancelGeneration}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full hover:bg-red-500/10 dark:hover:bg-red-500/20"
+                >
+                  <XCircle className="w-5 h-5 text-red-500" />
+                </Button>
+              )}
+              
+              {/* Input Field */}
+              <Input
+                type="text"
+                placeholder="Digite sua mensagem..."
+                value={inputMessage}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                disabled={isLoading}
+                className="flex-1 rounded-full py-2.5 pl-12 pr-4 shadow-sm focus-visible:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+              />
+              
+              {/* Send Button */}
+              <Button 
+                onClick={sendMessage} 
+                disabled={isLoading || !inputMessage.trim()}
+                className="rounded-full shadow-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
+              >
+                <Send className="w-4 h-4" />
+                <span className="sr-only">Enviar</span>
+              </Button>
+            </div>
           </div>
         </div>
+        
+        {/* Floating Action Button - Updated with context */}
+        <FloatingActionButton 
+          onAction={handleFloatingAction}
+          currentSection="chat"
+          hasActiveChat={!!currentConversation}
+          hasDocument={false} // You can integrate with document state if needed
+        />
       </div>
       
-      {/* Floating Action Button - Updated with context */}
-      <FloatingActionButton 
-        onAction={handleFloatingAction}
-        currentSection="chat"
-        hasActiveChat={!!currentConversation}
-        hasDocument={false} // You can integrate with document state if needed
+      {/* Focus Mode Overlay */}
+      <FocusMode
+        isActive={isFocusModeActive}
+        onExit={deactivateFocusMode}
+        onSendMessage={handleFocusModeMessage}
+        initialText=""
       />
-    </div>
+    </>
   );
 };
 

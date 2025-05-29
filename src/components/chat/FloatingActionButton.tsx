@@ -14,7 +14,7 @@ interface FloatingActionButtonProps {
 const RADIAL_ACTIONS = [
   { id: 'new-chat', icon: MessageCircle, label: 'Nova conversa', angle: 0 },
   { id: 'voice-mode', icon: Mic, label: 'Modo voz', angle: 72 },
-  { id: 'screenshot', icon: Camera, label: 'Screenshot', angle: 144 },
+  { id: 'focus-mode', icon: Sparkles, label: 'Focus Mode', angle: 144 },
   { id: 'quick-actions', icon: Zap, label: 'Ações rápidas', angle: 216 },
 ];
 

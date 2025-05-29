@@ -193,6 +193,68 @@
   left: 100%;
 }
 
+/* Focus Mode Animations */
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.2;
+  }
+}
+
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* Focus Mode Transitions */
+.focus-mode-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.focus-mode-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 500ms ease-out, transform 500ms ease-out;
+}
+
+.focus-mode-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.focus-mode-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 300ms ease-in, transform 300ms ease-in;
+}
+
+/* Minimalist text styles for focus mode */
+.focus-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.025em;
+  line-height: 1.6;
+}
+
+.focus-text::placeholder {
+  opacity: 0.4;
+  font-style: italic;
+}
+
+/* Gesture hint animations */
+.gesture-hint {
+  animation: fade-in-out 2s ease-in-out infinite;
+}
+
+@keyframes fade-in-out {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
 /* Custom Scrollbar */
 .premium-scrollbar::-webkit-scrollbar {
   width: 6px;
