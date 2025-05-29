@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AccessibilityProvider } from "@/components/accessibility/AccessibilityProvider";
+import { AuthProvider } from "@/hooks/useAuth";
 import SplashScreen from "@/components/branding/SplashScreen";
 import UpdatePrompt from "@/components/pwa/UpdatePrompt";
 import { SkeletonPremium } from "@/components/ui/skeleton-premium";
@@ -48,24 +49,26 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AccessibilityProvider>
-        {showSplash ? (
-          <SplashScreen onComplete={handleSplashComplete} />
-        ) : (
-          <>
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/404" element={<NotFound />} />
-                <Route path="*" element={<Navigate to="/404" replace />} />
-              </Routes>
-            </Suspense>
-            
-            <Toaster />
-            <UpdatePrompt />
-          </>
-        )}
-      </AccessibilityProvider>
+      <AuthProvider>
+        <AccessibilityProvider>
+          {showSplash ? (
+            <SplashScreen onComplete={handleSplashComplete} />
+          ) : (
+            <>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/404" element={<NotFound />} />
+                  <Route path="*" element={<Navigate to="/404" replace />} />
+                </Routes>
+              </Suspense>
+              
+              <Toaster />
+              <UpdatePrompt />
+            </>
+          )}
+        </AccessibilityProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
