@@ -1,24 +1,12 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  ArrowLeft,
-  MoreHorizontal,
-  Share,
-  Trash2,
-  Download,
-  Edit,
-  Sparkles,
-  ChevronDown,
-  MessageCircle
-} from 'lucide-react';
-import { Conversation, Message } from '@/hooks/useConversations';
-import { useConversations } from '@/hooks/useConversations';
-import MessageCardRevamped from './MessageCardRevamped';
+import { PremiumButton } from '@/components/ui/premium-button';
+import { ArrowLeft, Edit3, Share, MoreHorizontal, Sparkles } from 'lucide-react';
+import { Conversation } from '@/hooks/useConversations';
+import ChatMessages from './ChatMessages';
 import RevolutionaryInput from './RevolutionaryInput';
 import ModelSelector from './ModelSelector';
-import { useChatProcessor } from '@/hooks/useChatProcessor';
 
 interface ChatAreaProps {
   currentConversation: Conversation | null;
@@ -27,217 +15,163 @@ interface ChatAreaProps {
 }
 
 const ChatArea = ({ currentConversation, onBackToConversations, isMobile }: ChatAreaProps) => {
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState('');
   const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
-  const [showActions, setShowActions] = useState(false);
-  
-  const { messages, updateConversation } = useConversations();
-  const { processing, processMessage } = useChatProcessor();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [title, setTitle] = useState(currentConversation?.name || 'Nova conversa');
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const handleTitleEdit = () => {
+    setIsEditingTitle(true);
   };
 
-  const handleTitleEdit = async () => {
-    if (isEditingTitle && currentConversation && editedTitle.trim()) {
-      await updateConversation(currentConversation.id, { name: editedTitle.trim() });
-    }
+  const handleTitleSave = () => {
     setIsEditingTitle(false);
+    // Aqui você implementaria a lógica para salvar o título
+    console.log('Saving title:', title);
   };
 
-  const handleSendMessage = async (message: string) => {
-    if (!currentConversation) return;
-    await processMessage(message, currentConversation.id);
+  const handleShare = () => {
+    console.log('Sharing conversation');
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && isEditingTitle) {
-      handleTitleEdit();
-    }
-    if (e.key === 'Escape' && isEditingTitle) {
-      setIsEditingTitle(false);
-      setEditedTitle(currentConversation?.name || '');
-    }
+  const handleMoreActions = () => {
+    console.log('More actions');
   };
-
-  if (!currentConversation) {
-    return (
-      <div className="h-full flex items-center justify-center bg-[#0F0F0F]">
-        <div className="text-center max-w-md mx-auto px-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-            <Sparkles className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-4 bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-            Bem-vindo ao Alex iA
-          </h2>
-          <p className="text-white/60 mb-8 leading-relaxed">
-            Selecione uma conversa para começar ou crie uma nova para explorar as possibilidades da inteligência artificial premium.
-          </p>
-          
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-3 justify-center">
-              <div className="flex items-center space-x-2 text-sm text-white/40 bg-white/5 px-3 py-2 rounded-lg border border-white/10">
-                <kbd className="px-2 py-1 bg-white/10 rounded text-xs font-mono">⌘N</kbd>
-                <span>Nova conversa</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-white/40 bg-white/5 px-3 py-2 rounded-lg border border-white/10">
-                <kbd className="px-2 py-1 bg-white/10 rounded text-xs font-mono">⌘F</kbd>
-                <span>Focus mode</span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-3 mt-8">
-              <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-left">
-                <MessageCircle className="w-5 h-5 text-blue-400 mb-2" />
-                <h3 className="text-white font-medium mb-1">Conversas Inteligentes</h3>
-                <p className="text-white/60 text-sm">Interaja com modelos de IA avançados</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="h-full flex flex-col bg-[#0F0F0F]">
-      {/* Header Premium Minimalista */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#0A0A0A]/95 backdrop-blur-xl">
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {isMobile && onBackToConversations && (
-            <Button
-              onClick={onBackToConversations}
-              variant="ghost"
-              size="sm"
-              className="p-2 text-white hover:bg-white/10 flex-shrink-0 rounded-xl"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          )}
-          
-          {/* Título Editável Premium */}
-          <div className="flex-1 min-w-0">
-            {isEditingTitle ? (
-              <input
-                type="text"
-                value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-                onBlur={handleTitleEdit}
-                onKeyDown={handleKeyDown}
-                className="bg-transparent text-white text-lg font-medium w-full outline-none border-b border-blue-400 pb-1 focus:border-blue-300 transition-colors"
-                autoFocus
+    <div className="h-full flex flex-col bg-transparent animate-premium-fade-in">
+      {/* Header Premium */}
+      <div className="glass-card border-b border-white/5 p-4 backdrop-blur-xl">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {isMobile && onBackToConversations && (
+              <PremiumButton
+                variant="ghost"
+                size="sm"
+                onClick={onBackToConversations}
+                icon={<ArrowLeft className="w-4 h-4" />}
               />
-            ) : (
-              <button
-                onClick={() => {
-                  setIsEditingTitle(true);
-                  setEditedTitle(currentConversation.name || 'Nova Conversa');
-                }}
-                className="text-lg font-medium text-white hover:text-blue-400 transition-colors text-left truncate w-full group"
-              >
-                <span className="group-hover:underline decoration-blue-400/50">
-                  {currentConversation.name || 'Nova Conversa'}
-                </span>
-                <Edit className="w-3 h-3 inline ml-2 opacity-0 group-hover:opacity-50 transition-opacity" />
-              </button>
             )}
+            
+            <div className="flex items-center gap-3">
+              {/* AI Avatar Premium */}
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center shadow-lg animate-premium-glow">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              
+              {/* Title Editable */}
+              <div className="flex flex-col">
+                {isEditingTitle ? (
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    onBlur={handleTitleSave}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleTitleSave();
+                      if (e.key === 'Escape') {
+                        setIsEditingTitle(false);
+                        setTitle(currentConversation?.name || 'Nova conversa');
+                      }
+                    }}
+                    className="input-premium text-lg font-semibold bg-transparent border-none p-0 text-white"
+                    autoFocus
+                  />
+                ) : (
+                  <h1 
+                    className="text-lg font-semibold text-white cursor-pointer hover:text-white/80 transition-colors"
+                    onClick={handleTitleEdit}
+                  >
+                    {title}
+                  </h1>
+                )}
+                
+                <div className="flex items-center gap-2 text-xs text-white/50">
+                  <span>Conversando com</span>
+                  <ModelSelector
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center space-x-3 flex-shrink-0">
-          {/* Model Selector Premium */}
-          <ModelSelector
-            selectedModel={selectedModel}
-            onModelChange={setSelectedModel}
-          />
-
-          {/* Actions Menu Premium */}
-          <div className="relative">
-            <Button
-              onClick={() => setShowActions(!showActions)}
+          
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <PremiumButton
               variant="ghost"
               size="sm"
-              className="p-2 text-white hover:bg-white/10 rounded-xl"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-
-            {showActions && (
-              <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setShowActions(false)}
-                />
-                <div className="absolute top-full right-0 mt-2 w-48 bg-[#1A1A1A] border border-white/20 rounded-xl shadow-xl z-20 overflow-hidden">
-                  <button className="w-full p-3 text-left hover:bg-white/5 text-white transition-colors flex items-center space-x-3">
-                    <Share className="w-4 h-4" />
-                    <span>Compartilhar</span>
-                  </button>
-                  <button className="w-full p-3 text-left hover:bg-white/5 text-white transition-colors flex items-center space-x-3">
-                    <Download className="w-4 h-4" />
-                    <span>Exportar</span>
-                  </button>
-                  <button className="w-full p-3 text-left hover:bg-white/5 text-red-400 transition-colors flex items-center space-x-3">
-                    <Trash2 className="w-4 h-4" />
-                    <span>Excluir</span>
-                  </button>
-                </div>
-              </>
-            )}
+              onClick={handleTitleEdit}
+              icon={<Edit3 className="w-4 h-4" />}
+            />
+            <PremiumButton
+              variant="ghost"
+              size="sm"
+              onClick={handleShare}
+              icon={<Share className="w-4 h-4" />}
+            />
+            <PremiumButton
+              variant="ghost"
+              size="sm"
+              onClick={handleMoreActions}
+              icon={<MoreHorizontal className="w-4 h-4" />}
+            />
           </div>
         </div>
       </div>
 
-      {/* Messages Area Premium */}
-      <ScrollArea className="flex-1 px-4 py-6" style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'rgba(255,255,255,0.1) transparent'
-      }}>
-        <div className="max-w-4xl mx-auto space-y-6">
-          {messages.map((message, index) => (
-            <MessageCardRevamped 
-              key={message.id} 
-              message={message} 
-              index={index}
-            />
-          ))}
-          
-          {processing && (
-            <div className="flex items-start space-x-4 max-w-4xl mx-auto animate-fade-in">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Sparkles className="w-5 h-5 text-white" />
+      {/* Messages Area */}
+      <div className="flex-1 overflow-hidden">
+        {currentConversation ? (
+          <ChatMessages 
+            conversationId={currentConversation.id}
+            className="h-full"
+          />
+        ) : (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center max-w-md mx-auto p-8">
+              <div className="empty-state-icon mx-auto mb-6">
+                <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <div className="flex-1 bg-white/5 rounded-2xl p-5 border border-white/10">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  </div>
-                  <span className="text-white/70 text-sm font-medium">Alex iA está pensando...</span>
+              <h2 className="text-title text-xl mb-3 gradient-text">
+                Bem-vindo ao Chat Premium
+              </h2>
+              <p className="text-caption mb-6">
+                Selecione uma conversa ou inicie uma nova para começar a conversar com a IA mais avançada.
+              </p>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="glass-card p-4 text-left">
+                  <h4 className="text-white font-medium mb-1">💡 Sugestões</h4>
+                  <p className="text-white/60 text-xs">Peça ideias criativas</p>
                 </div>
-                <div className="h-4 bg-white/5 rounded animate-pulse"></div>
+                <div className="glass-card p-4 text-left">
+                  <h4 className="text-white font-medium mb-1">📊 Análises</h4>
+                  <p className="text-white/60 text-xs">Analise dados e textos</p>
+                </div>
+                <div className="glass-card p-4 text-left">
+                  <h4 className="text-white font-medium mb-1">🔧 Código</h4>
+                  <p className="text-white/60 text-xs">Ajuda com programação</p>
+                </div>
+                <div className="glass-card p-4 text-left">
+                  <h4 className="text-white font-medium mb-1">✍️ Escrita</h4>
+                  <p className="text-white/60 text-xs">Crie textos incríveis</p>
+                </div>
               </div>
             </div>
-          )}
-          
-          <div ref={messagesEndRef} />
-        </div>
-      </ScrollArea>
+          </div>
+        )}
+      </div>
 
-      {/* Input Area Revolucionária */}
-      <RevolutionaryInput
-        processing={processing}
-        onSendMessage={handleSendMessage}
-        contextualPlaceholder="Digite sua mensagem para Alex iA..."
-        aiTyping={processing}
-      />
+      {/* Input Area */}
+      {currentConversation && (
+        <div className="glass-card border-t border-white/5 p-4 backdrop-blur-xl">
+          <RevolutionaryInput
+            conversationId={currentConversation.id}
+            onSendMessage={() => {}}
+            disabled={false}
+          />
+        </div>
+      )}
     </div>
   );
 };

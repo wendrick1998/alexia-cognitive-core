@@ -27,7 +27,7 @@ const PremiumChatLayout = ({
 
   if (isMobile) {
     return (
-      <div className="h-full flex flex-col bg-[#0A0A0A] pb-[70px]">
+      <div className="h-full flex flex-col bg-black pb-[70px] animate-premium-fade-in">
         {showConversations ? (
           <ConversationsList
             conversations={conversations}
@@ -52,24 +52,28 @@ const PremiumChatLayout = ({
   }
 
   return (
-    <div className="h-full flex bg-[#0A0A0A] relative overflow-hidden">
-      {/* Conversations Sidebar - Largura fixa premium */}
-      <div className="w-[320px] border-r border-white/10 flex-shrink-0 bg-[#0A0A0A]">
-        <ConversationsList
-          conversations={conversations}
-          currentConversation={currentConversation}
-          onConversationSelect={onConversationSelect}
-          onNewConversation={onNewConversation}
-          isMobile={false}
-        />
+    <div className="h-full flex bg-black relative overflow-hidden animate-premium-fade-in">
+      {/* Conversations Sidebar - Premium Glass Design */}
+      <div className="w-[320px] flex-shrink-0 relative">
+        <div className="absolute inset-0 glass-card border-r border-white/5 backdrop-blur-xl">
+          <ConversationsList
+            conversations={conversations}
+            currentConversation={currentConversation}
+            onConversationSelect={onConversationSelect}
+            onNewConversation={onNewConversation}
+            isMobile={false}
+          />
+        </div>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 min-w-0 bg-[#0F0F0F]">
-        <ChatArea
-          currentConversation={currentConversation}
-          isMobile={false}
-        />
+      {/* Chat Area - Premium Background */}
+      <div className="flex-1 min-w-0 relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900/20 to-black">
+          <ChatArea
+            currentConversation={currentConversation}
+            isMobile={false}
+          />
+        </div>
       </div>
     </div>
   );
