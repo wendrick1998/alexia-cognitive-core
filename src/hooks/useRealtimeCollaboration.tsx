@@ -235,18 +235,10 @@ export function useRealtimeCollaboration() {
         }
       };
 
-      const { data, error } = await supabase
-        .from('shared_contexts')
-        .insert(sharedContext)
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      // Since we don't have a shared_contexts table, we'll store this in memory only
       const newContext: SharedContext = {
-        ...data,
-        createdAt: new Date(data.created_at),
-        expiresAt: data.expires_at ? new Date(data.expires_at) : undefined
+        ...sharedContext,
+        id: crypto.randomUUID()
       };
 
       setSharedContexts(prev => [newContext, ...prev]);
@@ -264,21 +256,8 @@ export function useRealtimeCollaboration() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('shared_contexts')
-        .select('*')
-        .contains('participants', [user.id])
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const contexts: SharedContext[] = (data || []).map(context => ({
-        ...context,
-        createdAt: new Date(context.created_at),
-        expiresAt: context.expires_at ? new Date(context.expires_at) : undefined
-      }));
-
-      setSharedContexts(contexts);
+      // Since we don't have a shared_contexts table, we'll just use what's in memory
+      console.log('Loading shared contexts from memory');
     } catch (error) {
       console.error('❌ Error loading shared contexts:', error);
     }

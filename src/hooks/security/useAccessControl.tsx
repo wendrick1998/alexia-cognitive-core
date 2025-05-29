@@ -16,7 +16,7 @@ export function useAccessControl() {
       name,
       level,
       createdAt: new Date(),
-      userId: user?.id || 'anonymous',
+      // Remove userId since it doesn't exist in SecurityContext type
       permissions: {
         read: true,
         write: level !== 'secret',
@@ -34,7 +34,7 @@ export function useAccessControl() {
     action: 'read' | 'write' | 'delete' | 'admin'
   ): boolean => {
     const context = securityContexts.find(c => c.id === contextId);
-    if (!context) return false;
+    if (!context || !context.permissions) return false;
     return context.permissions[action];
   }, [securityContexts]);
 

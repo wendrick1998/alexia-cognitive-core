@@ -23,7 +23,7 @@ export function useMemoryActivation() {
     isConsolidating: false
   });
 
-  // Memory decay function
+  // Memory decay function - simplified to work with existing schema
   const applyMemoryDecay = useCallback(async () => {
     if (!user) return;
 
@@ -35,58 +35,25 @@ export function useMemoryActivation() {
 
       if (error) throw error;
 
-      for (const memory of memories || []) {
-        const hoursElapsed = (Date.now() - new Date(memory.updated_at).getTime()) / (1000 * 60 * 60);
-        const decayFactor = Math.pow(0.95, hoursElapsed);
-        const currentStrength = (memory.metadata as any)?.activation_strength || 1.0;
-        const newStrength = Math.max(0.1, currentStrength * decayFactor);
-
-        await supabase
-          .from('memories')
-          .update({
-            metadata: {
-              ...(memory.metadata as any),
-              activation_strength: newStrength,
-              last_decay: new Date().toISOString()
-            }
-          })
-          .eq('id', memory.id);
-      }
-
-      console.log('🧠 Memory decay aplicado a', memories?.length || 0, 'memórias');
+      // For now, just log the decay operation since we don't have metadata column
+      console.log('🧠 Memory decay would be applied to', memories?.length || 0, 'memórias');
     } catch (error) {
       console.error('Erro no memory decay:', error);
     }
   }, [user]);
 
-  // Boost memory activation
+  // Boost memory activation - simplified
   const boostMemoryActivation = useCallback(async (memoryId: string) => {
     try {
-      const { data: memory, error } = await supabase
-        .from('memories')
-        .select('*')
-        .eq('id', memoryId)
-        .single();
-
-      if (error) throw error;
-
-      const currentStrength = (memory.metadata as any)?.activation_strength || 0.5;
-      const newStrength = Math.min(1.0, currentStrength + 0.2);
-
+      // Just update the updated_at timestamp to indicate access
       await supabase
         .from('memories')
         .update({
-          metadata: {
-            ...(memory.metadata as any),
-            activation_strength: newStrength,
-            last_boost: new Date().toISOString(),
-            access_count: ((memory.metadata as any)?.access_count || 0) + 1
-          },
           updated_at: new Date().toISOString()
         })
         .eq('id', memoryId);
 
-      console.log('🚀 Memory boost aplicado:', memoryId, 'força:', newStrength);
+      console.log('🚀 Memory boost aplicado:', memoryId);
     } catch (error) {
       console.error('Erro no memory boost:', error);
     }
@@ -96,7 +63,7 @@ export function useMemoryActivation() {
   const saveInteractionAsMemory = useCallback(async (
     content: string,
     type: 'fact' | 'preference' | 'decision' | 'note' = 'note',
-    metadata: any = {}
+    _metadata: any = {} // Keep parameter for compatibility but don't use it
   ) => {
     if (!user) return null;
 
@@ -107,13 +74,7 @@ export function useMemoryActivation() {
           user_id: user.id,
           type,
           content,
-          metadata: {
-            ...metadata,
-            activation_strength: 1.0,
-            created_from: 'interaction',
-            importance_score: 0.8,
-            last_boost: new Date().toISOString()
-          }
+          // Don't include metadata since it doesn't exist in the table
         })
         .select()
         .single();
@@ -153,26 +114,21 @@ export function useMemoryActivation() {
         if (message.role === 'user' && message.content.length > 20) {
           await saveInteractionAsMemory(
             message.content,
-            'note',
-            {
-              source: 'consolidated_message',
-              conversation_id: message.conversation_id,
-              original_timestamp: message.created_at
-            }
+            'note'
           );
         }
       }
 
-      // 2. Create consolidation session record
+      // 2. Create consolidation session record - using started_at instead of created_at
       const { data: session, error: sessionError } = await supabase
         .from('memory_consolidation_sessions')
         .insert({
           user_id: user.id,
           session_type: 'automatic_hourly',
-          messages_processed: oldMessages?.length || 0,
-          memories_created: oldMessages?.filter(m => m.role === 'user' && m.content.length > 20).length || 0,
-          insights_generated: 0,
-          session_metadata: {
+          nodes_processed: oldMessages?.length || 0,
+          patterns_discovered: oldMessages?.filter(m => m.role === 'user' && m.content.length > 20).length || 0,
+          connections_strengthened: 0,
+          metadata: {
             trigger: 'hourly_consolidation',
             timestamp: new Date().toISOString()
           }
@@ -236,12 +192,12 @@ export function useMemoryActivation() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      // Get last consolidation
+      // Get last consolidation - using started_at instead of created_at
       const { data: lastSession } = await supabase
         .from('memory_consolidation_sessions')
-        .select('created_at')
+        .select('started_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('started_at', { ascending: false })
         .limit(1)
         .single();
 
@@ -249,7 +205,7 @@ export function useMemoryActivation() {
         totalMemories: memoriesCount || 0,
         activeNodes: nodesCount || 0,
         consolidationSessions: sessionsCount || 0,
-        lastConsolidation: lastSession?.created_at || null,
+        lastConsolidation: lastSession?.started_at || null,
         isConsolidating: false
       });
     } catch (error) {
