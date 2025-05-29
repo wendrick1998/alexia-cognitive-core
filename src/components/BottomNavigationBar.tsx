@@ -1,5 +1,5 @@
 
-import PremiumNavigationBar from './premium/PremiumNavigationBar';
+import BottomNavigation from './navigation/BottomNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface BottomNavigationBarProps {
@@ -18,7 +18,7 @@ const BottomNavigationBar = ({
   if (!isMobile) return null;
 
   return (
-    <PremiumNavigationBar
+    <BottomNavigation
       currentSection={currentSection}
       onSectionChange={onSectionChange}
       onMenuToggle={onMenuToggle}

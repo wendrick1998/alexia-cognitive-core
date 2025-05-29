@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import AppLayout from "../components/layout/AppLayout";
+import PremiumAppLayout from "../components/layout/PremiumAppLayout";
 import MultiPaneLayout from "../components/layout/MultiPaneLayout";
 import Chat from "../components/Chat";
 import Dashboard from "../components/dashboard/Dashboard";
@@ -26,11 +26,9 @@ const Index = () => {
   const handleSectionChange = (section: string, id?: string) => {
     console.log(`🔗 Navegando para seção: ${section}`, id ? `com ID: ${id}` : '');
     
-    // Evitar renderização duplicada - só muda se for diferente
     if (section !== currentSection) {
       setCurrentSection(section);
       
-      // Handle navigation with optional ID for specific items
       if (id) {
         console.log(`Navegando para ${section} com ID: ${id}`);
       }
@@ -91,8 +89,8 @@ const Index = () => {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen" style={{ background: '#000000' }}>
-        <AppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
+      <div className="min-h-screen bg-white dark:bg-gray-950">
+        <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
           {isSplitView && !isMobile ? (
             <MultiPaneLayout
               leftPane={<PageTransition>{renderContent(splitSections.left)}</PageTransition>}
@@ -111,7 +109,7 @@ const Index = () => {
                     onClick={enableSplitView}
                     variant="outline"
                     size="sm"
-                    className="premium-card-dark text-white hover:bg-white/10 hover:border-white/30 shadow-sm backdrop-blur-sm"
+                    className="bg-white/95 dark:bg-gray-900/95 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur-sm"
                   >
                     <SplitSquareHorizontal className="w-4 h-4 mr-2" />
                     Split View
@@ -124,9 +122,8 @@ const Index = () => {
               </PageTransition>
             </div>
           )}
-        </AppLayout>
+        </PremiumAppLayout>
         
-        {/* Connection Status Indicator */}
         <ConnectionStatus />
       </div>
     </AuthGuard>
