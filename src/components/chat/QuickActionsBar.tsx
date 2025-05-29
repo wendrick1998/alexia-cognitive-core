@@ -1,37 +1,87 @@
 
-import { Button } from "@/components/ui/button";
-import { Paperclip, Mic, Camera, Lightbulb, Sparkles } from "lucide-react";
+import { useState } from 'react';
+import { AtSign, Hash, Paperclip, Smile } from 'lucide-react';
+import { useMobileOptimization } from '@/hooks/useMobileOptimization';
+import QuickActionButton from './QuickActionButton';
 
-interface QuickActionsBarProps {
-  onAction: (action: string) => void;
+interface QuickAction {
+  id: string;
+  icon: typeof AtSign;
+  label: string;
+  text?: string;
+  action?: string;
+  description: string;
 }
 
-const QUICK_ACTIONS = [
-  { id: 'attach', icon: Paperclip, label: 'Anexar', color: 'from-blue-500 to-indigo-600' },
-  { id: 'audio', icon: Mic, label: 'Áudio', color: 'from-red-500 to-pink-600' },
-  { id: 'photo', icon: Camera, label: 'Foto', color: 'from-green-500 to-emerald-600' },
-  { id: 'ideas', icon: Lightbulb, label: 'Ideias', color: 'from-yellow-500 to-orange-600' },
-  { id: 'deep-think', icon: Sparkles, label: 'Deep Think', color: 'from-purple-500 to-violet-600' },
-];
+interface QuickActionsBarProps {
+  onInsertText: (text: string) => void;
+  onAttachment: () => void;
+}
 
-const QuickActionsBar = ({ onAction }: QuickActionsBarProps) => {
+const QuickActionsBar = ({ onInsertText, onAttachment }: QuickActionsBarProps) => {
+  const [selectedQuickAction, setSelectedQuickAction] = useState<string | null>(null);
+  const { hapticFeedback } = useMobileOptimization();
+
+  const quickActions: QuickAction[] = [
+    {
+      id: 'mention',
+      icon: AtSign,
+      label: '@',
+      text: '@',
+      description: 'Mencionar'
+    },
+    {
+      id: 'filter',
+      icon: Hash,
+      label: '/',
+      text: '/',
+      description: 'Filtro'
+    },
+    {
+      id: 'attachment',
+      icon: Paperclip,
+      label: 'Anexo',
+      action: 'attachment',
+      description: 'Anexar'
+    },
+    {
+      id: 'emoji',
+      icon: Smile,
+      label: '😊',
+      text: '😊',
+      description: 'Emoji'
+    }
+  ];
+
+  const handleQuickAction = (action: QuickAction) => {
+    setSelectedQuickAction(action.id);
+    hapticFeedback('light');
+    
+    setTimeout(() => {
+      setSelectedQuickAction(null);
+      
+      if (action.action === 'attachment') {
+        onAttachment();
+      } else if (action.text) {
+        onInsertText(action.text);
+      }
+    }, 100);
+  };
+
   return (
-    <div className="px-4 pb-3">
-      <div className="flex space-x-3 overflow-x-auto scrollbar-none">
-        {QUICK_ACTIONS.map((action) => {
-          const Icon = action.icon;
-          return (
-            <Button
-              key={action.id}
-              onClick={() => onAction(action.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full bg-gradient-to-r ${action.color} hover:scale-105 transition-all duration-200 text-white border-0 shadow-lg min-w-fit`}
-            >
-              <Icon className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">{action.label}</span>
-            </Button>
-          );
-        })}
-      </div>
+    <div className="flex items-center space-x-2">
+      {quickActions.map((action) => (
+        <QuickActionButton
+          key={action.id}
+          id={action.id}
+          icon={action.icon}
+          label={action.label}
+          description={action.description}
+          isSelected={selectedQuickAction === action.id}
+          onTouchStart={() => setSelectedQuickAction(action.id)}
+          onTouchEnd={() => handleQuickAction(action)}
+        />
+      ))}
     </div>
   );
 };
