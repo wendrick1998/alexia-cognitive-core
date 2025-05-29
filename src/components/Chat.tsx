@@ -75,7 +75,8 @@ const Chat = () => {
 
   return (
     <>
-      <div className="h-full relative">
+      {/* Container principal com padding bottom para não sobrepor o menu inferior */}
+      <div className={`h-full relative ${isMobile ? 'pb-0' : ''}`}>
         <PremiumChatLayout
           conversations={conversations}
           currentConversation={currentConversation}

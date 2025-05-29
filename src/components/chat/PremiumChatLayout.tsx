@@ -27,7 +27,7 @@ const PremiumChatLayout = ({
 
   if (isMobile) {
     return (
-      <div className="h-full flex flex-col bg-black">
+      <div className="h-full flex flex-col bg-black pb-[70px]">
         {showConversations ? (
           <ConversationsList
             conversations={conversations}
