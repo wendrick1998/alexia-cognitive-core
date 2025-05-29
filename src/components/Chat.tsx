@@ -1,223 +1,40 @@
-import { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from '@/hooks/useAuth';
-import { useAutoNaming } from '@/hooks/useAutoNaming';
-import { Send, Mic, XCircle, Plus, Paperclip, ArrowUp, ArrowDown } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
-import { 
-  useConversations, 
-  Message, 
-  Conversation 
-} from '@/hooks/useConversations';
-import MessageCardRevamped from './chat/MessageCardRevamped';
-import AppSidebar from './AppSidebar';
-import FloatingActionButton from './chat/FloatingActionButton';
-import FocusMode from './focus/FocusMode';
-import { useFocusMode } from '@/hooks/useFocusMode';
 
-interface ChatProps {
-  // Add any props here
-}
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from "@/hooks/use-toast";
+import { useConversations } from '@/hooks/useConversations';
+import { useFocusMode } from '@/hooks/useFocusMode';
+import PremiumChatLayout from './chat/PremiumChatLayout';
+import FocusMode from './focus/FocusMode';
+import FloatingActionButton from './chat/FloatingActionButton';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { generateConversationName, isGenerating } = useAutoNaming();
-  const { 
-    conversations, 
-    currentConversation, 
-    messages,
+  const isMobile = useIsMobile();
+  
+  const {
+    conversations,
+    currentConversation,
     createAndNavigateToNewConversation,
     navigateToConversation,
-    setMessages,
-    updateConversation,
-    createConversation
   } = useConversations();
 
-  const [inputMessage, setInputMessage] = useState('');
-  const [isVoiceMode, setIsVoiceMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isNewConversation, setIsNewConversation] = useState(true);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
-  const [isBottomVisible, setIsBottomVisible] = useState(true);
-  
-  const chatBottomRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
   const { isActive: isFocusModeActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
 
-  // Auto scroll to bottom when new messages are added
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Check if bottom is visible
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsBottomVisible(entry.isIntersecting);
-      },
-      { threshold: 1 }
-    );
-
-    if (chatBottomRef.current) {
-      observer.observe(chatBottomRef.current);
-    }
-
-    return () => {
-      if (chatBottomRef.current) {
-        observer.unobserve(chatBottomRef.current);
-      }
-    };
-  }, [chatBottomRef]);
-
-  const scrollToBottom = () => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputMessage(e.target.value);
-  };
-
-  const startNewConversation = async () => {
-    setIsNewConversation(true);
+  const handleNewConversation = async () => {
     await createAndNavigateToNewConversation();
   };
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    // Get current conversation or create new
-    let conversation = currentConversation;
-    if (!conversation) {
-      conversation = await createConversation();
-      if (!conversation) {
-        setIsLoading(false);
-        return;
-      }
-    }
-
-    // Add user message to conversation
-    const userMessage: Message = {
-      id: uuidv4(),
-      conversation_id: conversation.id,
-      role: 'user',
-      content: inputMessage,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    
-    // Add message to local state
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-
-    // Generate AI response
-    const aiMessage = await generateAIResponse(conversation.id, inputMessage);
-    if (aiMessage) {
-      setMessages(prev => [...prev, aiMessage]);
-    }
-
-    setIsLoading(false);
-  };
-
-  const generateAIResponse = async (conversationId: string, messageContent: string): Promise<Message | null> => {
-    const currentAbortController = new AbortController();
-    setAbortController(currentAbortController);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          conversationId, 
-          messageContent 
-        }),
-        signal: currentAbortController.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao gerar resposta da IA: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (data.result && data.result.content) {
-        // Auto naming
-        if (isNewConversation && !isGenerating && currentConversation) {
-          const newName = await generateConversationName(data.result.content);
-          await updateConversation(currentConversation.id, { name: newName });
-          setIsNewConversation(false);
-        }
-
-        const aiMessage: Message = {
-          id: uuidv4(),
-          conversation_id: conversationId,
-          role: 'assistant',
-          content: data.result.content,
-          llm_used: data.result.llm_used,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        return aiMessage;
-      } else {
-        throw new Error('Resposta da IA inválida');
-      }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('Geração da IA cancelada');
-      } else {
-        setError(error.message || 'Erro desconhecido ao gerar resposta da IA.');
-        toast({
-          variant: "destructive",
-          title: "Erro ao gerar resposta da IA",
-          description: error.message || 'Erro desconhecido ao gerar resposta da IA.',
-        });
-      }
-      return null;
-    } finally {
-      setIsLoading(false);
-      setAbortController(null);
-    }
-  };
-
-  const cancelGeneration = () => {
-    if (abortController) {
-      abortController.abort();
-      setAbortController(null);
-      setIsLoading(false);
-      toast({
-        title: "Geração da IA cancelada",
-        description: "A geração da resposta foi interrompida.",
-      });
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+  const handleConversationSelect = async (conversation: any) => {
+    await navigateToConversation(conversation.id);
   };
 
   const handleFloatingAction = (action: string) => {
     switch (action) {
       case 'new-chat':
-        startNewConversation();
-        break;
-      case 'voice-mode':
-        setIsVoiceMode(!isVoiceMode);
-        toast({
-          title: isVoiceMode ? "Modo Voz Desativado" : "Modo Voz Ativado",
-          description: isVoiceMode ? "Voltando ao modo texto" : "Agora você pode falar com a AlexIA",
-        });
+        handleNewConversation();
         break;
       case 'focus-mode':
         activateFocusMode();
@@ -226,207 +43,62 @@ const Chat = () => {
           description: "Modo de escrita minimalista ativado",
         });
         break;
-      case 'screenshot':
-        toast({
-          title: "Screenshot",
-          description: "Funcionalidade em desenvolvimento",
-        });
-        break;
-      case 'change-model':
-        toast({
-          title: "Mudar Modelo",
-          description: "Alternando entre modelos de IA disponíveis",
-        });
-        break;
       default:
         console.log('Ação não reconhecida:', action);
     }
   };
 
-  // Handle focus mode message sending
-  const handleFocusModeMessage = async (message: string) => {
-    if (!message.trim()) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    // Get current conversation or create new
-    let conversation = currentConversation;
-    if (!conversation) {
-      conversation = await createConversation();
-      if (!conversation) {
-        setIsLoading(false);
-        return;
-      }
-    }
-
-    // Add user message to conversation
-    const userMessage = {
-      id: uuidv4(),
-      conversation_id: conversation.id,
-      role: 'user' as const,
-      content: message,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    
-    // Add message to local state
-    setMessages(prev => [...prev, userMessage]);
-
-    // Generate AI response
-    const aiMessage = await generateAIResponse(conversation.id, message);
-    if (aiMessage) {
-      setMessages(prev => [...prev, aiMessage]);
-    }
-
-    setIsLoading(false);
-  };
-
-  // Listen for focus mode activation from quick actions
-  useEffect(() => {
-    const handleActivateFocusMode = () => {
-      activateFocusMode();
-      toast({
-        title: "Focus Mode Ativado",
-        description: "Modo de escrita minimalista ativado. Triple-tap para ativar novamente.",
-      });
-    };
-
-    window.addEventListener('activate-focus-mode', handleActivateFocusMode);
-    
-    return () => {
-      window.removeEventListener('activate-focus-mode', handleActivateFocusMode);
-    };
-  }, [activateFocusMode, toast]);
-
   // Listen for keyboard shortcuts
   useEffect(() => {
-    const handleNewConversation = () => {
-      startNewConversation();
-    };
-
-    const handleEscapePressed = () => {
-      if (isFocusModeActive) {
+    const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey) {
+        switch (e.key) {
+          case 'n':
+            e.preventDefault();
+            handleNewConversation();
+            break;
+          case 'f':
+            e.preventDefault();
+            activateFocusMode();
+            break;
+        }
+      }
+      
+      if (e.key === 'Escape' && isFocusModeActive) {
         deactivateFocusMode();
       }
     };
 
-    window.addEventListener('new-conversation', handleNewConversation);
-    window.addEventListener('escape-pressed', handleEscapePressed);
-    
-    return () => {
-      window.removeEventListener('new-conversation', handleNewConversation);
-      window.removeEventListener('escape-pressed', handleEscapePressed);
-    };
-  }, [isFocusModeActive, deactivateFocusMode]);
+    window.addEventListener('keydown', handleKeyboardShortcuts);
+    return () => window.removeEventListener('keydown', handleKeyboardShortcuts);
+  }, [isFocusModeActive, deactivateFocusMode, activateFocusMode]);
 
   return (
     <>
-      <div className="flex h-full bg-transparent">
-        {/* Chat Content - Desktop Optimized */}
-        <div className="flex-1 flex flex-col overflow-hidden lg:pl-20">
-          {/* Message List - Centered on Desktop */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="max-w-4xl mx-auto">
-              {currentConversation ? (
-                messages?.map((message, index) => (
-                  <MessageCardRevamped key={message.id} message={message} index={index} />
-                ))
-              ) : (
-                <div className="text-center text-slate-500 dark:text-slate-400 mt-6">
-                  <div className="max-w-md mx-auto space-y-4">
-                    <h2 className="text-xl font-semibold">Bem-vindo à AlexIA</h2>
-                    <p>Selecione uma conversa para começar ou crie uma nova.</p>
-                    <div className="flex flex-wrap gap-2 justify-center text-sm text-slate-400">
-                      <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">⌘N</kbd>
-                      <span>Nova conversa</span>
-                      <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">⌘F</kbd>
-                      <span>Focus mode</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Loading Indicator */}
-              {isLoading && (
-                <div className="flex items-center space-x-3 max-w-md mx-auto mb-6 animate-fade-in">
-                  <div className="relative flex-shrink-0">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-500 dark:to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Mic className="w-5 h-5 text-white animate-pulse" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="w-64 h-4 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-                    <div className="w-48 h-3 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-                  </div>
-                </div>
-              )}
+      <div className="h-full relative">
+        <PremiumChatLayout
+          conversations={conversations}
+          currentConversation={currentConversation}
+          onConversationSelect={handleConversationSelect}
+          onNewConversation={handleNewConversation}
+        />
 
-              {/* Scroll Anchor */}
-              <div ref={chatBottomRef} />
-            </div>
-          </div>
-
-          {/* Input Area - Desktop Optimized */}
-          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-700/50 p-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="relative flex items-end space-x-3">
-                {/* Cancel Button */}
-                {isLoading && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={cancelGeneration}
-                    className="mb-2 rounded-full hover:bg-red-500/10 dark:hover:bg-red-500/20"
-                  >
-                    <XCircle className="w-5 h-5 text-red-500" />
-                  </Button>
-                )}
-                
-                {/* Input Field - Larger on Desktop */}
-                <div className="flex-1">
-                  <Input
-                    type="text"
-                    placeholder="Digite sua mensagem... (Enter para enviar)"
-                    value={inputMessage}
-                    onChange={handleInputChange}
-                    onKeyDown={handleKeyDown}
-                    disabled={isLoading}
-                    className="rounded-2xl py-4 px-6 text-base shadow-sm focus-visible:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 min-h-[56px] resize-none"
-                  />
-                </div>
-                
-                {/* Send Button */}
-                <Button 
-                  onClick={sendMessage} 
-                  disabled={isLoading || !inputMessage.trim()}
-                  size="lg"
-                  className="rounded-2xl h-14 w-14 shadow-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-all duration-200 hover:scale-105"
-                >
-                  <Send className="w-5 h-5" />
-                  <span className="sr-only">Enviar</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Floating Action Button - Hidden on Desktop */}
-        <div className="lg:hidden">
+        {/* Floating Action Button - Mobile Only */}
+        {isMobile && (
           <FloatingActionButton 
             onAction={handleFloatingAction}
             currentSection="chat"
             hasActiveChat={!!currentConversation}
             hasDocument={false}
           />
-        </div>
+        )}
       </div>
-      
+
       {/* Focus Mode Overlay */}
       <FocusMode
         isActive={isFocusModeActive}
         onExit={deactivateFocusMode}
-        onSendMessage={handleFocusModeMessage}
+        onSendMessage={() => {}} // Will be handled by the focus mode component
         initialText=""
       />
     </>
