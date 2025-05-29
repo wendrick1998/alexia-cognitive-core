@@ -128,6 +128,45 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
 /* Utility Classes */
 .premium-fade-in {
   animation: premium-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -156,6 +195,24 @@
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+.animate-shimmer {
+  background: linear-gradient(110deg, #f1f5f9 8%, #e2e8f0 18%, #f1f5f9 33%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-ripple {
+  animation: ripple 0.6s linear;
 }
 
 /* Premium Glass Effect */
@@ -256,6 +313,92 @@
   50% { opacity: 0.7; }
 }
 
+/* Microinteractions */
+.interactive-scale {
+  transition: transform 0.15s ease-out;
+}
+
+.interactive-scale:active {
+  transform: scale(0.95);
+}
+
+.interactive-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.hover-glow {
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.4);
+}
+
+/* Spring Physics for Swipe Actions */
+.swipe-spring {
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Dark Mode Enhancements */
+.dark {
+  /* True Black Option for OLED */
+  --true-black: #000000;
+  --deep-slate: #0a0a0a;
+  
+  /* Enhanced contrast */
+  --contrast-low: 0.8;
+  --contrast-medium: 0.9;
+  --contrast-high: 1.0;
+}
+
+.dark .true-black {
+  background-color: var(--true-black);
+}
+
+.dark .deep-slate {
+  background-color: var(--deep-slate);
+}
+
+.dark img {
+  opacity: var(--contrast-medium);
+  transition: opacity 0.3s ease;
+}
+
+.dark img:hover {
+  opacity: var(--contrast-high);
+}
+
+/* Syntax Highlighting for Code */
+.dark .code-block {
+  background: #1a1b26;
+  border: 1px solid #2a2b36;
+}
+
+.dark .code-keyword {
+  color: #bb9af7;
+}
+
+.dark .code-string {
+  color: #9ece6a;
+}
+
+.dark .code-comment {
+  color: #565f89;
+}
+
+.dark .code-function {
+  color: #7aa2f7;
+}
+
 /* Custom Scrollbar */
 .premium-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -336,13 +479,23 @@
   animation: shimmer 1.5s infinite;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+/* Success/Error Feedback */
+.feedback-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.feedback-error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  animation: shake 0.5s ease-in-out;
+}
+
+.feedback-processing {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  animation: premium-glow 2s ease-in-out infinite;
 }
 
 /* Responsive Grid System */
