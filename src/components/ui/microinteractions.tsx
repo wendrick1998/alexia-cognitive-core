@@ -120,13 +120,16 @@ export const RippleButton = ({
   );
 };
 
+type FeedbackType = "success" | "error" | "copy";
+type FeedbackState = "success" | "error" | "copied" | null;
+
 export const FeedbackButton = ({ 
   children, 
   className,
   type = "success",
   ...props 
-}: InteractiveButtonProps & { type?: "success" | "error" | "copy" }) => {
-  const [feedback, setFeedback] = useState<string | null>(null);
+}: InteractiveButtonProps & { type?: FeedbackType }) => {
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const handleFeedback = () => {
     switch (type) {
@@ -139,6 +142,8 @@ export const FeedbackButton = ({
       case "copy":
         setFeedback("copied");
         break;
+      default:
+        setFeedback(null);
     }
 
     setTimeout(() => setFeedback(null), 2000);
