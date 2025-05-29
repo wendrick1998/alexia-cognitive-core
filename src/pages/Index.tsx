@@ -63,37 +63,39 @@ const Index = () => {
   };
 
   return (
-    <AppLayout currentSection={currentSection} onSectionChange={setCurrentSection}>
-      {isSplitView && !isMobile ? (
-        <MultiPaneLayout
-          leftPane={renderContent(splitSections.left)}
-          rightPane={renderContent(splitSections.right)}
-          leftTitle={getSectionTitle(splitSections.left)}
-          rightTitle={getSectionTitle(splitSections.right)}
-          onClose={closeSplitView}
-          defaultLayout={[60, 40]}
-        />
-      ) : (
-        <div className="relative h-full">
-          {/* Split View Toggle - Desktop Only */}
-          {!isMobile && !isSplitView && (
-            <div className="absolute top-4 right-4 z-10">
-              <Button
-                onClick={enableSplitView}
-                variant="outline"
-                size="sm"
-                className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-sm"
-              >
-                <SplitSquareHorizontal className="w-4 h-4 mr-2" />
-                Split View
-              </Button>
-            </div>
-          )}
-          
-          {renderContent(currentSection)}
-        </div>
-      )}
-    </AppLayout>
+    <div className="min-h-screen bg-black">
+      <AppLayout currentSection={currentSection} onSectionChange={setCurrentSection}>
+        {isSplitView && !isMobile ? (
+          <MultiPaneLayout
+            leftPane={renderContent(splitSections.left)}
+            rightPane={renderContent(splitSections.right)}
+            leftTitle={getSectionTitle(splitSections.left)}
+            rightTitle={getSectionTitle(splitSections.right)}
+            onClose={closeSplitView}
+            defaultLayout={[60, 40]}
+          />
+        ) : (
+          <div className="relative h-full">
+            {/* Split View Toggle - Desktop Only */}
+            {!isMobile && !isSplitView && (
+              <div className="absolute top-4 right-4 z-10">
+                <Button
+                  onClick={enableSplitView}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 shadow-sm backdrop-blur-sm"
+                >
+                  <SplitSquareHorizontal className="w-4 h-4 mr-2" />
+                  Split View
+                </Button>
+              </div>
+            )}
+            
+            {renderContent(currentSection)}
+          </div>
+        )}
+      </AppLayout>
+    </div>
   );
 };
 
