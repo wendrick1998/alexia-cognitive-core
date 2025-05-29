@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import MultiPaneLayout from "../components/layout/MultiPaneLayout";
@@ -37,7 +36,7 @@ const Index = () => {
       case "documents":
         return <DocumentsManager />;
       case "search":
-        return <SemanticSearch onNavigate={handleSectionChange} />;
+        return <SemanticSearch />;
       case "actions":
         return <ProjectsManager />;
       default:

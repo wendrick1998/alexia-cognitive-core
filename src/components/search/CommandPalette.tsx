@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSemanticSearch } from '@/hooks/useSemanticSearch';
 import { useBM25Search } from '@/hooks/useBM25Search';
@@ -121,7 +120,7 @@ const CommandPalette = ({ isOpen, onClose, onNavigate }: CommandPaletteProps) =>
         // Normal search
         const [semanticResults, hybridResults] = await Promise.all([
           searchDocuments(searchQuery, undefined, 5),
-          hybridSearch(searchQuery, 5)
+          hybridSearch(searchQuery, { maxResults: 5 })
         ]);
 
         const formattedResults: SearchResult[] = [
@@ -139,8 +138,8 @@ const CommandPalette = ({ isOpen, onClose, onNavigate }: CommandPaletteProps) =>
             id: `hybrid-${i}`,
             title: r.title || 'Resultado',
             content: r.content,
-            type: r.node_type === 'conversation' ? 'conversation' as const : 'memory' as const,
-            section: r.node_type === 'conversation' ? 'Conversas' : 'Memórias',
+            type: r.type === 'conversation' ? 'conversation' as const : 'memory' as const,
+            section: r.type === 'conversation' ? 'Conversas' : 'Memórias',
             similarity: r.combined_score || r.relevance_score,
             timestamp: 'Recente',
             preview: r.content.substring(0, 200) + '...'
