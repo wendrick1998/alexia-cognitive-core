@@ -37,6 +37,11 @@ const ChatArea = ({ currentConversation, onBackToConversations, isMobile }: Chat
     console.log('More actions');
   };
 
+  const handleSendMessage = (message: string) => {
+    console.log('Sending message:', message);
+    // Implementar lógica de envio de mensagem
+  };
+
   return (
     <div className="h-full flex flex-col bg-transparent animate-premium-fade-in">
       {/* Header Premium */}
@@ -124,8 +129,9 @@ const ChatArea = ({ currentConversation, onBackToConversations, isMobile }: Chat
       <div className="flex-1 overflow-hidden">
         {currentConversation ? (
           <ChatMessages 
-            conversationId={currentConversation.id}
-            className="h-full"
+            messages={[]}
+            loading={false}
+            processing={false}
           />
         ) : (
           <div className="h-full flex items-center justify-center">
@@ -166,9 +172,10 @@ const ChatArea = ({ currentConversation, onBackToConversations, isMobile }: Chat
       {currentConversation && (
         <div className="glass-card border-t border-white/5 p-4 backdrop-blur-xl">
           <RevolutionaryInput
-            conversationId={currentConversation.id}
-            onSendMessage={() => {}}
-            disabled={false}
+            processing={false}
+            onSendMessage={handleSendMessage}
+            contextualPlaceholder="Digite sua mensagem..."
+            aiTyping={false}
           />
         </div>
       )}
