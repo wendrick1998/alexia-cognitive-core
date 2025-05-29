@@ -1,21 +1,26 @@
-
 import { useState, useEffect } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { useChatProcessor } from "@/hooks/useChatProcessor";
 import { useCognitiveSystem } from "@/hooks/useCognitiveSystem";
 import { useCognitiveOrchestrator } from "@/hooks/useCognitiveOrchestrator";
 import { useToast } from "@/hooks/use-toast";
+import { useMobile } from "@/hooks/use-mobile";
 import ChatHeaderMinimal from "./chat/ChatHeaderMinimal";
 import QuickActionsBar from "./chat/QuickActionsBar";
 import RevolutionaryInput from "./chat/RevolutionaryInput";
 import FloatingActionButton from "./chat/FloatingActionButton";
 import MessageCardRevamped from "./chat/MessageCardRevamped";
 import ChatWelcome from "./chat/ChatWelcome";
+import ConversationSidebar from "./ConversationSidebar";
 import { ChatLoadingSkeleton } from "./chat/ChatSkeleton";
+import { Button } from "@/components/ui/button";
+import { MessageCircle } from "lucide-react";
 
 const Chat = () => {
   const [currentModel, setCurrentModel] = useState('auto');
   const [aiTyping, setAiTyping] = useState(false);
+  const [showConversationSidebar, setShowConversationSidebar] = useState(false);
+  const isMobile = useMobile();
   
   const { 
     currentConversation, 
@@ -32,10 +37,16 @@ const Chat = () => {
   const { orchestrateCognitiveProcess } = useCognitiveOrchestrator();
   const { toast } = useToast();
 
+  // Auto-show conversation sidebar on desktop
+  useEffect(() => {
+    if (!isMobile) {
+      setShowConversationSidebar(true);
+    }
+  }, [isMobile]);
+
   const handleSendMessage = async (messageText: string) => {
     let conversation = currentConversation;
     
-    // Se não há conversa atual, criar uma nova automaticamente
     if (!conversation) {
       console.log('🔥 Nenhuma conversa ativa, criando nova...');
       conversation = await createAndNavigateToNewConversation();
@@ -47,10 +58,8 @@ const Chat = () => {
 
     console.log(`📤 Enviando mensagem para conversa: ${conversation.id}`);
     
-    // Set AI typing
     setAiTyping(true);
     
-    // 🧠 Create cognitive node for user message
     await createCognitiveNode(
       messageText, 
       'question', 
@@ -58,23 +67,19 @@ const Chat = () => {
       conversation.id
     );
 
-    // Check for cognitive commands
     const cognitiveCommands = ['@deep-think', '@connect', '@evolve', '@simulate'];
     const hasCommand = cognitiveCommands.some(cmd => messageText.includes(cmd));
     
     let response;
     if (hasCommand || cognitiveState.currentMode.type !== 'focus') {
-      // Use cognitive orchestration for enhanced processing
       console.log('🧠 Usando processamento cognitivo avançado...');
       const cognitiveResult = await orchestrateCognitiveProcess(messageText, {
         conversationId: conversation.id,
         currentMode: cognitiveState.currentMode.type
       });
       
-      // Still process through normal chat for UI consistency
       response = await processMessage(messageText, conversation.id);
       
-      // Create cognitive node for enhanced result
       if (cognitiveResult.success) {
         await createCognitiveNode(
           JSON.stringify(cognitiveResult.result),
@@ -89,14 +94,12 @@ const Chat = () => {
         );
       }
     } else {
-      // Normal message processing
       response = await processMessage(messageText, conversation.id);
     }
     
     setAiTyping(false);
     
     if (response) {
-      // Create cognitive node for AI response
       await createCognitiveNode(
         response.content || 'Resposta do AI',
         'answer',
@@ -105,7 +108,6 @@ const Chat = () => {
       );
       
       await updateConversationTimestamp(conversation.id);
-      // Recarregar mensagens para mostrar a nova interação
       await loadMessages(conversation.id);
     }
   };
@@ -124,7 +126,6 @@ const Chat = () => {
         createAndNavigateToNewConversation();
         break;
       case 'change-model':
-        // This will be handled by the header
         break;
       default:
         toast({
@@ -149,68 +150,102 @@ const Chat = () => {
     return "Continue a conversa...";
   };
 
-  // Estados de carregamento otimizados
   const isLoadingState = loading || conversationState.isNavigating || conversationState.isLoadingMessages;
 
   return (
-    <div className="flex-1 flex flex-col bg-[#0A0A0A] min-h-screen">
-      <ChatHeaderMinimal
-        currentModel={currentModel}
-        onModelChange={setCurrentModel}
-        onProfileClick={handleProfileClick}
-      />
+    <div className="flex-1 flex bg-slate-50/50 min-h-screen">
+      {/* Conversation Sidebar */}
+      {(!isMobile || showConversationSidebar) && (
+        <ConversationSidebar
+          isOpen={showConversationSidebar}
+          onToggle={() => setShowConversationSidebar(!showConversationSidebar)}
+        />
+      )}
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        {isLoadingState ? (
-          <ChatLoadingSkeleton />
-        ) : messages.length === 0 ? (
-          <ChatWelcome />
-        ) : (
-          <div className="space-y-4">
-            {messages.map((message, index) => (
-              <MessageCardRevamped key={message.id} message={message} index={index} />
-            ))}
-            
-            {processing && (
-              <div className="flex items-start space-x-4 max-w-4xl mx-auto mb-4 animate-fade-in">
-                <div className="relative flex-shrink-0">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] rounded-2xl flex items-center justify-center shadow-lg">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <div className="bg-white/95 backdrop-blur-xl border-b border-slate-200/50">
+          <ChatHeaderMinimal
+            currentModel={currentModel}
+            onModelChange={setCurrentModel}
+            onProfileClick={handleProfileClick}
+          />
+          
+          {/* Mobile Conversation Toggle */}
+          {isMobile && (
+            <div className="px-4 pb-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowConversationSidebar(true)}
+                className="w-full justify-start glass-effect"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                {currentConversation?.name || 'Selecionar conversa'}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto premium-scrollbar bg-gradient-to-b from-slate-50/50 to-white/50">
+          <div className="px-4 py-6">
+            {isLoadingState ? (
+              <ChatLoadingSkeleton />
+            ) : messages.length === 0 ? (
+              <ChatWelcome />
+            ) : (
+              <div className="space-y-6 max-w-4xl mx-auto">
+                {messages.map((message, index) => (
+                  <div key={message.id} className="premium-fade-in">
+                    <MessageCardRevamped message={message} index={index} />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#F59E0B] rounded-full border-2 border-[#0A0A0A] animate-pulse" />
-                </div>
-                <div className="max-w-2xl p-4 rounded-3xl bg-[#1A1A1A] border border-white/10 text-white">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-[#8B5CF6] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                ))}
+                
+                {processing && (
+                  <div className="flex items-start space-x-4 max-w-4xl mx-auto mb-4 premium-scale-in">
+                    <div className="relative flex-shrink-0">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-premium">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse" />
                     </div>
-                    <p className="text-base text-white/90">
-                      Analisando e processando sua mensagem...
-                    </p>
+                    <div className="max-w-2xl p-6 rounded-3xl glass-effect text-slate-800 shadow-premium">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                        <p className="text-base text-slate-700 font-medium">
+                          Analisando e processando sua mensagem...
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
-        )}
+        </div>
+
+        {/* Quick Actions Bar */}
+        <QuickActionsBar onAction={handleQuickAction} />
+
+        {/* Revolutionary Input */}
+        <div className="bg-white/95 backdrop-blur-xl border-t border-slate-200/50">
+          <RevolutionaryInput
+            processing={processing || conversationState.isCreatingNew}
+            onSendMessage={handleSendMessage}
+            contextualPlaceholder={getContextualPlaceholder()}
+            aiTyping={aiTyping}
+          />
+        </div>
+
+        {/* Floating Action Button */}
+        <FloatingActionButton onAction={handleFABAction} />
       </div>
-
-      {/* Quick Actions Bar */}
-      <QuickActionsBar onAction={handleQuickAction} />
-
-      {/* Revolutionary Input */}
-      <RevolutionaryInput
-        processing={processing || conversationState.isCreatingNew}
-        onSendMessage={handleSendMessage}
-        contextualPlaceholder={getContextualPlaceholder()}
-        aiTyping={aiTyping}
-      />
-
-      {/* Floating Action Button */}
-      <FloatingActionButton onAction={handleFABAction} />
     </div>
   );
 };
