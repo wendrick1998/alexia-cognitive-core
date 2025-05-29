@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 export const ConnectionStatus = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
