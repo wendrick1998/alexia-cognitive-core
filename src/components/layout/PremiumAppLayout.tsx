@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
@@ -6,6 +5,7 @@ import BottomNavigation from '../navigation/BottomNavigation';
 import SlideOutSidebar from '../navigation/SlideOutSidebar';
 import DesktopSidebar from '../premium/DesktopSidebar';
 import DarkModeToggle from '../premium/DarkModeToggle';
+import { cn } from '@/lib/utils';
 
 interface PremiumAppLayoutProps {
   children: React.ReactNode;
