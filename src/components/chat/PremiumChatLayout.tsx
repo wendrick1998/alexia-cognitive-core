@@ -88,7 +88,8 @@ const PremiumChatLayout = ({
                 conversations={conversations}
                 currentConversation={currentConversation}
                 onConversationSelect={handleConversationSelect}
-                loading={isNavigating}
+                onNewConversation={onNewConversation}
+                isMobile={isMobile}
               />
             </div>
           </div>
