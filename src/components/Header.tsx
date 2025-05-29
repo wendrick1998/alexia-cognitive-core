@@ -1,12 +1,14 @@
 
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Sparkles } from "lucide-react";
+import { User, LogOut, Sparkles, Brain } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useMemoryActivation } from "@/hooks/useMemoryActivation";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const { user, signOut } = useAuth();
+  const { stats } = useMemoryActivation();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -31,6 +33,12 @@ const Header = () => {
     navigate('/auth');
   };
 
+  const formatUptime = () => {
+    if (!stats.lastConsolidation) return "0h";
+    const hours = Math.floor((Date.now() - new Date(stats.lastConsolidation).getTime()) / (1000 * 60 * 60));
+    return `${hours}h`;
+  };
+
   return (
     <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60 px-6 py-4 flex justify-between items-center shadow-sm">
       <div className="flex items-center space-x-4">
@@ -45,6 +53,26 @@ const Header = () => {
             Beta
           </span>
         </div>
+        
+        {/* Memory Status */}
+        {user && (
+          <div className="flex items-center space-x-2 text-sm text-slate-600 bg-slate-50/80 px-3 py-1.5 rounded-lg border">
+            <Brain className="w-4 h-4" />
+            <span className="flex items-center space-x-1">
+              <span>🧠 Memórias: {stats.totalMemories}</span>
+              <span className="text-slate-400">|</span>
+              <span>Nodes: {stats.activeNodes}</span>
+              <span className="text-slate-400">|</span>
+              <span>Ativo há: {formatUptime()}</span>
+              {stats.isConsolidating && (
+                <>
+                  <span className="text-slate-400">|</span>
+                  <span className="text-orange-600 animate-pulse">Consolidando...</span>
+                </>
+              )}
+            </span>
+          </div>
+        )}
       </div>
       
       <div className="flex items-center space-x-4">
