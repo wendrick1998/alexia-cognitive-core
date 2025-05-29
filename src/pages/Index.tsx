@@ -24,6 +24,7 @@ const Index = () => {
   const { isAuthenticated } = useAuth();
 
   const handleSectionChange = (section: string, id?: string) => {
+    console.log(`🔗 Navigating to section: ${section}`, id ? `with ID: ${id}` : '');
     setCurrentSection(section);
     // Handle navigation with optional ID for specific items
     if (id) {
@@ -32,11 +33,13 @@ const Index = () => {
   };
 
   const renderContent = (section: string) => {
+    console.log(`🎨 Rendering content for section: ${section}`);
     const content = (() => {
       switch (section) {
         case "dashboard":
           return <Dashboard />;
         case "chat":
+          console.log('🗨️ Rendering Chat component');
           return <Chat />;
         case "memory":
           return <MemoryManager />;
@@ -47,6 +50,7 @@ const Index = () => {
         case "actions":
           return <ProjectsManager />;
         default:
+          console.log(`⚠️ Unknown section: ${section}, defaulting to Dashboard`);
           return <Dashboard />;
       }
     })();

@@ -29,6 +29,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   const handleSplashComplete = () => {
+    console.log('🎬 Splash screen completed');
     setShowSplash(false);
   };
 

@@ -119,8 +119,8 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
           />
         )}
 
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Main Content - FIXED: Added proper margin for desktop sidebar */}
+        <main className={`flex-1 flex flex-col overflow-hidden ${!isMobile ? 'ml-20' : ''}`}>
           {/* Header for mobile */}
           {isMobile && (
             <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300">
