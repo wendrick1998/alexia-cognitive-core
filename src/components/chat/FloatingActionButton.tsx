@@ -35,7 +35,7 @@ const FloatingActionButton = ({ onAction }: FloatingActionButtonProps) => {
   };
 
   return (
-    <div className="fixed bottom-24 right-4 z-40">
+    <div className="fixed bottom-32 right-3 z-40">
       {/* Radial Menu Items */}
       {isOpen && (
         <>
@@ -48,7 +48,7 @@ const FloatingActionButton = ({ onAction }: FloatingActionButtonProps) => {
           {/* Radial Actions */}
           {RADIAL_ACTIONS.map((action, index) => {
             const Icon = action.icon;
-            const radius = 80;
+            const radius = 70;
             const angleRad = (action.angle * Math.PI) / 180;
             const x = Math.cos(angleRad) * radius;
             const y = Math.sin(angleRad) * radius;
@@ -57,28 +57,28 @@ const FloatingActionButton = ({ onAction }: FloatingActionButtonProps) => {
               <Button
                 key={action.id}
                 onClick={() => handleAction(action.id)}
-                className="absolute w-12 h-12 rounded-full bg-[#1A1A1A] hover:bg-[#2A2A2A] border border-white/10 text-white shadow-lg transition-all duration-300 hover:scale-110"
+                className="absolute w-10 h-10 rounded-full bg-[#1A1A1A] hover:bg-[#2A2A2A] border border-white/10 text-white shadow-lg transition-all duration-300 hover:scale-110"
                 style={{
                   transform: `translate(${x}px, ${y}px)`,
                   animation: `scale-in 0.2s ease-out ${index * 0.05}s both`
                 }}
                 title={action.label}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4" />
               </Button>
             );
           })}
         </>
       )}
 
-      {/* Main FAB */}
+      {/* Main FAB - Mais discreto */}
       <Button
         onClick={toggleMenu}
-        className={`w-[60px] h-[60px] rounded-full bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:from-[#5B5BF7] hover:to-[#9333EA] text-white shadow-xl transition-all duration-300 hover:scale-110 border-0 ${
-          isOpen ? 'rotate-45' : ''
+        className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white/80 hover:text-white shadow-lg transition-all duration-300 hover:scale-105 border border-white/20 ${
+          isOpen ? 'rotate-45 bg-white/20' : ''
         }`}
       >
-        <Sparkles className="w-7 h-7" />
+        <Sparkles className="w-5 h-5" />
       </Button>
     </div>
   );
