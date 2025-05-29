@@ -16,6 +16,7 @@ export const useAutoScroll = ({
 }: UseAutoScrollOptions) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isScrolling = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   const scrollToBottom = useCallback(() => {
     if (isScrolling.current) return;
@@ -23,15 +24,25 @@ export const useAutoScroll = ({
     const element = scrollRef.current;
     if (!element) return;
 
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
     isScrolling.current = true;
     
-    setTimeout(() => {
-      element.scrollIntoView({ 
-        behavior, 
-        block,
-        inline: 'nearest'
-      });
+    timeoutRef.current = setTimeout(() => {
+      try {
+        element.scrollIntoView({ 
+          behavior, 
+          block,
+          inline: 'nearest'
+        });
+      } catch (error) {
+        console.warn('Scroll error:', error);
+      }
       
+      // Reset scrolling flag
       setTimeout(() => {
         isScrolling.current = false;
       }, 300);
@@ -40,7 +51,23 @@ export const useAutoScroll = ({
 
   useEffect(() => {
     scrollToBottom();
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, dependency);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return { scrollRef, scrollToBottom };
 };

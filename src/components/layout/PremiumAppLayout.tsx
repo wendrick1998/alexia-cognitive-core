@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
 import BottomNavigation from '../navigation/BottomNavigation';
@@ -18,6 +19,21 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
+  const handleMenuToggle = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
+  const handleSidebarClose = useCallback(() => {
+    setSidebarOpen(false);
+  }, []);
+
+  const handleSectionChange = useCallback((section: string) => {
+    onSectionChange(section);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [onSectionChange, isMobile]);
+
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -25,7 +41,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         switch (e.key) {
           case 'd':
             e.preventDefault();
-            onSectionChange('dashboard');
+            handleSectionChange('dashboard');
             toast({
               title: "Dashboard ativado",
               description: "Cmd/Ctrl + D para dashboard",
@@ -33,7 +49,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
             break;
           case 'k':
             e.preventDefault();
-            onSectionChange('search');
+            handleSectionChange('search');
             toast({
               title: "Command Palette ativado",
               description: "Cmd/Ctrl + K para buscar",
@@ -60,7 +76,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
       
       if (e.key === 'Escape') {
         if (sidebarOpen) {
-          setSidebarOpen(false);
+          handleSidebarClose();
         } else {
           window.dispatchEvent(new CustomEvent('escape-pressed'));
         }
@@ -69,17 +85,9 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onSectionChange, currentSection, toast, sidebarOpen]);
+  }, [handleSectionChange, currentSection, toast, sidebarOpen, handleSidebarClose]);
 
-  const handleMenuToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleSidebarClose = () => {
-    setSidebarOpen(false);
-  };
-
-  const getSectionTitle = (section: string) => {
+  const getSectionTitle = useCallback((section: string) => {
     switch (section) {
       case 'dashboard':
         return 'Dashboard';
@@ -96,7 +104,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
       default:
         return 'AlexIA';
     }
-  };
+  }, []);
 
   return (
     <div className="min-h-screen flex w-full bg-white dark:bg-gray-950 transition-colors duration-300">
@@ -104,17 +112,17 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
       {!isMobile && (
         <DesktopSidebar 
           currentSection={currentSection} 
-          onSectionChange={onSectionChange} 
+          onSectionChange={handleSectionChange} 
         />
       )}
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 flex flex-col h-screen overflow-hidden",
+        "flex-1 flex flex-col h-screen overflow-hidden relative",
         !isMobile && "ml-20"
       )}>
         {/* Header */}
-        <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0">
+        <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0 relative z-30">
           <h1 className="font-semibold text-gray-900 dark:text-gray-100 capitalize text-xl">
             {getSectionTitle(currentSection)}
           </h1>
@@ -136,7 +144,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
 
         {/* Content Area */}
         <div className={cn(
-          "flex-1 overflow-hidden",
+          "flex-1 overflow-hidden relative z-10",
           isMobile && "pb-20" // Space for bottom navigation
         )}>
           {children}
@@ -145,7 +153,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         {/* Bottom Navigation (Mobile only) */}
         <BottomNavigation 
           currentSection={currentSection} 
-          onSectionChange={onSectionChange}
+          onSectionChange={handleSectionChange}
           onMenuToggle={handleMenuToggle}
         />
 
@@ -154,7 +162,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
           isOpen={sidebarOpen}
           onClose={handleSidebarClose}
           currentSection={currentSection}
-          onSectionChange={onSectionChange}
+          onSectionChange={handleSectionChange}
         />
       </main>
     </div>

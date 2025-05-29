@@ -1,5 +1,5 @@
 
-import { useMemo, memo } from "react";
+import { useMemo, memo, useCallback } from "react";
 import { Message } from "@/hooks/useConversations";
 import ChatWelcome from "./ChatWelcome";
 import MessageBubble from "./MessageBubble";
@@ -45,9 +45,18 @@ const ChatMessages = memo(({ messages, loading, processing }: ChatMessagesProps)
   // Memoizar o agrupamento de mensagens por data
   const messageGroups = useMemo(() => groupMessagesByDate(messages), [messages]);
 
+  // Memoizar o callback para evitar re-renderizações
+  const renderMessageBubble = useCallback((message: Message, isLastOverall: boolean) => (
+    <MessageBubble
+      key={message.id}
+      message={message}
+      isLast={isLastOverall}
+    />
+  ), []);
+
   return (
     <div className="h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-      <div className="p-4 pb-8 min-h-full">
+      <div className="p-4 pb-8 min-h-full relative">
         {/* Welcome screen quando não há mensagens */}
         {messages.length === 0 && !loading && <ChatWelcome />}
 
@@ -56,7 +65,7 @@ const ChatMessages = memo(({ messages, loading, processing }: ChatMessagesProps)
 
         {/* Grupos de mensagens por data */}
         {messageGroups.map((group, groupIndex) => (
-          <div key={`group-${group.date.getTime()}`}>
+          <div key={`group-${group.date.getTime()}`} className="relative">
             {/* Separador de data */}
             <DateSeparator date={group.date} />
             
@@ -65,22 +74,20 @@ const ChatMessages = memo(({ messages, loading, processing }: ChatMessagesProps)
               const isLastInGroup = messageIndex === group.messages.length - 1;
               const isLastOverall = groupIndex === messageGroups.length - 1 && isLastInGroup;
               
-              return (
-                <MessageBubble
-                  key={message.id}
-                  message={message}
-                  isLast={isLastOverall}
-                />
-              );
+              return renderMessageBubble(message, isLastOverall);
             })}
           </div>
         ))}
 
         {/* Processing indicator */}
-        {processing && <ChatProcessingIndicator />}
+        {processing && (
+          <div className="relative z-10">
+            <ChatProcessingIndicator />
+          </div>
+        )}
 
         {/* Elemento para scroll automático */}
-        <div ref={scrollRef} className="h-1" />
+        <div ref={scrollRef} className="h-1 relative z-0" />
       </div>
     </div>
   );
