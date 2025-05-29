@@ -37,7 +37,6 @@ const ChatArea = ({
 
   const handleTitleSave = () => {
     setIsEditingTitle(false);
-    // Aqui você implementaria a lógica para salvar o título
     console.log('Saving title:', title);
   };
 
@@ -60,7 +59,7 @@ const ChatArea = ({
     <div className="h-full flex flex-col bg-transparent animate-premium-fade-in">
       {/* Header Premium - Always show when there's a conversation */}
       {currentConversation && (
-        <div className="glass-card border-b border-white/5 p-4 backdrop-blur-xl">
+        <div className="glass-card border-b border-white/5 p-4 backdrop-blur-xl flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {isMobile && onBackToConversations && (
@@ -141,8 +140,8 @@ const ChatArea = ({
         </div>
       )}
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-hidden">
+      {/* Messages Area - Flex-grow para ocupar espaço disponível */}
+      <div className="flex-1 min-h-0 flex flex-col">
         {currentConversation ? (
           <ChatMessages 
             messages={messages}
@@ -150,8 +149,8 @@ const ChatArea = ({
             processing={processing}
           />
         ) : (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center max-w-md mx-auto p-8">
+          <div className="flex-1 flex items-center justify-center p-8">
+            <div className="text-center max-w-md mx-auto">
               <div className="empty-state-icon mx-auto mb-6">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
@@ -184,8 +183,8 @@ const ChatArea = ({
         )}
       </div>
 
-      {/* Input Area - SEMPRE VISÍVEL para permitir iniciar conversas */}
-      <div className="glass-card border-t border-white/5 p-4 backdrop-blur-xl">
+      {/* Input Area - Fixado na parte inferior */}
+      <div className="glass-card border-t border-white/5 backdrop-blur-xl flex-shrink-0">
         <RevolutionaryInput
           processing={processing}
           onSendMessage={onSendMessage}
