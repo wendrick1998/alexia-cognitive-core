@@ -24,38 +24,39 @@ const Index = () => {
   const { isAuthenticated } = useAuth();
 
   const handleSectionChange = (section: string, id?: string) => {
-    console.log(`🔗 Navigating to section: ${section}`, id ? `with ID: ${id}` : '');
-    setCurrentSection(section);
-    // Handle navigation with optional ID for specific items
-    if (id) {
-      console.log(`Navigating to ${section} with ID: ${id}`);
+    console.log(`🔗 Navegando para seção: ${section}`, id ? `com ID: ${id}` : '');
+    
+    // Evitar renderização duplicada - só muda se for diferente
+    if (section !== currentSection) {
+      setCurrentSection(section);
+      
+      // Handle navigation with optional ID for specific items
+      if (id) {
+        console.log(`Navegando para ${section} com ID: ${id}`);
+      }
     }
   };
 
   const renderContent = (section: string) => {
-    console.log(`🎨 Rendering content for section: ${section}`);
-    const content = (() => {
-      switch (section) {
-        case "dashboard":
-          return <Dashboard />;
-        case "chat":
-          console.log('🗨️ Rendering Chat component');
-          return <Chat />;
-        case "memory":
-          return <MemoryManager />;
-        case "documents":
-          return <DocumentsManager />;
-        case "search":
-          return <SemanticSearch />;
-        case "actions":
-          return <ProjectsManager />;
-        default:
-          console.log(`⚠️ Unknown section: ${section}, defaulting to Dashboard`);
-          return <Dashboard />;
-      }
-    })();
-
-    return <PageTransition>{content}</PageTransition>;
+    console.log(`🎨 Renderizando conteúdo para seção: ${section}`);
+    
+    switch (section) {
+      case "dashboard":
+        return <Dashboard />;
+      case "chat":
+        return <Chat />;
+      case "memory":
+        return <MemoryManager />;
+      case "documents":
+        return <DocumentsManager />;
+      case "search":
+        return <SemanticSearch />;
+      case "actions":
+        return <ProjectsManager />;
+      default:
+        console.log(`⚠️ Seção desconhecida: ${section}, retornando para Dashboard`);
+        return <Dashboard />;
+    }
   };
 
   const getSectionTitle = (section: string) => {
@@ -94,8 +95,8 @@ const Index = () => {
         <AppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
           {isSplitView && !isMobile ? (
             <MultiPaneLayout
-              leftPane={renderContent(splitSections.left)}
-              rightPane={renderContent(splitSections.right)}
+              leftPane={<PageTransition>{renderContent(splitSections.left)}</PageTransition>}
+              rightPane={<PageTransition>{renderContent(splitSections.right)}</PageTransition>}
               leftTitle={getSectionTitle(splitSections.left)}
               rightTitle={getSectionTitle(splitSections.right)}
               onClose={closeSplitView}
@@ -118,7 +119,9 @@ const Index = () => {
                 </div>
               )}
               
-              {renderContent(currentSection)}
+              <PageTransition>
+                {renderContent(currentSection)}
+              </PageTransition>
             </div>
           )}
         </AppLayout>

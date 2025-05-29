@@ -3,18 +3,30 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PremiumButton } from '@/components/ui/premium-button';
 import { ArrowLeft, Edit3, Share, MoreHorizontal, Sparkles } from 'lucide-react';
-import { Conversation } from '@/hooks/useConversations';
+import { Conversation, Message } from '@/hooks/useConversations';
 import ChatMessages from './ChatMessages';
 import RevolutionaryInput from './RevolutionaryInput';
 import ModelSelector from './ModelSelector';
 
 interface ChatAreaProps {
   currentConversation: Conversation | null;
+  messages: Message[];
+  processing: boolean;
+  onSendMessage: (message: string) => void;
   onBackToConversations?: () => void;
   isMobile: boolean;
+  isNavigating?: boolean;
 }
 
-const ChatArea = ({ currentConversation, onBackToConversations, isMobile }: ChatAreaProps) => {
+const ChatArea = ({ 
+  currentConversation, 
+  messages,
+  processing,
+  onSendMessage,
+  onBackToConversations, 
+  isMobile,
+  isNavigating = false
+}: ChatAreaProps) => {
   const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState(currentConversation?.name || 'Nova conversa');
@@ -37,10 +49,12 @@ const ChatArea = ({ currentConversation, onBackToConversations, isMobile }: Chat
     console.log('More actions');
   };
 
-  const handleSendMessage = (message: string) => {
-    console.log('Sending message:', message);
-    // Implementar lógica de envio de mensagem
-  };
+  console.log('🎨 ChatArea renderizado:', {
+    conversation: currentConversation?.id,
+    messages: messages.length,
+    processing,
+    isNavigating
+  });
 
   return (
     <div className="h-full flex flex-col bg-transparent animate-premium-fade-in">
@@ -87,7 +101,7 @@ const ChatArea = ({ currentConversation, onBackToConversations, isMobile }: Chat
                       className="text-lg font-semibold text-white cursor-pointer hover:text-white/80 transition-colors"
                       onClick={handleTitleEdit}
                     >
-                      {title}
+                      {isNavigating ? 'Carregando...' : (title || 'Nova conversa')}
                     </h1>
                   )}
                   
@@ -131,9 +145,9 @@ const ChatArea = ({ currentConversation, onBackToConversations, isMobile }: Chat
       <div className="flex-1 overflow-hidden">
         {currentConversation ? (
           <ChatMessages 
-            messages={[]}
-            loading={false}
-            processing={false}
+            messages={messages}
+            loading={isNavigating}
+            processing={processing}
           />
         ) : (
           <div className="h-full flex items-center justify-center">
@@ -173,14 +187,14 @@ const ChatArea = ({ currentConversation, onBackToConversations, isMobile }: Chat
       {/* Input Area - SEMPRE VISÍVEL para permitir iniciar conversas */}
       <div className="glass-card border-t border-white/5 p-4 backdrop-blur-xl">
         <RevolutionaryInput
-          processing={false}
-          onSendMessage={handleSendMessage}
+          processing={processing}
+          onSendMessage={onSendMessage}
           contextualPlaceholder={
             currentConversation 
               ? "Digite sua mensagem..." 
               : "Digite sua primeira mensagem para iniciar uma conversa..."
           }
-          aiTyping={false}
+          aiTyping={processing}
         />
       </div>
     </div>
