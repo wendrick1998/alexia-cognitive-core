@@ -15,7 +15,7 @@ import {
   BarChart3, 
   Brain, 
   MessageCircle, 
-  Robot, 
+  Bot, 
   Lightbulb, 
   Target,
   RefreshCw

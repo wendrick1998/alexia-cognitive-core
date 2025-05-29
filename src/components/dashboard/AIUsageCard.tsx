@@ -1,6 +1,6 @@
 
 import { PremiumCard } from '@/components/ui/premium-card';
-import { Robot, Zap, DollarSign } from 'lucide-react';
+import { Bot, Zap, DollarSign } from 'lucide-react';
 
 interface AIUsageCardProps {
   tokensUsed: number;
@@ -27,7 +27,7 @@ const AIUsageCard = ({ tokensUsed, tokenLimit }: AIUsageCardProps) => {
     <PremiumCard variant="elevated" className="h-full">
       <div className="flex items-center gap-3 mb-4">
         <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
-          <Robot className="w-5 h-5 text-white" />
+          <Bot className="w-5 h-5 text-white" />
         </div>
         <div>
           <h3 className="text-white font-semibold">Uso de IA</h3>
