@@ -5,7 +5,6 @@ import {
   MessageCircle, 
   Brain, 
   Search,
-  Menu,
   X
 } from "lucide-react";
 import { useState } from "react";
@@ -40,6 +39,8 @@ const PremiumNavigationBar = ({
 }: PremiumNavigationBarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [isProcessing, setIsProcessing] = useState(false); // Simulated AI processing state
+  const [hasNotifications, setHasNotifications] = useState(true); // Simulated notifications
 
   const handleItemClick = (itemId: string, event: React.MouseEvent) => {
     // Haptic feedback
@@ -112,8 +113,7 @@ const PremiumNavigationBar = ({
                     onClick={(e) => handleItemClick(item.id, e)}
                     className={cn(
                       "relative flex items-center justify-center transition-all duration-300 ease-out rounded-full p-3 group overflow-hidden",
-                      "active:scale-95 transform-gpu",
-                      isActive && "animate-pulse"
+                      "active:scale-95 transform-gpu spring-touch"
                     )}
                     style={{
                       WebkitTapHighlightColor: 'transparent',
@@ -123,7 +123,7 @@ const PremiumNavigationBar = ({
                     {isActive && (
                       <>
                         <div 
-                          className="absolute inset-0 rounded-full opacity-20 blur-[20px]"
+                          className="absolute inset-0 rounded-full opacity-20 blur-[20px] premium-glow-active"
                           style={{
                             background: 'linear-gradient(135deg, #6366F1, #EC4899)',
                           }}
@@ -137,31 +137,31 @@ const PremiumNavigationBar = ({
                       </>
                     )}
                     
-                    {/* Icon */}
+                    {/* Icon - Exactly 24px */}
                     <Icon 
                       className={cn(
                         "w-6 h-6 transition-all duration-300 ease-out relative z-10",
                         isActive 
-                          ? "text-white drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]" 
+                          ? "text-white premium-glow-active" 
                           : "text-white/40 group-hover:text-white/70"
                       )} 
                     />
 
-                    {/* Notification Dot */}
-                    {item.id === "chat" && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full shadow-lg" />
+                    {/* Chat Notification Dot */}
+                    {item.id === "chat" && hasNotifications && (
+                      <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow-lg animate-pulse" />
                     )}
 
-                    {/* Processing Bar for AI */}
-                    {item.id === "memory" && isActive && (
-                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-60" />
+                    {/* AI Processing Bar */}
+                    {item.id === "memory" && isActive && isProcessing && (
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full opacity-80 animate-pulse" />
                     )}
 
                     {/* Ripple Effects */}
                     {ripples.map(ripple => (
                       <span
                         key={ripple.id}
-                        className="absolute bg-white/30 rounded-full animate-ping pointer-events-none"
+                        className="absolute bg-white/30 rounded-full animate-ripple pointer-events-none"
                         style={{
                           left: ripple.x - 10,
                           top: ripple.y - 10,
@@ -180,8 +180,8 @@ const PremiumNavigationBar = ({
               <button
                 onClick={handleMenuClick}
                 className={cn(
-                  "relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-500 ease-out group overflow-hidden",
-                  "active:scale-95 transform-gpu",
+                  "relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ease-out group overflow-hidden",
+                  "active:scale-95 transform-gpu spring-touch",
                   "border border-white/20 hover:border-white/30"
                 )}
                 style={{
@@ -199,19 +199,25 @@ const PremiumNavigationBar = ({
                 />
                 
                 {/* Pulse Animation for Notifications */}
-                <div 
-                  className="absolute inset-0 rounded-full animate-pulse opacity-20"
-                  style={{
-                    background: 'linear-gradient(135deg, #6366F1, #EC4899)',
-                  }}
-                />
+                {hasNotifications && (
+                  <div 
+                    className="absolute inset-0 rounded-full animate-pulse opacity-20 premium-notification-pulse"
+                    style={{
+                      background: 'linear-gradient(135deg, #6366F1, #EC4899)',
+                    }}
+                  />
+                )}
 
-                {/* Menu Icon with Rotation Animation */}
-                <div className="relative z-10">
+                {/* Custom Hamburger Menu Icon */}
+                <div className="relative z-10 flex flex-col items-center justify-center space-y-1">
                   {isMenuOpen ? (
-                    <X className="w-6 h-6 text-white transition-transform duration-300 rotate-180" />
+                    <X className="w-5 h-5 text-white transition-transform duration-300 rotate-180" />
                   ) : (
-                    <Menu className="w-6 h-6 text-white transition-transform duration-300" />
+                    <div className="hamburger-container">
+                      <div className={cn("hamburger-line", isMenuOpen && "hamburger-open")} />
+                      <div className={cn("hamburger-line", isMenuOpen && "hamburger-open")} />
+                      <div className={cn("hamburger-line", isMenuOpen && "hamburger-open")} />
+                    </div>
                   )}
                 </div>
 
@@ -219,7 +225,7 @@ const PremiumNavigationBar = ({
                 {ripples.map(ripple => (
                   <span
                     key={ripple.id}
-                    className="absolute bg-white/30 rounded-full animate-ping pointer-events-none"
+                    className="absolute bg-white/30 rounded-full animate-ripple pointer-events-none"
                     style={{
                       left: ripple.x - 10,
                       top: ripple.y - 10,

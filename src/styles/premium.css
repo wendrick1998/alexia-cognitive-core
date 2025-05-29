@@ -1,3 +1,4 @@
+
 /* Premium Typography */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
@@ -173,6 +174,54 @@
   }
 }
 
+/* NEW: Premium Notification Pulse */
+@keyframes premium-notification-pulse {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.05);
+  }
+}
+
+/* NEW: Custom Hamburger Menu Animation */
+@keyframes hamburger-to-x-line1 {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(6px) rotate(0deg);
+  }
+  100% {
+    transform: translateY(6px) rotate(45deg);
+  }
+}
+
+@keyframes hamburger-to-x-line2 {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+@keyframes hamburger-to-x-line3 {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+}
+
 /* Utility Classes */
 .premium-fade-in {
   animation: premium-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -188,6 +237,11 @@
 
 .premium-glow {
   animation: premium-glow 3s ease-in-out infinite;
+}
+
+/* NEW: Premium Notification Pulse Class */
+.premium-notification-pulse {
+  animation: premium-notification-pulse 2s ease-in-out infinite;
 }
 
 /* Quick Actions Utility Classes */
@@ -352,6 +406,15 @@
 /* Spring Physics for Swipe Actions */
 .swipe-spring {
   transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* NEW: Spring Touch Animation */
+.spring-touch {
+  transition: transform 0.15s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.spring-touch:active {
+  transform: scale(0.95);
 }
 
 /* Dark Mode Enhancements */
@@ -716,7 +779,15 @@
   opacity: 0.2;
 }
 
-/* Hamburger Menu Animation */
+/* NEW: Custom Hamburger Menu Implementation */
+.hamburger-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 20px;
+  height: 14px;
+}
+
 .hamburger-line {
   display: block;
   width: 20px;
@@ -727,16 +798,15 @@
 }
 
 .hamburger-open .hamburger-line:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
+  animation: hamburger-to-x-line1 0.3s ease-out forwards;
 }
 
 .hamburger-open .hamburger-line:nth-child(2) {
-  opacity: 0;
-  transform: scale(0);
+  animation: hamburger-to-x-line2 0.3s ease-out forwards;
 }
 
 .hamburger-open .hamburger-line:nth-child(3) {
-  transform: rotate(-45deg) translate(7px, -6px);
+  animation: hamburger-to-x-line3 0.3s ease-out forwards;
 }
 
 /* Ripple Animation */
@@ -772,13 +842,4 @@
 
 .premium-glow-active {
   filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.8)) drop-shadow(0 0 16px rgba(236, 72, 153, 0.6));
-}
-
-/* Spring Animation for Touch */
-.spring-touch {
-  transition: transform 0.15s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.spring-touch:active {
-  transform: scale(0.95);
 }

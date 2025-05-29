@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Menu } from 'lucide-react';
 import AppSidebar from '../AppSidebar';
-import BottomNavigationBar from '../BottomNavigationBar';
+import PremiumNavigationBar from '../premium/PremiumNavigationBar';
 import DarkModeToggle from '../premium/DarkModeToggle';
 import DesktopSidebar from '../premium/DesktopSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -78,7 +78,7 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
+      <div className="min-h-screen flex w-full transition-colors duration-300" style={{ background: '#000000' }}>
         {/* Desktop Sidebar */}
         {!isMobile ? (
           <DesktopSidebar 
@@ -96,14 +96,14 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header for mobile */}
           {isMobile && (
-            <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 p-4 flex items-center justify-between transition-colors duration-300">
+            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300">
               <SidebarTrigger>
-                <Button variant="ghost" size="sm" className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+                <Button variant="ghost" size="sm" className="p-2 rounded-xl hover:bg-white/10 text-white">
                   <Menu className="w-5 h-5" />
                 </Button>
               </SidebarTrigger>
               
-              <h1 className="font-semibold text-slate-900 dark:text-slate-100 capitalize">
+              <h1 className="font-semibold text-white capitalize">
                 {currentSection === 'chat' ? 'Chat' : 
                  currentSection === 'memory' ? 'Memórias' :
                  currentSection === 'documents' ? 'Documentos' :
@@ -117,8 +117,8 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
 
           {/* Desktop Header with shortcuts */}
           {!isMobile && (
-            <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 p-4 flex items-center justify-between transition-colors duration-300">
-              <h1 className="font-semibold text-slate-900 dark:text-slate-100 capitalize text-xl">
+            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300">
+              <h1 className="font-semibold text-white capitalize text-xl">
                 {currentSection === 'chat' ? 'Chat' : 
                  currentSection === 'memory' ? 'Memórias' :
                  currentSection === 'documents' ? 'Documentos' :
@@ -127,12 +127,12 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
               </h1>
               
               <div className="flex items-center space-x-4">
-                <div className="hidden lg:flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
-                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-xs">⌘K</kbd>
+                <div className="hidden lg:flex items-center space-x-2 text-sm text-white/60">
+                  <kbd className="px-2 py-1 bg-white/10 rounded text-xs">⌘K</kbd>
                   <span>Search</span>
-                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-xs">⌘N</kbd>
+                  <kbd className="px-2 py-1 bg-white/10 rounded text-xs">⌘N</kbd>
                   <span>New</span>
-                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-xs">⌘F</kbd>
+                  <kbd className="px-2 py-1 bg-white/10 rounded text-xs">⌘F</kbd>
                   <span>Focus</span>
                 </div>
                 <DarkModeToggle />
@@ -145,9 +145,9 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
             {children}
           </div>
 
-          {/* Bottom Navigation (Mobile only) */}
+          {/* Premium Bottom Navigation (Mobile only) */}
           {isMobile && (
-            <BottomNavigationBar 
+            <PremiumNavigationBar 
               currentSection={currentSection} 
               onSectionChange={onSectionChange}
               onMenuToggle={handleMenuToggle}

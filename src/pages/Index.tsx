@@ -63,7 +63,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen" style={{ background: '#000000' }}>
       <AppLayout currentSection={currentSection} onSectionChange={setCurrentSection}>
         {isSplitView && !isMobile ? (
           <MultiPaneLayout
@@ -83,7 +83,7 @@ const Index = () => {
                   onClick={enableSplitView}
                   variant="outline"
                   size="sm"
-                  className="bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 shadow-sm backdrop-blur-sm"
+                  className="premium-card-dark text-white hover:bg-white/10 hover:border-white/30 shadow-sm backdrop-blur-sm"
                 >
                   <SplitSquareHorizontal className="w-4 h-4 mr-2" />
                   Split View
