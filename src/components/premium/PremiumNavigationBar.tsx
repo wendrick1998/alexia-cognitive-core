@@ -8,6 +8,7 @@ import {
   X
 } from "lucide-react";
 import { useState } from "react";
+import PremiumSidebar from "./PremiumSidebar";
 
 interface PremiumNavigationBarProps {
   currentSection: string;
@@ -37,10 +38,10 @@ const PremiumNavigationBar = ({
   onMenuToggle,
   className = "" 
 }: PremiumNavigationBarProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
-  const [isProcessing, setIsProcessing] = useState(false); // Simulated AI processing state
-  const [hasNotifications, setHasNotifications] = useState(true); // Simulated notifications
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(true);
 
   const handleItemClick = (itemId: string, event: React.MouseEvent) => {
     // Haptic feedback
@@ -80,8 +81,12 @@ const PremiumNavigationBar = ({
       setRipples(prev => prev.filter(ripple => ripple.id !== newRipple.id));
     }, 600);
 
-    setIsMenuOpen(!isMenuOpen);
+    setSidebarOpen(!sidebarOpen);
     onMenuToggle();
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
   };
 
   return (
@@ -98,7 +103,6 @@ const PremiumNavigationBar = ({
       style={{
         background: 'rgba(0, 0, 0, 0.7)',
       }}>
-        {/* Safe area for mobile devices */}
         <div className="h-full px-6">
           <div className="flex items-center justify-between h-full max-w-lg mx-auto">
             {/* Navigation Items - Left Side */}
@@ -210,13 +214,13 @@ const PremiumNavigationBar = ({
 
                 {/* Custom Hamburger Menu Icon */}
                 <div className="relative z-10 flex flex-col items-center justify-center space-y-1">
-                  {isMenuOpen ? (
+                  {sidebarOpen ? (
                     <X className="w-5 h-5 text-white transition-transform duration-300 rotate-180" />
                   ) : (
                     <div className="hamburger-container">
-                      <div className={cn("hamburger-line", isMenuOpen && "hamburger-open")} />
-                      <div className={cn("hamburger-line", isMenuOpen && "hamburger-open")} />
-                      <div className={cn("hamburger-line", isMenuOpen && "hamburger-open")} />
+                      <div className={cn("hamburger-line", sidebarOpen && "hamburger-open")} />
+                      <div className={cn("hamburger-line", sidebarOpen && "hamburger-open")} />
+                      <div className={cn("hamburger-line", sidebarOpen && "hamburger-open")} />
                     </div>
                   )}
                 </div>
@@ -239,6 +243,14 @@ const PremiumNavigationBar = ({
           </div>
         </div>
       </nav>
+
+      {/* Premium Sidebar */}
+      <PremiumSidebar
+        isOpen={sidebarOpen}
+        onClose={closeSidebar}
+        currentSection={currentSection}
+        onSectionChange={onSectionChange}
+      />
     </>
   );
 };
