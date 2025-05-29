@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Menu } from 'lucide-react';
 import AppSidebar from '../AppSidebar';
 import BottomNavigationBar from '../BottomNavigationBar';
+import DarkModeToggle from '../premium/DarkModeToggle';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AppLayoutProps {
@@ -37,9 +38,13 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onSectionChange]);
 
+  const handleMenuToggle = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <div className="min-h-screen flex w-full bg-slate-50/50">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
         {/* Sidebar */}
         <AppSidebar 
           currentSection={currentSection} 
@@ -48,21 +53,23 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Header com trigger do sidebar */}
-          <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200/50 p-4 flex items-center justify-between lg:hidden">
+          {/* Header premium com trigger do sidebar */}
+          <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 p-4 flex items-center justify-between lg:hidden transition-colors duration-300">
             <SidebarTrigger>
-              <Button variant="ghost" size="sm" className="p-2">
+              <Button variant="ghost" size="sm" className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
                 <Menu className="w-5 h-5" />
               </Button>
             </SidebarTrigger>
-            <h1 className="font-semibold text-slate-900 capitalize">
+            
+            <h1 className="font-semibold text-slate-900 dark:text-slate-100 capitalize">
               {currentSection === 'chat' ? 'Chat' : 
                currentSection === 'memory' ? 'Memórias' :
                currentSection === 'documents' ? 'Documentos' :
                currentSection === 'search' ? 'Busca' :
                currentSection === 'actions' ? 'Projetos' : 'AlexIA'}
             </h1>
-            <div className="w-8" /> {/* Spacer para centralizar o título */}
+            
+            <DarkModeToggle />
           </header>
 
           {/* Content Area */}
@@ -70,22 +77,23 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
             {children}
           </div>
 
-          {/* Bottom Navigation (Mobile only) */}
+          {/* Bottom Navigation Premium (Mobile only) */}
           {isMobile && (
             <BottomNavigationBar 
               currentSection={currentSection} 
-              onSectionChange={onSectionChange} 
+              onSectionChange={onSectionChange}
+              onMenuToggle={handleMenuToggle}
             />
           )}
         </main>
 
-        {/* Floating Menu Button (Desktop only) */}
+        {/* Floating Menu Button Premium (Desktop only) */}
         {!isMobile && (
           <div className="fixed bottom-6 right-6 z-50">
             <SidebarTrigger>
               <Button
                 size="lg"
-                className="w-14 h-14 rounded-full shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 border-0 transition-all duration-300 hover:scale-110"
+                className="w-14 h-14 rounded-full shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 border-0 transition-all duration-300 hover:scale-110 hover:shadow-2xl dark:shadow-blue-500/25"
               >
                 <Menu className="w-6 h-6 text-white" />
               </Button>
