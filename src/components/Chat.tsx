@@ -4,7 +4,7 @@ import { useChatProcessor } from "@/hooks/useChatProcessor";
 import { useCognitiveSystem } from "@/hooks/useCognitiveSystem";
 import { useCognitiveOrchestrator } from "@/hooks/useCognitiveOrchestrator";
 import { useToast } from "@/hooks/use-toast";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import ChatHeaderMinimal from "./chat/ChatHeaderMinimal";
 import QuickActionsBar from "./chat/QuickActionsBar";
 import RevolutionaryInput from "./chat/RevolutionaryInput";
@@ -20,7 +20,7 @@ const Chat = () => {
   const [currentModel, setCurrentModel] = useState('auto');
   const [aiTyping, setAiTyping] = useState(false);
   const [showConversationSidebar, setShowConversationSidebar] = useState(false);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   
   const { 
     currentConversation, 

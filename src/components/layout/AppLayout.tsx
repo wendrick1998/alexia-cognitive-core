@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Menu, X } from 'lucide-react';
 import AppSidebar from '../AppSidebar';
 import BottomNavigationBar from '../BottomNavigationBar';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -15,7 +14,7 @@ interface AppLayoutProps {
 
 const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   // Fechar sidebar automaticamente no mobile após navegar
   useEffect(() => {
