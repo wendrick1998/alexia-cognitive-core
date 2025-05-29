@@ -8,7 +8,9 @@ import {
   Search, 
   ArrowLeft,
   MessageCircle,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { Conversation } from '@/hooks/useConversations';
 import { cn } from '@/lib/utils';
@@ -31,6 +33,7 @@ const ConversationsList = ({
   onToggleView
 }: ConversationsListProps) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const filteredConversations = conversations.filter(conv =>
     conv.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -84,6 +87,16 @@ const ConversationsList = ({
     }
   };
 
+  const toggleSection = (sectionId: string) => {
+    const newCollapsed = new Set(collapsedSections);
+    if (newCollapsed.has(sectionId)) {
+      newCollapsed.delete(sectionId);
+    } else {
+      newCollapsed.add(sectionId);
+    }
+    setCollapsedSections(newCollapsed);
+  };
+
   const groupedConversations = groupConversationsByDate(filteredConversations);
 
   const ConversationCard = ({ conversation }: { conversation: Conversation }) => {
@@ -93,28 +106,23 @@ const ConversationsList = ({
       <button
         onClick={() => onConversationSelect(conversation)}
         className={cn(
-          "w-full p-3 text-left rounded-lg transition-all duration-200 group relative overflow-hidden",
+          "w-full p-3 text-left rounded-xl transition-all duration-200 group relative overflow-hidden mb-1",
           isActive 
-            ? "bg-white/10 border-l-2 border-blue-400" 
+            ? "bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-l-2 border-blue-400" 
             : "hover:bg-white/5"
         )}
       >
-        {/* Hover gradient border */}
-        {!isActive && (
-          <div className="absolute left-0 top-0 bottom-0 w-0 bg-gradient-to-b from-blue-400 to-purple-400 transition-all duration-200 group-hover:w-0.5" />
-        )}
-        
-        <div className="flex items-start justify-between mb-1">
-          <h3 className="text-sm font-medium text-white truncate flex-1 mr-2">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="text-sm font-medium text-white truncate flex-1 mr-2 leading-tight">
             {conversation.name || 'Nova Conversa'}
           </h3>
-          <span className="text-xs text-white/40 flex-shrink-0">
+          <span className="text-xs text-white/40 flex-shrink-0 font-mono">
             {formatTime(conversation.updated_at)}
           </span>
         </div>
         
         {conversation.last_message_preview && (
-          <p className="text-xs text-white/60 truncate">
+          <p className="text-xs text-white/60 truncate leading-relaxed">
             {conversation.last_message_preview}
           </p>
         )}
@@ -122,33 +130,56 @@ const ConversationsList = ({
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center space-x-1 text-xs text-white/40">
             <MessageCircle className="w-3 h-3" />
-            <span>{conversation.message_count}</span>
+            <span>{conversation.message_count || 0}</span>
           </div>
-          <Clock className="w-3 h-3 text-white/30" />
+          {isActive && (
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+          )}
         </div>
+        
+        {/* Gradient border for hover */}
+        {!isActive && (
+          <div className="absolute left-0 top-0 bottom-0 w-0 bg-gradient-to-b from-blue-400 to-purple-400 transition-all duration-200 group-hover:w-0.5 rounded-r" />
+        )}
       </button>
     );
   };
 
-  const GroupSection = ({ title, conversations, isCollapsible = false }: { 
+  const GroupSection = ({ 
+    id,
+    title, 
+    conversations, 
+    isCollapsible = false 
+  }: { 
+    id: string;
     title: string; 
     conversations: Conversation[];
     isCollapsible?: boolean;
   }) => {
-    const [isExpanded, setIsExpanded] = useState(!isCollapsible);
+    const isExpanded = !collapsedSections.has(id);
     
     if (conversations.length === 0) return null;
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 mb-6">
         <button
-          onClick={() => isCollapsible && setIsExpanded(!isExpanded)}
+          onClick={() => isCollapsible && toggleSection(id)}
           className={cn(
-            "text-xs font-semibold text-white/40 uppercase tracking-wider w-full text-left",
-            isCollapsible && "hover:text-white/60 transition-colors"
+            "flex items-center justify-between w-full text-xs font-semibold text-white/60 uppercase tracking-wider",
+            isCollapsible && "hover:text-white/80 transition-colors"
           )}
         >
-          {title} {isCollapsible && (isExpanded ? '−' : '+')}
+          <span>{title}</span>
+          {isCollapsible && (
+            <div className="flex items-center space-x-1">
+              <span className="text-white/40">({conversations.length})</span>
+              {isExpanded ? (
+                <ChevronDown className="w-3 h-3" />
+              ) : (
+                <ChevronRight className="w-3 h-3" />
+              )}
+            </div>
+          )}
         </button>
         
         {isExpanded && (
@@ -164,7 +195,7 @@ const ConversationsList = ({
 
   return (
     <div className="h-full flex flex-col bg-[#0A0A0A]">
-      {/* Header */}
+      {/* Header Premium */}
       <div className="p-4 border-b border-white/10">
         {isMobile && onToggleView && (
           <div className="flex items-center mb-4">
@@ -172,7 +203,7 @@ const ConversationsList = ({
               onClick={onToggleView}
               variant="ghost"
               size="sm"
-              className="p-2 text-white hover:bg-white/10"
+              className="p-2 text-white hover:bg-white/10 rounded-xl"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
@@ -180,16 +211,16 @@ const ConversationsList = ({
           </div>
         )}
         
-        {/* New Conversation Button */}
+        {/* New Conversation Button Premium */}
         <Button
           onClick={onNewConversation}
-          className="w-full mb-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 rounded-xl h-11 font-medium transition-all duration-200 hover:scale-[1.02]"
+          className="w-full mb-4 bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 hover:from-blue-600 hover:via-blue-700 hover:to-purple-700 text-white border-0 rounded-xl h-11 font-medium transition-all duration-200 hover:scale-[1.02] shadow-lg hover:shadow-xl"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nova Conversa
         </Button>
         
-        {/* Search */}
+        {/* Search Premium */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
           <Input
@@ -197,26 +228,34 @@ const ConversationsList = ({
             placeholder="Buscar conversas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40 rounded-xl focus:border-blue-400 transition-colors"
+            className="pl-10 bg-[#1A1A1A] border-white/10 text-white placeholder:text-white/40 rounded-xl focus:border-blue-400 focus:ring-1 focus:ring-blue-400/20 transition-all"
           />
         </div>
       </div>
 
-      {/* Conversations List */}
-      <ScrollArea className="flex-1 p-4 premium-scrollbar">
-        <div className="space-y-6">
-          <GroupSection title="Hoje" conversations={groupedConversations.today} />
-          <GroupSection title="Ontem" conversations={groupedConversations.yesterday} />
-          <GroupSection title="Últimos 7 dias" conversations={groupedConversations.lastWeek} />
-          <GroupSection title="Últimos 30 dias" conversations={groupedConversations.lastMonth} isCollapsible />
-          <GroupSection title="Mais antigos" conversations={groupedConversations.older} isCollapsible />
+      {/* Conversations List Premium */}
+      <ScrollArea className="flex-1 p-4" style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'rgba(255,255,255,0.2) transparent'
+      }}>
+        <div className="space-y-2">
+          <GroupSection id="today" title="Hoje" conversations={groupedConversations.today} />
+          <GroupSection id="yesterday" title="Ontem" conversations={groupedConversations.yesterday} />
+          <GroupSection id="lastWeek" title="Últimos 7 dias" conversations={groupedConversations.lastWeek} />
+          <GroupSection id="lastMonth" title="Últimos 30 dias" conversations={groupedConversations.lastMonth} isCollapsible />
+          <GroupSection id="older" title="Mais antigos" conversations={groupedConversations.older} isCollapsible />
         </div>
         
         {filteredConversations.length === 0 && (
-          <div className="text-center py-8">
-            <MessageCircle className="w-12 h-12 text-white/20 mx-auto mb-3" />
-            <p className="text-white/40 text-sm">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="w-8 h-8 text-white/30" />
+            </div>
+            <h3 className="text-white/60 font-medium mb-2">
               {searchQuery ? 'Nenhuma conversa encontrada' : 'Suas conversas aparecerão aqui'}
+            </h3>
+            <p className="text-white/40 text-sm">
+              {searchQuery ? 'Tente usar termos diferentes' : 'Clique em "Nova Conversa" para começar'}
             </p>
           </div>
         )}

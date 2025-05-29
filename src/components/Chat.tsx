@@ -61,6 +61,10 @@ const Chat = () => {
             e.preventDefault();
             activateFocusMode();
             break;
+          case 'k':
+            e.preventDefault();
+            // Implementar busca global
+            break;
         }
       }
       
@@ -75,8 +79,8 @@ const Chat = () => {
 
   return (
     <>
-      {/* Container principal com padding bottom para não sobrepor o menu inferior */}
-      <div className={`h-full relative ${isMobile ? 'pb-0' : ''}`}>
+      {/* Container principal - CORRIGIDO padding bottom para não sobrepor menu */}
+      <div className="h-full relative">
         <PremiumChatLayout
           conversations={conversations}
           currentConversation={currentConversation}

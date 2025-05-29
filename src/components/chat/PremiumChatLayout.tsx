@@ -27,7 +27,7 @@ const PremiumChatLayout = ({
 
   if (isMobile) {
     return (
-      <div className="h-full flex flex-col bg-black pb-[70px]">
+      <div className="h-full flex flex-col bg-[#0A0A0A] pb-[70px]">
         {showConversations ? (
           <ConversationsList
             conversations={conversations}
@@ -52,9 +52,9 @@ const PremiumChatLayout = ({
   }
 
   return (
-    <div className="h-full flex bg-black">
-      {/* Conversations Sidebar */}
-      <div className="w-[300px] border-r border-white/10 flex-shrink-0">
+    <div className="h-full flex bg-[#0A0A0A] relative overflow-hidden">
+      {/* Conversations Sidebar - Largura fixa premium */}
+      <div className="w-[320px] border-r border-white/10 flex-shrink-0 bg-[#0A0A0A]">
         <ConversationsList
           conversations={conversations}
           currentConversation={currentConversation}
@@ -65,7 +65,7 @@ const PremiumChatLayout = ({
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 bg-[#0F0F0F]">
         <ChatArea
           currentConversation={currentConversation}
           isMobile={false}
