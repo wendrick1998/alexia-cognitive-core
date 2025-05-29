@@ -1,12 +1,15 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Send, Sparkles, Paperclip, Mic, StopCircle } from 'lucide-react';
+import { Send, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useMobileOptimization } from '@/hooks/useMobileOptimization';
 import MobileKeyboardAccessory from './MobileKeyboardAccessory';
+import VoiceRecordingButton from './VoiceRecordingButton';
+import InputTextArea from './InputTextArea';
+import SmartSuggestions from './SmartSuggestions';
+import ProcessingIndicator from './ProcessingIndicator';
 
 interface RevolutionaryInputProps {
   processing: boolean;
@@ -22,7 +25,6 @@ const RevolutionaryInput = ({
   aiTyping = false
 }: RevolutionaryInputProps) => {
   const [message, setMessage] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const [showKeyboardAccessory, setShowKeyboardAccessory] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -43,7 +45,6 @@ const RevolutionaryInput = ({
 
     const handleBlur = () => {
       setIsFocused(false);
-      // Delay hiding accessory to allow for button taps
       setTimeout(() => {
         setShowKeyboardAccessory(false);
       }, 100);
@@ -63,16 +64,6 @@ const RevolutionaryInput = ({
     };
   }, [isMobile, hapticFeedback]);
 
-  // Auto-resize textarea
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      const newHeight = Math.min(textarea.scrollHeight, isMobile ? 120 : 200);
-      textarea.style.height = `${newHeight}px`;
-    }
-  }, [message, isMobile]);
-
   const handleSend = () => {
     if (!message.trim() || processing) return;
     
@@ -80,7 +71,6 @@ const RevolutionaryInput = ({
     onSendMessage(message.trim());
     setMessage('');
     
-    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -103,28 +93,18 @@ const RevolutionaryInput = ({
     
     setMessage(newMessage);
     
-    // Set cursor position after inserted text
     setTimeout(() => {
       textarea.setSelectionRange(start + text.length, start + text.length);
       textarea.focus();
     }, 0);
   };
 
-  const handleVoiceRecording = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      hapticFeedback('heavy');
-      // Stop recording logic here
-    } else {
-      setIsRecording(true);
-      hapticFeedback('heavy');
-      // Start recording logic here
-    }
+  const handleVoiceRecording = (isRecording: boolean) => {
+    console.log(isRecording ? 'Starting recording' : 'Stopping recording');
   };
 
   const handleAttachment = () => {
     hapticFeedback('medium');
-    // Open attachment picker
     console.log('Opening attachment picker');
   };
 
@@ -173,60 +153,22 @@ const RevolutionaryInput = ({
           <div className="flex items-end gap-3 p-4">
             {/* Voice Recording Button (Mobile) */}
             {isMobile && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onTouchStart={() => hapticFeedback('light')}
-                onTouchEnd={handleVoiceRecording}
-                className={cn(
-                  "flex-shrink-0 w-10 h-10 p-0 rounded-xl transition-all duration-200",
-                  "touch-manipulation",
-                  isRecording 
-                    ? "bg-red-500 text-white hover:bg-red-600" 
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                )}
-                style={{ WebkitTapHighlightColor: 'transparent' }}
+              <VoiceRecordingButton
                 disabled={processing}
-              >
-                {isRecording ? (
-                  <StopCircle className="w-5 h-5" />
-                ) : (
-                  <Mic className="w-5 h-5" />
-                )}
-              </Button>
+                onRecordingToggle={handleVoiceRecording}
+              />
             )}
 
             {/* Text Input */}
-            <div className="flex-1 relative">
-              <Textarea
-                ref={textareaRef}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder={contextualPlaceholder}
-                disabled={processing}
-                className={cn(
-                  "min-h-[20px] max-h-[120px] resize-none",
-                  "bg-transparent border-none p-0 text-white placeholder:text-white/40",
-                  "focus:ring-0 focus:outline-none",
-                  "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20",
-                  isMobile && "text-16px", // Prevent zoom on iOS
-                  "text-rendering-optimized"
-                )}
-                style={{
-                  fontSize: isMobile ? '16px' : '14px', // Prevent iOS zoom
-                  lineHeight: '1.5',
-                  ...adaptiveStyles
-                }}
-              />
-              
-              {/* Character count for mobile */}
-              {isMobile && message.length > 100 && (
-                <div className="absolute -bottom-6 right-0 text-xs text-white/40">
-                  {message.length}/2000
-                </div>
-              )}
-            </div>
+            <InputTextArea
+              message={message}
+              onMessageChange={setMessage}
+              onKeyPress={handleKeyPress}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder={contextualPlaceholder}
+              disabled={processing}
+            />
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -270,42 +212,14 @@ const RevolutionaryInput = ({
           </div>
 
           {/* Smart suggestions bar (mobile) */}
-          {isMobile && isFocused && !message && (
-            <div className="px-4 pb-3">
-              <div className="flex gap-2 text-xs">
-                {['Como posso ajudar?', 'Analise este documento', 'Crie um resumo'].map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    onTouchEnd={() => {
-                      hapticFeedback('light');
-                      setMessage(suggestion);
-                    }}
-                    className={cn(
-                      "px-3 py-1 rounded-full bg-white/10 text-white/70",
-                      "touch-manipulation whitespace-nowrap",
-                      "hover:bg-white/20 hover:text-white transition-colors"
-                    )}
-                    style={{ WebkitTapHighlightColor: 'transparent' }}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <SmartSuggestions
+            isVisible={isMobile && isFocused && !message}
+            onSuggestionSelect={setMessage}
+          />
         </div>
 
         {/* Processing Indicator */}
-        {processing && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="glass-card px-4 py-2 rounded-xl">
-              <div className="flex items-center gap-3 text-white/80">
-                <Sparkles className="w-5 h-5 animate-spin" />
-                <span className="text-sm">Processando...</span>
-              </div>
-            </div>
-          </div>
-        )}
+        <ProcessingIndicator isVisible={processing} />
       </div>
 
       {/* Mobile Keyboard Accessory */}
