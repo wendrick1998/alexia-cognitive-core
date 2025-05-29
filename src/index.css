@@ -61,6 +61,34 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  /* OLED True Black Theme */
+  .oled {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 4%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 4%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 4%;
+    --accent-foreground: 0 0% 90%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 6%;
+    --input: 0 0% 4%;
+    --ring: 217.2 91.2% 59.8%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
 }
 
 @layer base {
@@ -80,6 +108,59 @@
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+
+  /* OLED specific body styles */
+  .oled body {
+    background: #000000;
+    color: rgba(255, 255, 255, 0.95);
+  }
+}
+
+/* OLED Optimizations */
+.oled .glass-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.oled .glass-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Media optimizations for dark modes */
+.dark img, .oled img {
+  opacity: 0.9;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.dark img:hover, .oled img:hover {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.02);
+}
+
+.oled img {
+  opacity: 0.85;
+  filter: brightness(0.9) contrast(1.1);
+}
+
+.oled img:hover {
+  opacity: 0.95;
+  filter: brightness(1) contrast(1);
+}
+
+/* Code block optimizations */
+.oled .code-block {
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .code-block {
+  background: #0D0D0D;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Enhanced safe area support for mobile devices */
@@ -145,6 +226,10 @@
 /* Focus ring for accessibility */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2;
+}
+
+.oled .focus-ring {
+  @apply focus:ring-white/20;
 }
 
 /* Mobile optimizations */
@@ -223,6 +308,16 @@
   color: white;
 }
 
+.oled ::selection {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.oled ::-moz-selection {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
 /* iOS-style rubber band scrolling */
 .rubber-band-scroll {
   overscroll-behavior: contain;
@@ -276,14 +371,31 @@
   }
 }
 
-/* Dark mode optimizations for OLED */
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #000000; /* True black for OLED */
-  }
-  
-  .glass-card {
-    background: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
+/* OLED Power Optimization */
+.oled {
+  /* Minimize white areas to save battery */
+}
+
+.oled .premium-card-dark {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.oled .premium-card-dark:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Custom scrollbar for OLED */
+.oled .premium-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.oled .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Theme transition */
+.theme-transition * {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease !important;
 }

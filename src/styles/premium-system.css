@@ -43,6 +43,18 @@
   --space-16: 64px;
 }
 
+/* OLED Mode Overrides */
+.oled {
+  --glass-bg: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-hover: rgba(255, 255, 255, 0.04);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.4);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
 /* Premium Font System */
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
@@ -95,6 +107,17 @@ body {
   box-shadow: var(--shadow-elevated);
 }
 
+/* OLED specific glass cards */
+.oled .glass-card {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.oled .glass-card:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
 /* Premium Buttons */
 .btn-primary {
   background: var(--color-primary);
@@ -134,6 +157,17 @@ body {
   color: var(--text-primary);
 }
 
+/* OLED button optimizations */
+.oled .btn-secondary {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.oled .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 /* Premium Inputs */
 .input-premium {
   background: var(--glass-bg);
@@ -153,6 +187,17 @@ body {
 
 .input-premium::placeholder {
   color: var(--text-tertiary);
+}
+
+/* OLED input optimizations */
+.oled .input-premium {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.oled .input-premium:focus {
+  border-color: #6366F1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 /* Gradient Text */
@@ -233,6 +278,14 @@ body {
   animation: premium-shimmer 1.5s infinite;
 }
 
+/* OLED shimmer effect */
+.oled .animate-premium-shimmer {
+  background: linear-gradient(110deg, 
+    rgba(255, 255, 255, 0.02) 8%, 
+    rgba(255, 255, 255, 0.08) 18%, 
+    rgba(255, 255, 255, 0.02) 33%);
+}
+
 /* Hover States */
 .hover-lift {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -270,6 +323,15 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
+/* OLED scrollbar */
+.oled .premium-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.oled .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 /* Skeleton Loading */
 .skeleton-premium {
   background: var(--glass-bg);
@@ -290,6 +352,18 @@ body {
     rgba(255, 255, 255, 0.1), 
     transparent);
   animation: premium-shimmer 1.5s infinite;
+}
+
+/* OLED skeleton */
+.oled .skeleton-premium {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.oled .skeleton-premium::before {
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.05), 
+    transparent);
 }
 
 /* Status Indicators */
@@ -326,6 +400,12 @@ body {
   justify-content: center;
 }
 
+/* OLED empty state */
+.oled .empty-state {
+  background: rgba(255, 255, 255, 0.01);
+  border: 2px dashed rgba(255, 255, 255, 0.04);
+}
+
 /* Premium Navigation */
 .nav-item {
   position: relative;
@@ -358,6 +438,16 @@ body {
   border-radius: 2px;
 }
 
+/* OLED navigation */
+.oled .nav-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.oled .nav-item.active {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 /* Message Bubbles */
 .message-user {
   background: var(--color-primary);
@@ -377,6 +467,12 @@ body {
   max-width: 80%;
 }
 
+/* OLED message bubbles */
+.oled .message-ai {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 /* Code Blocks */
 .code-block {
   background: rgba(0, 0, 0, 0.3);
@@ -386,6 +482,12 @@ body {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.875rem;
   overflow-x: auto;
+}
+
+/* OLED code blocks */
+.oled .code-block {
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Premium Tables */
@@ -409,6 +511,20 @@ body {
   border-top: 1px solid var(--glass-border);
 }
 
+/* OLED table */
+.oled .table-premium {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.oled .table-premium th {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.oled .table-premium td {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .glass-card {
@@ -429,11 +545,18 @@ body {
   }
 }
 
-/* Dark Mode Enhancements */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --glass-bg: rgba(255, 255, 255, 0.02);
-    --glass-border: rgba(255, 255, 255, 0.06);
-    --glass-hover: rgba(255, 255, 255, 0.04);
-  }
+/* Theme transition smoothing */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Power optimization hints for OLED */
+.oled * {
+  /* Hints to browser for OLED optimization */
+  will-change: auto;
+}
+
+.oled .power-efficient {
+  /* Use for elements that should minimize power consumption */
+  contain: layout style paint;
 }
