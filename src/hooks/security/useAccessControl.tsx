@@ -7,75 +7,46 @@ export function useAccessControl() {
   const { user } = useAuth();
   const [securityContexts, setSecurityContexts] = useState<SecurityContext[]>([]);
 
-  // Create security context
-  const createSecurityContext = useCallback(async (
+  const createSecurityContext = useCallback((
     name: string,
-    level: SecurityContext['level'],
-    options: {
-      encryption?: boolean;
-      auditTrail?: boolean;
-      accessControl?: string[];
-    } = {}
-  ): Promise<SecurityContext> => {
+    level: 'public' | 'private' | 'secret'
+  ): SecurityContext => {
     const context: SecurityContext = {
       id: crypto.randomUUID(),
       name,
       level,
-      encryption: options.encryption ?? level !== 'public',
-      auditTrail: options.auditTrail ?? true,
-      accessControl: options.accessControl ?? [user?.id || 'anonymous'],
       createdAt: new Date(),
-      lastAccessed: new Date()
+      userId: user?.id || 'anonymous',
+      permissions: {
+        read: true,
+        write: level !== 'secret',
+        delete: level === 'public',
+        admin: level === 'public'
+      }
     };
 
     setSecurityContexts(prev => [...prev, context]);
-    
     return context;
   }, [user]);
 
-  // Check access permission
   const checkAccess = useCallback((
     contextId: string,
-    action: string
-  ): { allowed: boolean; reason?: string } => {
+    action: 'read' | 'write' | 'delete' | 'admin'
+  ): boolean => {
     const context = securityContexts.find(c => c.id === contextId);
-    if (!context) {
-      return { allowed: false, reason: 'Context not found' };
-    }
+    if (!context) return false;
+    return context.permissions[action];
+  }, [securityContexts]);
 
-    // Check user permissions
-    if (!context.accessControl.includes(user?.id || '')) {
-      return { allowed: false, reason: 'Access denied: User not in access control list' };
-    }
-
-    // Check action permissions based on security level
-    const restrictedActions = ['delete', 'export', 'admin'];
-    if (context.level === 'secret' && restrictedActions.includes(action)) {
-      return { allowed: false, reason: `Action '${action}' not allowed for secret context` };
-    }
-
-    return { allowed: true };
-  }, [securityContexts, user]);
-
-  // Secure data access with logging
-  const secureAccess = useCallback(async <T>(
+  const secureAccess = useCallback(async (
     contextId: string,
-    action: string,
-    operation: () => Promise<T>,
-    metadata: any = {}
-  ): Promise<T | null> => {
-    const accessCheck = checkAccess(contextId, action);
-    
-    if (!accessCheck.allowed) {
-      throw new Error(accessCheck.reason);
+    action: 'read' | 'write' | 'delete' | 'admin',
+    callback: () => Promise<any>
+  ): Promise<any> => {
+    if (!checkAccess(contextId, action)) {
+      throw new Error(`Access denied: ${action} on ${contextId}`);
     }
-
-    try {
-      const result = await operation();
-      return result;
-    } catch (error) {
-      throw error;
-    }
+    return await callback();
   }, [checkAccess]);
 
   return {
