@@ -3,8 +3,9 @@ import { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { AlertCircle, RefreshCw, Wifi } from 'lucide-react';
 import Logo from '@/components/branding/Logo';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -13,6 +14,8 @@ interface AuthGuardProps {
 
 const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
   const { user, loading, error, isAuthenticated, refreshSession, clearError } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Loading state
   if (loading) {
@@ -58,7 +61,7 @@ const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
               <Button
                 onClick={() => {
                   clearError();
-                  window.location.href = '/';
+                  navigate('/auth');
                 }}
                 className="bg-blue-600 hover:bg-blue-700"
               >
@@ -80,6 +83,11 @@ const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
 
   // Not authenticated - show fallback or redirect
   if (!isAuthenticated) {
+    // If we're already on auth page, don't redirect to avoid loops
+    if (location.pathname === '/auth') {
+      return fallback ? <>{fallback}</> : null;
+    }
+    
     if (fallback) {
       return <>{fallback}</>;
     }
@@ -96,7 +104,7 @@ const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
           </CardHeader>
           <CardContent>
             <Button
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/auth')}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
               Fazer Login

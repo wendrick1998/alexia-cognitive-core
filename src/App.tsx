@@ -12,6 +12,7 @@ import "./App.css";
 
 // Lazy load components for better performance
 const Index = lazy(() => import("./pages/Index"));
+const AuthPage = lazy(() => import("./components/auth/AuthPage"));
 const NotFound = lazy(() => import("./pages/404"));
 
 // Create a client
@@ -58,6 +59,7 @@ function App() {
               <Suspense fallback={<LoadingFallback />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<AuthPage />} />
                   <Route path="/404" element={<NotFound />} />
                   <Route path="*" element={<Navigate to="/404" replace />} />
                 </Routes>

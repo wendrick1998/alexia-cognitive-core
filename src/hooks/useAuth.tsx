@@ -142,7 +142,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (error) {
-        setError(error.message);
+        const friendlyMessage = error.message.includes('already registered') 
+          ? 'Este email já está cadastrado. Tente fazer login.'
+          : error.message.includes('password') 
+          ? 'A senha deve ter pelo menos 6 caracteres.'
+          : error.message;
+        setError(friendlyMessage);
       }
       
       return { error };
@@ -162,7 +167,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (error) {
-        setError(error.message);
+        const friendlyMessage = error.message.includes('Invalid login credentials') 
+          ? 'Email ou senha incorretos.'
+          : error.message.includes('Email not confirmed')
+          ? 'Confirme seu email antes de fazer login.'
+          : error.message;
+        setError(friendlyMessage);
       }
       
       return { error };
