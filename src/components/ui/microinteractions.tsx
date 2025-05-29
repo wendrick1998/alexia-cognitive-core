@@ -146,17 +146,17 @@ export const FeedbackButton = ({
     setTimeout(() => setFeedback(null), 2000);
   };
 
-  const getFeedbackIcon = () => {
-    switch (feedback) {
-      case "success":
-        return <Check className="w-4 h-4 text-green-500" />;
-      case "error":
-        return <X className="w-4 h-4 text-red-500" />;
-      case "copied":
-        return <Copy className="w-4 h-4 text-blue-500" />;
-      default:
-        return children;
+  const getFeedbackIcon = (): React.ReactNode => {
+    if (feedback === "success") {
+      return <Check className="w-4 h-4 text-green-500" />;
     }
+    if (feedback === "error") {
+      return <X className="w-4 h-4 text-red-500" />;
+    }
+    if (feedback === "copied") {
+      return <Copy className="w-4 h-4 text-blue-500" />;
+    }
+    return children;
   };
 
   const getFeedbackClass = () => {
