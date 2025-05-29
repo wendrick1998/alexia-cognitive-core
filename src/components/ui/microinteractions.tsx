@@ -132,20 +132,17 @@ export const FeedbackButton = ({
   const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const handleFeedback = () => {
-    switch (type) {
-      case "success":
-        setFeedback("success");
-        break;
-      case "error":
-        setFeedback("error");
-        break;
-      case "copy":
-        setFeedback("copied");
-        break;
-      default:
-        setFeedback(null);
+    let newFeedback: FeedbackState = null;
+    
+    if (type === "success") {
+      newFeedback = "success";
+    } else if (type === "error") {
+      newFeedback = "error";
+    } else if (type === "copy") {
+      newFeedback = "copied";
     }
-
+    
+    setFeedback(newFeedback);
     setTimeout(() => setFeedback(null), 2000);
   };
 
