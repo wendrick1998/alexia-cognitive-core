@@ -140,7 +140,7 @@ const ChatArea = ({
         </div>
       )}
 
-      {/* Messages Area - Flex-grow para ocupar espaço disponível */}
+      {/* Messages Area - FIXED: Proper flex layout with min-h-0 to prevent expansion */}
       <div className="flex-1 min-h-0 flex flex-col">
         {currentConversation ? (
           <ChatMessages 
@@ -183,7 +183,7 @@ const ChatArea = ({
         )}
       </div>
 
-      {/* Input Area - Fixado na parte inferior */}
+      {/* Input Area - FIXED: Always visible at bottom, no scroll interference */}
       <div className="glass-card border-t border-white/5 backdrop-blur-xl flex-shrink-0">
         <RevolutionaryInput
           processing={processing}

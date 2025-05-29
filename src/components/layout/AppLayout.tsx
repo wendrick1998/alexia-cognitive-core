@@ -119,11 +119,11 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
           />
         )}
 
-        {/* Main Content - FIXED: Added proper margin for desktop sidebar */}
-        <main className={`flex-1 flex flex-col overflow-hidden ${!isMobile ? 'ml-20' : ''}`}>
+        {/* Main Content - FIXED: Removed overflow-auto that was causing scroll issues */}
+        <main className={`flex-1 flex flex-col h-screen ${!isMobile ? 'ml-20' : ''}`}>
           {/* Header for mobile */}
           {isMobile && (
-            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300">
+            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0">
               <SidebarTrigger>
                 <Button variant="ghost" size="sm" className="p-2 rounded-xl hover:bg-white/10 text-white">
                   <Menu className="w-5 h-5" />
@@ -140,7 +140,7 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
 
           {/* Desktop Header with shortcuts */}
           {!isMobile && (
-            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300">
+            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0">
               <h1 className="font-semibold text-white capitalize text-xl">
                 {getSectionTitle(currentSection)}
               </h1>
@@ -161,8 +161,8 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
             </header>
           )}
 
-          {/* Content Area */}
-          <div className="flex-1 overflow-auto">
+          {/* Content Area - FIXED: Removed overflow-auto, added proper flex layout */}
+          <div className="flex-1 min-h-0">
             {children}
           </div>
 

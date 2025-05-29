@@ -41,13 +41,9 @@ const ChatMessages = ({ messages, loading, processing }: ChatMessagesProps) => {
   return (
     <div 
       ref={containerRef}
-      className="flex-1 overflow-y-auto"
-      style={{ 
-        maxHeight: '100%',
-        scrollBehavior: 'smooth'
-      }}
+      className="flex-1 overflow-y-auto min-h-0"
     >
-      <div className="p-6 space-y-8 relative min-h-full">
+      <div className="p-6 space-y-8 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-50/10 to-transparent pointer-events-none" />
         
         {messages.length === 0 && !loading && <ChatWelcome />}
