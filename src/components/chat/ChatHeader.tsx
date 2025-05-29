@@ -1,98 +1,124 @@
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Bot, Plus, Sparkles, Loader2 } from "lucide-react";
-import { Conversation } from "@/hooks/useConversations";
+import { useState } from 'react';
+import { PremiumButton } from '@/components/ui/premium-button';
+import { ArrowLeft, Edit3, Share, MoreHorizontal, Sparkles } from 'lucide-react';
+import { Conversation } from '@/hooks/useConversations';
+import ModelSelector from './ModelSelector';
 
 interface ChatHeaderProps {
   currentConversation: Conversation | null;
-  sidebarOpen: boolean;
-  onToggleSidebar: () => void;
-  onNewConversation: () => void;
-  isCreatingNew?: boolean;
+  onBackToConversations?: () => void;
+  isMobile: boolean;
   isNavigating?: boolean;
 }
 
 const ChatHeader = ({ 
   currentConversation, 
-  sidebarOpen, 
-  onToggleSidebar, 
-  onNewConversation,
-  isCreatingNew = false,
+  onBackToConversations, 
+  isMobile,
   isNavigating = false
 }: ChatHeaderProps) => {
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [title, setTitle] = useState(currentConversation?.name || 'Nova conversa');
+
+  const handleTitleEdit = () => {
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleSave = () => {
+    setIsEditingTitle(false);
+    console.log('Saving title:', title);
+  };
+
+  const handleShare = () => {
+    console.log('Sharing conversation');
+  };
+
+  const handleMoreActions = () => {
+    console.log('More actions');
+  };
+
+  if (!currentConversation) return null;
+
   return (
-    <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200/60 p-6 shadow-sm relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-indigo-50/50" />
-      <div className="relative flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleSidebar}
-            className="text-slate-600 hover:text-slate-800 hover:bg-white/80 rounded-xl shadow-sm border border-slate-200/50"
-          >
-            <MessageCircle className="w-5 h-5" />
-          </Button>
+    <div className="glass-card border-b border-white/5 p-4 backdrop-blur-xl flex-shrink-0">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {isMobile && onBackToConversations && (
+            <PremiumButton
+              variant="ghost"
+              size="sm"
+              onClick={onBackToConversations}
+              icon={<ArrowLeft className="w-4 h-4" />}
+            />
+          )}
           
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                {isNavigating ? (
-                  <Loader2 className="w-6 h-6 text-white animate-spin" />
-                ) : (
-                  <Bot className="w-6 h-6 text-white" />
-                )}
-              </div>
-              <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                isNavigating ? 'bg-yellow-500 animate-pulse' : 'bg-emerald-500'
-              }`} />
+          <div className="flex items-center gap-3">
+            {/* AI Avatar Premium */}
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center shadow-lg animate-premium-glow">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
             
-            <div>
-              <div className="flex items-center space-x-2">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                  {isNavigating ? 'Carregando...' : (currentConversation?.name || 'Alex iA')}
+            {/* Title Editable */}
+            <div className="flex flex-col">
+              {isEditingTitle ? (
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onBlur={handleTitleSave}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleTitleSave();
+                    if (e.key === 'Escape') {
+                      setIsEditingTitle(false);
+                      setTitle(currentConversation?.name || 'Nova conversa');
+                    }
+                  }}
+                  className="input-premium text-lg font-semibold bg-transparent border-none p-0 text-white"
+                  autoFocus
+                />
+              ) : (
+                <h1 
+                  className="text-lg font-semibold text-white cursor-pointer hover:text-white/80 transition-colors"
+                  onClick={handleTitleEdit}
+                >
+                  {isNavigating ? 'Carregando...' : (title || 'Nova conversa')}
                 </h1>
-                <Badge className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-0 px-2 py-1">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  Premium
-                </Badge>
-                {isCreatingNew && (
-                  <Badge variant="outline" className="text-blue-600 border-blue-200">
-                    Criando...
-                  </Badge>
-                )}
-              </div>
-              {currentConversation && !isNavigating && (
-                <p className="text-sm text-slate-500 flex items-center space-x-2">
-                  <span>Conversa iniciada em {new Date(currentConversation.created_at).toLocaleDateString('pt-BR')}</span>
-                  {currentConversation.message_count > 0 && (
-                    <>
-                      <span>•</span>
-                      <span>{currentConversation.message_count} mensagens</span>
-                    </>
-                  )}
-                </p>
               )}
+              
+              <div className="flex items-center gap-2 text-xs text-white/50">
+                <span>Conversando com</span>
+                <ModelSelector
+                  selectedModel={selectedModel}
+                  onModelChange={setSelectedModel}
+                />
+              </div>
             </div>
           </div>
         </div>
         
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onNewConversation}
-          disabled={isCreatingNew}
-          className="flex items-center space-x-2 rounded-xl border-slate-200 hover:bg-white/80 shadow-sm bg-white/60 backdrop-blur-sm"
-        >
-          {isCreatingNew ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Plus className="w-4 h-4" />
-          )}
-          <span>{isCreatingNew ? 'Criando...' : 'Nova Conversa'}</span>
-        </Button>
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <PremiumButton
+            variant="ghost"
+            size="sm"
+            onClick={handleTitleEdit}
+            icon={<Edit3 className="w-4 h-4" />}
+          />
+          <PremiumButton
+            variant="ghost"
+            size="sm"
+            onClick={handleShare}
+            icon={<Share className="w-4 h-4" />}
+          />
+          <PremiumButton
+            variant="ghost"
+            size="sm"
+            onClick={handleMoreActions}
+            icon={<MoreHorizontal className="w-4 h-4" />}
+          />
+        </div>
       </div>
     </div>
   );
