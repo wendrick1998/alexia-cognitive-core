@@ -22,7 +22,7 @@ import {
   LogOut,
   X,
   Sparkles,
-  Sync,
+  RotateCcw,
   CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -207,7 +207,7 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
             <div className="flex items-center justify-between text-xs text-white/60">
               <div className="flex items-center space-x-2">
                 {syncStatus === 'synced' && <CheckCircle className="w-3 h-3 text-green-400" />}
-                {syncStatus === 'syncing' && <Sync className="w-3 h-3 animate-spin text-blue-400" />}
+                {syncStatus === 'syncing' && <RotateCcw className="w-3 h-3 animate-spin text-blue-400" />}
                 <span>
                   {syncStatus === 'synced' && 'Sincronizado'}
                   {syncStatus === 'syncing' && 'Sincronizando...'}
