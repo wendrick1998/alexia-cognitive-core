@@ -31,6 +31,7 @@ export const useDashboardStats = () => {
   });
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -38,6 +39,7 @@ export const useDashboardStats = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
+        setError(null);
 
         // Fetch conversations
         const { data: conversations } = await supabase
@@ -108,6 +110,8 @@ export const useDashboardStats = () => {
         setActivityData(activityArray);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+        setError('Erro ao carregar estatísticas do dashboard');
+        
         // Set mock data in case of error
         setStats({
           totalConversations: 12,
@@ -138,5 +142,5 @@ export const useDashboardStats = () => {
     fetchStats();
   }, [user?.id]);
 
-  return { stats, activityData, loading };
+  return { stats, activityData, loading, error };
 };

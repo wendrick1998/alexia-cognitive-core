@@ -17,6 +17,7 @@ export const useRecentInsights = () => {
   const { user } = useAuth();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -24,6 +25,7 @@ export const useRecentInsights = () => {
     const fetchInsights = async () => {
       try {
         setLoading(true);
+        setError(null);
 
         const { data } = await supabase
           .from('cognitive_insights')
@@ -77,6 +79,7 @@ export const useRecentInsights = () => {
         }
       } catch (error) {
         console.error('Error fetching insights:', error);
+        setError('Erro ao carregar insights');
         setInsights([]);
       } finally {
         setLoading(false);
@@ -86,5 +89,5 @@ export const useRecentInsights = () => {
     fetchInsights();
   }, [user?.id]);
 
-  return { insights, loading };
+  return { insights, loading, error };
 };
