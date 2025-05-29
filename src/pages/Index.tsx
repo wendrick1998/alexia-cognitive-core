@@ -18,6 +18,14 @@ const Index = () => {
   const [splitSections, setSplitSections] = useState({ left: "dashboard", right: "chat" });
   const isMobile = useIsMobile();
 
+  const handleSectionChange = (section: string, id?: string) => {
+    setCurrentSection(section);
+    // Handle navigation with optional ID for specific items
+    if (id) {
+      console.log(`Navigating to ${section} with ID: ${id}`);
+    }
+  };
+
   const renderContent = (section: string) => {
     switch (section) {
       case "dashboard":
@@ -29,7 +37,7 @@ const Index = () => {
       case "documents":
         return <DocumentsManager />;
       case "search":
-        return <SemanticSearch />;
+        return <SemanticSearch onNavigate={handleSectionChange} />;
       case "actions":
         return <ProjectsManager />;
       default:
@@ -69,7 +77,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen" style={{ background: '#000000' }}>
-      <AppLayout currentSection={currentSection} onSectionChange={setCurrentSection}>
+      <AppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
         {isSplitView && !isMobile ? (
           <MultiPaneLayout
             leftPane={renderContent(splitSections.left)}

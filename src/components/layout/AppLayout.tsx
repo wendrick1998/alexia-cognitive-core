@@ -37,16 +37,16 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
             e.preventDefault();
             onSectionChange('dashboard');
             toast({
-              title: "Dashboard activated",
-              description: "Cmd/Ctrl + D for dashboard",
+              title: "Dashboard ativado",
+              description: "Cmd/Ctrl + D para dashboard",
             });
             break;
           case 'k':
             e.preventDefault();
             onSectionChange('search');
             toast({
-              title: "Search activated",
-              description: "Cmd/Ctrl + K to search",
+              title: "Command Palette ativado",
+              description: "Cmd/Ctrl + K para buscar",
             });
             break;
           case 'n':
@@ -56,8 +56,8 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
               window.dispatchEvent(new CustomEvent('new-conversation'));
             }
             toast({
-              title: "New conversation",
-              description: "Cmd/Ctrl + N for new chat",
+              title: "Nova conversa",
+              description: "Cmd/Ctrl + N para novo chat",
             });
             break;
           case 'f':
