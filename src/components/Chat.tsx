@@ -1,18 +1,21 @@
+
 import { useState, useEffect } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { useChatProcessor } from "@/hooks/useChatProcessor";
 import { useCognitiveSystem } from "@/hooks/useCognitiveSystem";
 import { useCognitiveOrchestrator } from "@/hooks/useCognitiveOrchestrator";
-import ConversationSidebar from "./ConversationSidebar";
-import ChatHeader from "./chat/ChatHeader";
-import ChatMessages from "./chat/ChatMessages";
-import ChatInput from "./chat/ChatInput";
-import EnhancedCognitiveInterface from "./cognitive/EnhancedCognitiveInterface";
+import { useToast } from "@/hooks/use-toast";
+import ChatHeaderMinimal from "./chat/ChatHeaderMinimal";
+import QuickActionsBar from "./chat/QuickActionsBar";
+import RevolutionaryInput from "./chat/RevolutionaryInput";
+import FloatingActionButton from "./chat/FloatingActionButton";
+import MessageCardRevamped from "./chat/MessageCardRevamped";
+import ChatWelcome from "./chat/ChatWelcome";
 import { ChatLoadingSkeleton } from "./chat/ChatSkeleton";
 
 const Chat = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showCognitiveInterface, setShowCognitiveInterface] = useState(false);
+  const [currentModel, setCurrentModel] = useState('auto');
+  const [aiTyping, setAiTyping] = useState(false);
   
   const { 
     currentConversation, 
@@ -27,6 +30,7 @@ const Chat = () => {
   const { processing, processMessage } = useChatProcessor();
   const { createCognitiveNode, cognitiveState } = useCognitiveSystem();
   const { orchestrateCognitiveProcess } = useCognitiveOrchestrator();
+  const { toast } = useToast();
 
   const handleSendMessage = async (messageText: string) => {
     let conversation = currentConversation;
@@ -42,6 +46,9 @@ const Chat = () => {
     }
 
     console.log(`📤 Enviando mensagem para conversa: ${conversation.id}`);
+    
+    // Set AI typing
+    setAiTyping(true);
     
     // 🧠 Create cognitive node for user message
     await createCognitiveNode(
@@ -86,6 +93,8 @@ const Chat = () => {
       response = await processMessage(messageText, conversation.id);
     }
     
+    setAiTyping(false);
+    
     if (response) {
       // Create cognitive node for AI response
       await createCognitiveNode(
@@ -101,88 +110,107 @@ const Chat = () => {
     }
   };
 
-  // ✅ FUNÇÃO PRINCIPAL - Nova Conversa Premium
-  const handleNewConversation = async () => {
-    console.log('🆕 NOVA CONVERSA SOLICITADA - UX PREMIUM');
-    const newConversation = await createAndNavigateToNewConversation();
-    
-    if (newConversation) {
-      console.log('🎯 Nova conversa criada e ativa, pronta para primeira mensagem!');
-      
-      // Create cognitive node for new conversation
-      await createCognitiveNode(
-        `Nova conversa iniciada: ${newConversation.name || 'Sem nome'}`,
-        'conversation',
-        { source: 'new_conversation', conversation_id: newConversation.id },
-        newConversation.id
-      );
+  const handleQuickAction = (action: string) => {
+    console.log('Quick action:', action);
+    toast({
+      title: "Ação rápida",
+      description: `Ação ${action} será implementada em breve!`,
+    });
+  };
+
+  const handleFABAction = (action: string) => {
+    switch (action) {
+      case 'new-chat':
+        createAndNavigateToNewConversation();
+        break;
+      case 'change-model':
+        // This will be handled by the header
+        break;
+      default:
+        toast({
+          title: "Ação",
+          description: `${action} será implementada em breve!`,
+        });
     }
+  };
+
+  const handleProfileClick = () => {
+    toast({
+      title: "Perfil",
+      description: "Menu de perfil será implementado em breve!",
+    });
+  };
+
+  const getContextualPlaceholder = () => {
+    if (processing) return "Processando...";
+    if (conversationState.isCreatingNew) return "Criando nova conversa...";
+    if (!currentConversation) return "Comece uma nova conversa...";
+    if (messages.length === 0) return "Digite sua primeira mensagem...";
+    return "Continue a conversa...";
   };
 
   // Estados de carregamento otimizados
   const isLoadingState = loading || conversationState.isNavigating || conversationState.isLoadingMessages;
-  const isCreatingNew = conversationState.isCreatingNew;
 
   return (
-    <div className="flex-1 flex bg-gradient-to-br from-slate-50 via-white to-blue-50/30 min-h-screen">
-      <ConversationSidebar 
-        isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)} 
+    <div className="flex-1 flex flex-col bg-[#0A0A0A] min-h-screen">
+      <ChatHeaderMinimal
+        currentModel={currentModel}
+        onModelChange={setCurrentModel}
+        onProfileClick={handleProfileClick}
       />
-      
-      <div className="flex-1 flex flex-col relative">
-        <ChatHeader
-          currentConversation={currentConversation}
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          onNewConversation={handleNewConversation}
-          isCreatingNew={isCreatingNew}
-          isNavigating={conversationState.isNavigating}
-        />
 
-        <div className="flex-1 flex">
-          <div className="flex-1 flex flex-col">
-            {isLoadingState ? (
-              <ChatLoadingSkeleton />
-            ) : (
-              <ChatMessages
-                messages={messages}
-                loading={false}
-                processing={processing}
-              />
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        {isLoadingState ? (
+          <ChatLoadingSkeleton />
+        ) : messages.length === 0 ? (
+          <ChatWelcome />
+        ) : (
+          <div className="space-y-4">
+            {messages.map((message, index) => (
+              <MessageCardRevamped key={message.id} message={message} index={index} />
+            ))}
+            
+            {processing && (
+              <div className="flex items-start space-x-4 max-w-4xl mx-auto mb-4 animate-fade-in">
+                <div className="relative flex-shrink-0">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] rounded-2xl flex items-center justify-center shadow-lg">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#F59E0B] rounded-full border-2 border-[#0A0A0A] animate-pulse" />
+                </div>
+                <div className="max-w-2xl p-4 rounded-3xl bg-[#1A1A1A] border border-white/10 text-white">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-[#8B5CF6] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                    <p className="text-base text-white/90">
+                      Analisando e processando sua mensagem...
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
-
-            <ChatInput
-              processing={processing || isCreatingNew}
-              currentConversation={currentConversation}
-              onSendMessage={handleSendMessage}
-              placeholder={
-                isCreatingNew 
-                  ? "Criando nova conversa..." 
-                  : currentConversation 
-                    ? "Digite sua mensagem... (Use @deep-think, @connect, @evolve, @simulate para comandos multi-agente)"
-                    : "Comece uma nova conversa..."
-              }
-            />
           </div>
-
-          {/* Enhanced Cognitive Interface - Right Panel */}
-          {showCognitiveInterface && (
-            <div className="w-96 border-l border-gray-200 overflow-y-auto">
-              <EnhancedCognitiveInterface />
-            </div>
-          )}
-        </div>
-
-        {/* Cognitive Interface Toggle */}
-        <button
-          onClick={() => setShowCognitiveInterface(!showCognitiveInterface)}
-          className="fixed bottom-20 right-4 w-12 h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-10"
-          title="Sistema Multi-Agente Cognitivo"
-        >
-          🧠
-        </button>
+        )}
       </div>
+
+      {/* Quick Actions Bar */}
+      <QuickActionsBar onAction={handleQuickAction} />
+
+      {/* Revolutionary Input */}
+      <RevolutionaryInput
+        processing={processing || conversationState.isCreatingNew}
+        onSendMessage={handleSendMessage}
+        contextualPlaceholder={getContextualPlaceholder()}
+        aiTyping={aiTyping}
+      />
+
+      {/* Floating Action Button */}
+      <FloatingActionButton onAction={handleFABAction} />
     </div>
   );
 };
