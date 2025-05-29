@@ -1,10 +1,13 @@
 
-import { useRef, useEffect } from "react";
+import { useMemo, memo } from "react";
 import { Message } from "@/hooks/useConversations";
 import ChatWelcome from "./ChatWelcome";
-import MessageCard from "./MessageCard";
+import MessageBubble from "./MessageBubble";
+import DateSeparator from "./DateSeparator";
 import ChatLoadingIndicator from "./ChatLoadingIndicator";
 import ChatProcessingIndicator from "./ChatProcessingIndicator";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
+import { isSameDay } from 'date-fns';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -12,56 +15,77 @@ interface ChatMessagesProps {
   processing: boolean;
 }
 
-const ChatMessages = ({ messages, loading, processing }: ChatMessagesProps) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // Scroll automático quando novas mensagens chegam
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      scrollToBottom();
-    }, 100); // Pequeno delay para garantir que a mensagem foi renderizada
-
-    return () => clearTimeout(timeoutId);
-  }, [messages.length]);
-
-  // Scroll automático quando o processing muda
-  useEffect(() => {
-    if (processing) {
-      const timeoutId = setTimeout(() => {
-        scrollToBottom();
-      }, 100);
-      return () => clearTimeout(timeoutId);
+// Função para agrupar mensagens por data
+const groupMessagesByDate = (messages: Message[]) => {
+  const groups: { date: Date; messages: Message[] }[] = [];
+  
+  messages.forEach((message) => {
+    const messageDate = new Date(message.created_at);
+    const lastGroup = groups[groups.length - 1];
+    
+    if (!lastGroup || !isSameDay(lastGroup.date, messageDate)) {
+      groups.push({
+        date: messageDate,
+        messages: [message]
+      });
+    } else {
+      lastGroup.messages.push(message);
     }
-  }, [processing]);
+  });
+  
+  return groups;
+};
+
+const ChatMessages = memo(({ messages, loading, processing }: ChatMessagesProps) => {
+  const { scrollRef } = useAutoScroll({
+    dependency: [messages.length, processing],
+    delay: 50
+  });
+
+  // Memoizar o agrupamento de mensagens por data
+  const messageGroups = useMemo(() => groupMessagesByDate(messages), [messages]);
 
   return (
-    <div 
-      ref={containerRef}
-      className="h-full overflow-y-auto"
-    >
-      <div className="p-4 space-y-6 min-h-full">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-50/10 to-transparent pointer-events-none" />
-        
+    <div className="h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+      <div className="p-4 pb-8 min-h-full">
+        {/* Welcome screen quando não há mensagens */}
         {messages.length === 0 && !loading && <ChatWelcome />}
 
+        {/* Loading indicator */}
         {loading && <ChatLoadingIndicator />}
 
-        {messages.map((message, index) => (
-          <MessageCard key={message.id} message={message} index={index} />
+        {/* Grupos de mensagens por data */}
+        {messageGroups.map((group, groupIndex) => (
+          <div key={`group-${group.date.getTime()}`}>
+            {/* Separador de data */}
+            <DateSeparator date={group.date} />
+            
+            {/* Mensagens do grupo */}
+            {group.messages.map((message, messageIndex) => {
+              const isLastInGroup = messageIndex === group.messages.length - 1;
+              const isLastOverall = groupIndex === messageGroups.length - 1 && isLastInGroup;
+              
+              return (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  isLast={isLastOverall}
+                />
+              );
+            })}
+          </div>
         ))}
 
+        {/* Processing indicator */}
         {processing && <ChatProcessingIndicator />}
 
         {/* Elemento para scroll automático */}
-        <div ref={messagesEndRef} className="h-1" />
+        <div ref={scrollRef} className="h-1" />
       </div>
     </div>
   );
-};
+});
+
+ChatMessages.displayName = 'ChatMessages';
 
 export default ChatMessages;
