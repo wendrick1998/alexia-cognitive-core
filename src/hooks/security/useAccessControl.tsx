@@ -14,20 +14,11 @@ export function useAccessControl() {
     const context: SecurityContext = {
       id: crypto.randomUUID(),
       name,
-      level,
+      level: level as 'public' | 'private' | 'confidential' | 'secret',
       createdAt: new Date(),
-      encryption: {
-        algorithm: 'AES-256-GCM',
-        keyId: crypto.randomUUID(),
-        enabled: level !== 'public'
-      },
-      auditTrail: [],
-      accessControl: {
-        read: true,
-        write: level !== 'secret',
-        delete: level === 'public',
-        admin: level === 'public'
-      },
+      encryption: level !== 'public',
+      auditTrail: true,
+      accessControl: level === 'public' ? ['read', 'write', 'delete'] : ['read'],
       lastAccessed: new Date()
     };
 
@@ -42,7 +33,7 @@ export function useAccessControl() {
     const context = securityContexts.find(c => c.id === contextId);
     if (!context) return false;
     
-    return context.accessControl[action] || false;
+    return context.accessControl.includes(action);
   }, [securityContexts]);
 
   const secureAccess = useCallback(async (
