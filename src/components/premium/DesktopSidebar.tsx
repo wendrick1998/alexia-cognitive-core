@@ -8,7 +8,9 @@ import {
   FileText, 
   Search,
   Zap,
-  ChevronRight
+  ChevronRight,
+  Settings,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,25 +33,35 @@ const navigationItems = [
     shortcut: "⌘N"
   },
   {
-    id: "memory",
-    label: "Memória",
-    icon: Brain,
-  },
-  {
-    id: "documents",
-    label: "Documentos",
-    icon: FileText,
-  },
-  {
     id: "search",
-    label: "Buscar",
+    label: "Busca Semântica",
     icon: Search,
     shortcut: "⌘K"
   },
   {
+    id: "memory",
+    label: "Gerenciar Memória",
+    icon: Brain,
+  },
+  {
+    id: "documents",
+    label: "Documentos Conectados",
+    icon: FileText,
+  },
+  {
     id: "actions",
-    label: "Ações",
+    label: "Meus Projetos",
     icon: Zap,
+  },
+  {
+    id: "preferences",
+    label: "Preferências do Usuário",
+    icon: User,
+  },
+  {
+    id: "privacy",
+    label: "Configurações de IA",
+    icon: Settings,
   },
 ];
 

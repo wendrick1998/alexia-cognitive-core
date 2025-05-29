@@ -16,13 +16,6 @@ import {
   User,
   LogOut,
   Sparkles,
-  Target,
-  Network,
-  Palette,
-  Users,
-  Globe,
-  Play,
-  FolderOpen,
   CreditCard,
   Lock
 } from 'lucide-react';
@@ -43,35 +36,18 @@ const menuSections = [
       { id: "dashboard", title: "Dashboard", icon: BarChart3, description: "Visão geral e insights" },
       { id: "chat", title: "Chat", icon: MessageCircle, description: "Conversas com IA" },
       { id: "search", title: "Busca Semântica", icon: Search, description: "Encontre qualquer informação", badge: "Premium" },
-      { id: "memory", title: "Memórias", icon: Brain, description: "Gestão de conhecimento" },
-      { id: "documents", title: "Documentos", icon: FileText, description: "PDFs, textos e arquivos" },
-      { id: "actions", title: "Projetos", icon: FolderOpen, description: "Ações automáticas", badge: "Beta" }
-    ]
-  },
-  {
-    title: "AVANÇADO",
-    items: [
-      { id: "objectives", title: "Objetivos", icon: Target, description: "Metas e planejamento" },
-      { id: "analytics", title: "Analytics", icon: BarChart3, description: "Dados e métricas" },
-      { id: "connections", title: "Conexões", icon: Network, description: "Integrações externas" }
-    ]
-  },
-  {
-    title: "FERRAMENTAS",
-    items: [
-      { id: "cognitive-modes", title: "Modos Cognitivos", icon: Palette, description: "Diferentes tipos de pensamento" },
-      { id: "collaboration", title: "Colaboração", icon: Users, description: "Trabalho em equipe" },
-      { id: "integrations", title: "Integrações", icon: Globe, description: "APIs e webhooks" },
-      { id: "voice-mode", title: "Modo Voz", icon: Play, description: "Interação por voz" }
+      { id: "memory", title: "Gerenciar Memória", icon: Brain, description: "Gestão de conhecimento" },
+      { id: "documents", title: "Documentos Conectados", icon: FileText, description: "PDFs, textos e arquivos" },
+      { id: "actions", title: "Meus Projetos", icon: Zap, description: "Ações automáticas", badge: "Beta" }
     ]
   },
   {
     title: "CONFIGURAÇÕES",
     items: [
-      { id: "preferences", title: "Preferências", icon: Settings, description: "Configurações gerais" },
-      { id: "profile", title: "Perfil", icon: User, description: "Dados pessoais" },
+      { id: "preferences", title: "Preferências do Usuário", icon: User, description: "Configurações pessoais" },
       { id: "subscription", title: "Assinatura", icon: CreditCard, description: "Planos e pagamento" },
-      { id: "privacy", title: "Privacidade", icon: Lock, description: "Segurança e dados" }
+      { id: "privacy", title: "Configurações de IA", icon: Settings, description: "Configurações do sistema" },
+      { id: "security", title: "Privacidade", icon: Lock, description: "Segurança e dados" }
     ]
   }
 ];

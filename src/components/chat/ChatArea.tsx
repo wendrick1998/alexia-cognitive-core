@@ -40,20 +40,24 @@ const ChatArea = ({
         isNavigating={isNavigating}
       />
 
-      {/* Content Area - Apply flex-1 min-h-0 directly to ChatContent */}
-      <ChatContent
-        currentConversation={currentConversation}
-        messages={messages}
-        processing={processing}
-        isNavigating={isNavigating}
-      />
+      {/* Content Area - Garantir altura mínima e overflow correto */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ChatContent
+          currentConversation={currentConversation}
+          messages={messages}
+          processing={processing}
+          isNavigating={isNavigating}
+        />
+      </div>
 
-      {/* Input Area */}
-      <ChatInputArea
-        processing={processing}
-        onSendMessage={onSendMessage}
-        currentConversation={currentConversation}
-      />
+      {/* Input Area - Fixo na parte inferior */}
+      <div className="flex-shrink-0">
+        <ChatInputArea
+          processing={processing}
+          onSendMessage={onSendMessage}
+          currentConversation={currentConversation}
+        />
+      </div>
     </div>
   );
 };
