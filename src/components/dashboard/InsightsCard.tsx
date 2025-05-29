@@ -1,7 +1,15 @@
 
 import { PremiumCard } from '@/components/ui/premium-card';
-import { SkeletonPremium } from '@/components/ui/skeleton-premium';
-import { Lightbulb, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { 
+  Lightbulb, 
+  TrendingUp, 
+  Brain, 
+  Zap,
+  AlertCircle,
+  RefreshCw
+} from 'lucide-react';
 
 interface Insight {
   id: string;
@@ -16,40 +24,33 @@ interface Insight {
 interface InsightsCardProps {
   insights: Insight[];
   loading: boolean;
+  error?: string | null;
 }
 
-const InsightsCard = ({ insights, loading }: InsightsCardProps) => {
-  const getTimeAgo = (dateStr: string) => {
-    const now = new Date();
-    const date = new Date(dateStr);
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    
-    if (diffHours > 0) return `há ${diffHours}h`;
-    if (diffMinutes > 0) return `há ${diffMinutes}m`;
-    return 'agora';
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'applied':
-        return <CheckCircle className="w-3 h-3 text-green-400" />;
-      case 'viewed':
-        return <Clock className="w-3 h-3 text-blue-400" />;
+const InsightsCard = ({ insights, loading, error }: InsightsCardProps) => {
+  const getInsightIcon = (type: string) => {
+    switch (type) {
+      case 'pattern':
+        return <TrendingUp className="w-4 h-4" />;
+      case 'trend':
+        return <Zap className="w-4 h-4" />;
+      case 'consolidation':
+        return <Brain className="w-4 h-4" />;
       default:
-        return <AlertCircle className="w-3 h-3 text-yellow-400" />;
+        return <Lightbulb className="w-4 h-4" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'applied':
-        return 'border-l-green-500 bg-green-500/5';
+      case 'pending':
+        return 'bg-yellow-500/20 text-yellow-300';
       case 'viewed':
-        return 'border-l-blue-500 bg-blue-500/5';
+        return 'bg-blue-500/20 text-blue-300';
+      case 'applied':
+        return 'bg-green-500/20 text-green-300';
       default:
-        return 'border-l-yellow-500 bg-yellow-500/5';
+        return 'bg-gray-500/20 text-gray-300';
     }
   };
 
@@ -57,19 +58,50 @@ const InsightsCard = ({ insights, loading }: InsightsCardProps) => {
     return (
       <PremiumCard variant="elevated" className="h-full">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg">
-            <Lightbulb className="w-5 h-5 text-white" />
+          <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
+            <Lightbulb className="w-5 h-5 text-white animate-pulse" />
           </div>
           <div>
             <h3 className="text-white font-semibold">Insights Recentes</h3>
-            <p className="text-white/50 text-sm">Descobertas da IA</p>
+            <p className="text-white/50 text-sm">Carregando...</p>
           </div>
         </div>
-        
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <SkeletonPremium key={i} className="h-16" />
+            <div key={i} className="animate-pulse">
+              <div className="h-4 bg-white/10 rounded mb-2"></div>
+              <div className="h-3 bg-white/5 rounded w-3/4"></div>
+            </div>
           ))}
+        </div>
+      </PremiumCard>
+    );
+  }
+
+  if (error) {
+    return (
+      <PremiumCard variant="elevated" className="h-full">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-gradient-to-br from-red-500 to-red-600 rounded-lg">
+            <AlertCircle className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-white font-semibold">Insights Recentes</h3>
+            <p className="text-red-300 text-sm">Erro ao carregar</p>
+          </div>
+        </div>
+        <div className="text-center py-4">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+          <p className="text-red-300 mb-4">Falha ao carregar insights</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline" 
+            size="sm"
+            className="border-red-400 text-red-300 hover:bg-red-500/20"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Tentar Novamente
+          </Button>
         </div>
       </PremiumCard>
     );
@@ -78,52 +110,61 @@ const InsightsCard = ({ insights, loading }: InsightsCardProps) => {
   return (
     <PremiumCard variant="elevated" className="h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg">
+        <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
           <Lightbulb className="w-5 h-5 text-white" />
         </div>
         <div>
           <h3 className="text-white font-semibold">Insights Recentes</h3>
-          <p className="text-white/50 text-sm">Descobertas da IA</p>
+          <p className="text-white/50 text-sm">Descobertas automáticas</p>
         </div>
       </div>
 
-      <div className="space-y-3 max-h-64 overflow-y-auto">
-        {insights.length === 0 ? (
-          <div className="text-center py-8 text-white/40">
-            <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Nenhum insight disponível</p>
-          </div>
-        ) : (
-          insights.map((insight) => (
-            <div
+      {insights.length === 0 ? (
+        <div className="text-center py-8">
+          <Lightbulb className="w-12 h-12 text-white/20 mx-auto mb-3" />
+          <p className="text-white/40">Nenhum insight disponível</p>
+          <p className="text-white/30 text-sm mt-1">
+            Continue usando o sistema para gerar insights
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {insights.map((insight) => (
+            <div 
               key={insight.id}
-              className={`p-3 rounded-lg border-l-2 transition-all duration-200 hover:bg-white/5 cursor-pointer ${getStatusColor(insight.status)}`}
+              className="p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    {getStatusIcon(insight.status)}
-                    <h4 className="text-white text-sm font-medium truncate">
-                      {insight.title}
-                    </h4>
-                  </div>
-                  <p className="text-white/70 text-xs line-clamp-2">
-                    {insight.content}
-                  </p>
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {getInsightIcon(insight.type)}
+                  <span className="text-white font-medium text-sm">
+                    {insight.title}
+                  </span>
                 </div>
-                <div className="text-right">
-                  <div className="text-white/50 text-xs">
-                    {getTimeAgo(insight.createdAt)}
-                  </div>
-                  <div className="text-white/40 text-xs">
-                    {Math.round(insight.confidence * 100)}%
-                  </div>
+                <Badge className={`text-xs ${getStatusColor(insight.status)}`}>
+                  {insight.status}
+                </Badge>
+              </div>
+              
+              <p className="text-white/70 text-sm mb-2">
+                {insight.content}
+              </p>
+              
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-white/40">
+                  {new Date(insight.createdAt).toLocaleDateString('pt-BR')}
+                </span>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span className="text-green-300">
+                    {Math.round(insight.confidence * 100)}% confiança
+                  </span>
                 </div>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </PremiumCard>
   );
 };
