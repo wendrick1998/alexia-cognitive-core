@@ -72,7 +72,7 @@ const SemanticSearch = ({ onNavigate }: SemanticSearchProps) => {
               </div>
               <h3 className="font-semibold text-white mb-2">Comandos Rápidos</h3>
               <p className="text-sm text-white/60">
-                Execute ações usando comandos especiais com ">"
+                Execute ações usando comandos especiais com {'">"'}
               </p>
             </div>
             
@@ -102,8 +102,8 @@ const SemanticSearch = ({ onNavigate }: SemanticSearchProps) => {
             <h3 className="font-semibold text-white mb-3">Dicas Rápidas:</h3>
             <div className="space-y-2 text-sm text-white/60">
               <div className="flex items-center gap-3">
-                <kbd className="px-2 py-1 bg-white/10 rounded text-xs">></kbd>
-                <span>Use ">" para comandos (ex: >theme dark)</span>
+                <kbd className="px-2 py-1 bg-white/10 rounded text-xs">{'>'}</kbd>
+                <span>Use {'">"}' para comandos (ex: {'>'}theme dark)</span>
               </div>
               <div className="flex items-center gap-3">
                 <kbd className="px-2 py-1 bg-white/10 rounded text-xs">@</kbd>

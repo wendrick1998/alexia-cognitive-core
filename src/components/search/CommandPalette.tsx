@@ -292,11 +292,11 @@ const CommandPalette = ({ isOpen, onClose, onNavigate }: CommandPaletteProps) =>
       {
         id: 'help-commands',
         title: 'Comandos',
-        content: 'Use > para comandos especiais',
+        content: 'Use {">"} para comandos especiais',
         type: 'action' as const,
         section: 'Ajuda',
         similarity: 1,
-        preview: 'Exemplo: >theme dark'
+        preview: 'Exemplo: {">"}theme dark'
       }
     ];
   };
@@ -357,7 +357,7 @@ const CommandPalette = ({ isOpen, onClose, onNavigate }: CommandPaletteProps) =>
 
             {/* Search hints */}
             <div className="flex gap-2 mt-4 text-sm text-white/40">
-              <span>Use ">" para comandos</span>
+              <span>Use {"\">\""} para comandos</span>
               <span>•</span>
               <span>"@" para menções</span>
               <span>•</span>
