@@ -1,17 +1,24 @@
 
 import { useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
+import MultiPaneLayout from "../components/layout/MultiPaneLayout";
 import Chat from "../components/Chat";
 import ProjectsManager from "../components/ProjectsManager";
 import MemoryManager from "../components/MemoryManager";
 import DocumentsManager from "../components/DocumentsManager";
 import SemanticSearch from "../components/SemanticSearch";
+import { Button } from "@/components/ui/button";
+import { SplitSquareHorizontal, X } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState("chat");
+  const [isSplitView, setIsSplitView] = useState(false);
+  const [splitSections, setSplitSections] = useState({ left: "chat", right: "documents" });
+  const isMobile = useIsMobile();
 
-  const renderContent = () => {
-    switch (currentSection) {
+  const renderContent = (section: string) => {
+    switch (section) {
       case "chat":
         return <Chat />;
       case "memory":
@@ -27,9 +34,65 @@ const Index = () => {
     }
   };
 
+  const getSectionTitle = (section: string) => {
+    switch (section) {
+      case "chat":
+        return "Chat";
+      case "memory":
+        return "Memórias";
+      case "documents":
+        return "Documentos";
+      case "search":
+        return "Busca";
+      case "actions":
+        return "Projetos";
+      default:
+        return "Chat";
+    }
+  };
+
+  const enableSplitView = () => {
+    if (!isMobile) {
+      setIsSplitView(true);
+      setSplitSections({ left: currentSection, right: currentSection === "chat" ? "documents" : "chat" });
+    }
+  };
+
+  const closeSplitView = () => {
+    setIsSplitView(false);
+  };
+
   return (
     <AppLayout currentSection={currentSection} onSectionChange={setCurrentSection}>
-      {renderContent()}
+      {isSplitView && !isMobile ? (
+        <MultiPaneLayout
+          leftPane={renderContent(splitSections.left)}
+          rightPane={renderContent(splitSections.right)}
+          leftTitle={getSectionTitle(splitSections.left)}
+          rightTitle={getSectionTitle(splitSections.right)}
+          onClose={closeSplitView}
+          defaultLayout={[60, 40]}
+        />
+      ) : (
+        <div className="relative h-full">
+          {/* Split View Toggle - Desktop Only */}
+          {!isMobile && !isSplitView && (
+            <div className="absolute top-4 right-4 z-10">
+              <Button
+                onClick={enableSplitView}
+                variant="outline"
+                size="sm"
+                className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-sm"
+              >
+                <SplitSquareHorizontal className="w-4 h-4 mr-2" />
+                Split View
+              </Button>
+            </div>
+          )}
+          
+          {renderContent(currentSection)}
+        </div>
+      )}
     </AppLayout>
   );
 };

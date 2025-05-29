@@ -6,7 +6,9 @@ import { Menu } from 'lucide-react';
 import AppSidebar from '../AppSidebar';
 import BottomNavigationBar from '../BottomNavigationBar';
 import DarkModeToggle from '../premium/DarkModeToggle';
+import DesktopSidebar from '../premium/DesktopSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,26 +19,58 @@ interface AppLayoutProps {
 const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
-  // Fechar sidebar automaticamente no mobile após navegar
+  // Close sidebar automatically on mobile after navigation
   useEffect(() => {
     if (isMobile && sidebarOpen) {
       setSidebarOpen(false);
     }
   }, [currentSection, isMobile]);
 
-  // Escutar atalho de teclado Cmd+K para busca
+  // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        onSectionChange('search');
+      if (e.metaKey || e.ctrlKey) {
+        switch (e.key) {
+          case 'k':
+            e.preventDefault();
+            onSectionChange('search');
+            toast({
+              title: "Search activated",
+              description: "Cmd/Ctrl + K to search",
+            });
+            break;
+          case 'n':
+            e.preventDefault();
+            if (currentSection === 'chat') {
+              // Trigger new conversation
+              window.dispatchEvent(new CustomEvent('new-conversation'));
+            }
+            toast({
+              title: "New conversation",
+              description: "Cmd/Ctrl + N for new chat",
+            });
+            break;
+          case 'f':
+            e.preventDefault();
+            // Activate focus mode
+            window.dispatchEvent(new CustomEvent('activate-focus-mode'));
+            break;
+          default:
+            break;
+        }
+      }
+      
+      if (e.key === 'Escape') {
+        // Close any open modals or return to main view
+        window.dispatchEvent(new CustomEvent('escape-pressed'));
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onSectionChange]);
+  }, [onSectionChange, currentSection, toast]);
 
   const handleMenuToggle = () => {
     setSidebarOpen(!sidebarOpen);
@@ -45,39 +79,73 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
   return (
     <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
-        {/* Sidebar */}
-        <AppSidebar 
-          currentSection={currentSection} 
-          onSectionChange={onSectionChange} 
-        />
+        {/* Desktop Sidebar */}
+        {!isMobile ? (
+          <DesktopSidebar 
+            currentSection={currentSection} 
+            onSectionChange={onSectionChange} 
+          />
+        ) : (
+          <AppSidebar 
+            currentSection={currentSection} 
+            onSectionChange={onSectionChange} 
+          />
+        )}
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Header premium com trigger do sidebar */}
-          <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 p-4 flex items-center justify-between lg:hidden transition-colors duration-300">
-            <SidebarTrigger>
-              <Button variant="ghost" size="sm" className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SidebarTrigger>
-            
-            <h1 className="font-semibold text-slate-900 dark:text-slate-100 capitalize">
-              {currentSection === 'chat' ? 'Chat' : 
-               currentSection === 'memory' ? 'Memórias' :
-               currentSection === 'documents' ? 'Documentos' :
-               currentSection === 'search' ? 'Busca' :
-               currentSection === 'actions' ? 'Projetos' : 'AlexIA'}
-            </h1>
-            
-            <DarkModeToggle />
-          </header>
+          {/* Header for mobile */}
+          {isMobile && (
+            <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 p-4 flex items-center justify-between transition-colors duration-300">
+              <SidebarTrigger>
+                <Button variant="ghost" size="sm" className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SidebarTrigger>
+              
+              <h1 className="font-semibold text-slate-900 dark:text-slate-100 capitalize">
+                {currentSection === 'chat' ? 'Chat' : 
+                 currentSection === 'memory' ? 'Memórias' :
+                 currentSection === 'documents' ? 'Documentos' :
+                 currentSection === 'search' ? 'Busca' :
+                 currentSection === 'actions' ? 'Projetos' : 'AlexIA'}
+              </h1>
+              
+              <DarkModeToggle />
+            </header>
+          )}
+
+          {/* Desktop Header with shortcuts */}
+          {!isMobile && (
+            <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 p-4 flex items-center justify-between transition-colors duration-300">
+              <h1 className="font-semibold text-slate-900 dark:text-slate-100 capitalize text-xl">
+                {currentSection === 'chat' ? 'Chat' : 
+                 currentSection === 'memory' ? 'Memórias' :
+                 currentSection === 'documents' ? 'Documentos' :
+                 currentSection === 'search' ? 'Busca' :
+                 currentSection === 'actions' ? 'Projetos' : 'AlexIA'}
+              </h1>
+              
+              <div className="flex items-center space-x-4">
+                <div className="hidden lg:flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
+                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-xs">⌘K</kbd>
+                  <span>Search</span>
+                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-xs">⌘N</kbd>
+                  <span>New</span>
+                  <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-xs">⌘F</kbd>
+                  <span>Focus</span>
+                </div>
+                <DarkModeToggle />
+              </div>
+            </header>
+          )}
 
           {/* Content Area */}
           <div className="flex-1 overflow-auto">
             {children}
           </div>
 
-          {/* Bottom Navigation Premium (Mobile only) */}
+          {/* Bottom Navigation (Mobile only) */}
           {isMobile && (
             <BottomNavigationBar 
               currentSection={currentSection} 
@@ -86,20 +154,6 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
             />
           )}
         </main>
-
-        {/* Floating Menu Button Premium (Desktop only) */}
-        {!isMobile && (
-          <div className="fixed bottom-6 right-6 z-50">
-            <SidebarTrigger>
-              <Button
-                size="lg"
-                className="w-14 h-14 rounded-full shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 border-0 transition-all duration-300 hover:scale-110 hover:shadow-2xl dark:shadow-blue-500/25"
-              >
-                <Menu className="w-6 h-6 text-white" />
-              </Button>
-            </SidebarTrigger>
-          </div>
-        )}
       </div>
     </SidebarProvider>
   );

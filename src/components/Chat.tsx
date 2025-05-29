@@ -299,88 +299,127 @@ const Chat = () => {
     };
   }, [activateFocusMode, toast]);
 
+  // Listen for keyboard shortcuts
+  useEffect(() => {
+    const handleNewConversation = () => {
+      startNewConversation();
+    };
+
+    const handleEscapePressed = () => {
+      if (isFocusModeActive) {
+        deactivateFocusMode();
+      }
+    };
+
+    window.addEventListener('new-conversation', handleNewConversation);
+    window.addEventListener('escape-pressed', handleEscapePressed);
+    
+    return () => {
+      window.removeEventListener('new-conversation', handleNewConversation);
+      window.removeEventListener('escape-pressed', handleEscapePressed);
+    };
+  }, [isFocusModeActive, deactivateFocusMode]);
+
   return (
     <>
-      <div className="flex h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
-        {/* Chat Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Message List */}
+      <div className="flex h-full bg-transparent">
+        {/* Chat Content - Desktop Optimized */}
+        <div className="flex-1 flex flex-col overflow-hidden lg:pl-20">
+          {/* Message List - Centered on Desktop */}
           <div className="flex-1 overflow-y-auto p-4">
-            {currentConversation ? (
-              messages?.map((message, index) => (
-                <MessageCardRevamped key={message.id} message={message} index={index} />
-              ))
-            ) : (
-              <div className="text-center text-slate-500 dark:text-slate-400 mt-6">
-                Selecione uma conversa para começar a conversar.
-              </div>
-            )}
-            
-            {/* Loading Indicator */}
-            {isLoading && (
-              <div className="flex items-center space-x-3 max-w-md mx-auto mb-6 animate-fade-in">
-                <div className="relative flex-shrink-0">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-500 dark:to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <Mic className="w-5 h-5 text-white animate-pulse" />
+            <div className="max-w-4xl mx-auto">
+              {currentConversation ? (
+                messages?.map((message, index) => (
+                  <MessageCardRevamped key={message.id} message={message} index={index} />
+                ))
+              ) : (
+                <div className="text-center text-slate-500 dark:text-slate-400 mt-6">
+                  <div className="max-w-md mx-auto space-y-4">
+                    <h2 className="text-xl font-semibold">Bem-vindo à AlexIA</h2>
+                    <p>Selecione uma conversa para começar ou crie uma nova.</p>
+                    <div className="flex flex-wrap gap-2 justify-center text-sm text-slate-400">
+                      <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">⌘N</kbd>
+                      <span>Nova conversa</span>
+                      <kbd className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">⌘F</kbd>
+                      <span>Focus mode</span>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="w-64 h-4 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-                  <div className="w-48 h-3 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
-                </div>
-              </div>
-            )}
-
-            {/* Scroll Anchor */}
-            <div ref={chatBottomRef} />
-          </div>
-
-          {/* Input Area */}
-          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-700/50 p-4">
-            <div className="relative flex items-center space-x-3">
-              {/* Cancel Button */}
-              {isLoading && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={cancelGeneration}
-                  className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full hover:bg-red-500/10 dark:hover:bg-red-500/20"
-                >
-                  <XCircle className="w-5 h-5 text-red-500" />
-                </Button>
               )}
               
-              {/* Input Field */}
-              <Input
-                type="text"
-                placeholder="Digite sua mensagem..."
-                value={inputMessage}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                disabled={isLoading}
-                className="flex-1 rounded-full py-2.5 pl-12 pr-4 shadow-sm focus-visible:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
-              />
-              
-              {/* Send Button */}
-              <Button 
-                onClick={sendMessage} 
-                disabled={isLoading || !inputMessage.trim()}
-                className="rounded-full shadow-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
-              >
-                <Send className="w-4 h-4" />
-                <span className="sr-only">Enviar</span>
-              </Button>
+              {/* Loading Indicator */}
+              {isLoading && (
+                <div className="flex items-center space-x-3 max-w-md mx-auto mb-6 animate-fade-in">
+                  <div className="relative flex-shrink-0">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-500 dark:to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Mic className="w-5 h-5 text-white animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-64 h-4 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                    <div className="w-48 h-3 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                  </div>
+                </div>
+              )}
+
+              {/* Scroll Anchor */}
+              <div ref={chatBottomRef} />
+            </div>
+          </div>
+
+          {/* Input Area - Desktop Optimized */}
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-700/50 p-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="relative flex items-end space-x-3">
+                {/* Cancel Button */}
+                {isLoading && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={cancelGeneration}
+                    className="mb-2 rounded-full hover:bg-red-500/10 dark:hover:bg-red-500/20"
+                  >
+                    <XCircle className="w-5 h-5 text-red-500" />
+                  </Button>
+                )}
+                
+                {/* Input Field - Larger on Desktop */}
+                <div className="flex-1">
+                  <Input
+                    type="text"
+                    placeholder="Digite sua mensagem... (Enter para enviar)"
+                    value={inputMessage}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    disabled={isLoading}
+                    className="rounded-2xl py-4 px-6 text-base shadow-sm focus-visible:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 min-h-[56px] resize-none"
+                  />
+                </div>
+                
+                {/* Send Button */}
+                <Button 
+                  onClick={sendMessage} 
+                  disabled={isLoading || !inputMessage.trim()}
+                  size="lg"
+                  className="rounded-2xl h-14 w-14 shadow-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-all duration-200 hover:scale-105"
+                >
+                  <Send className="w-5 h-5" />
+                  <span className="sr-only">Enviar</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
         
-        {/* Floating Action Button - Updated with context */}
-        <FloatingActionButton 
-          onAction={handleFloatingAction}
-          currentSection="chat"
-          hasActiveChat={!!currentConversation}
-          hasDocument={false} // You can integrate with document state if needed
-        />
+        {/* Floating Action Button - Hidden on Desktop */}
+        <div className="lg:hidden">
+          <FloatingActionButton 
+            onAction={handleFloatingAction}
+            currentSection="chat"
+            hasActiveChat={!!currentConversation}
+            hasDocument={false}
+          />
+        </div>
       </div>
       
       {/* Focus Mode Overlay */}
