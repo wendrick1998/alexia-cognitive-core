@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -22,21 +23,20 @@ interface CreateMemoryModalProps {
 }
 
 const CreateMemoryModal = ({ isOpen, onClose }: CreateMemoryModalProps) => {
-  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [category, setCategory] = useState('');
+  const [type, setType] = useState<'fact' | 'preference' | 'decision' | 'note'>('note');
   const [loading, setLoading] = useState(false);
   
-  const { addMemory } = useMemories();
+  const { createMemory } = useMemories();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim() || !content.trim()) {
+    if (!content.trim()) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha pelo menos o título e o conteúdo da memória.",
+        title: "Campo obrigatório",
+        description: "Por favor, preencha o conteúdo da memória.",
         variant: "destructive"
       });
       return;
@@ -45,22 +45,22 @@ const CreateMemoryModal = ({ isOpen, onClose }: CreateMemoryModalProps) => {
     setLoading(true);
     
     try {
-      await addMemory({
-        title: title.trim(),
+      const success = await createMemory({
         content: content.trim(),
-        category: category.trim() || 'Geral',
+        type,
       });
       
-      toast({
-        title: "Memória criada",
-        description: "Nova memória foi adicionada com sucesso!",
-      });
-      
-      // Reset form
-      setTitle('');
-      setContent('');
-      setCategory('');
-      onClose();
+      if (success) {
+        toast({
+          title: "Memória criada",
+          description: "Nova memória foi adicionada com sucesso!",
+        });
+        
+        // Reset form
+        setContent('');
+        setType('note');
+        onClose();
+      }
     } catch (error) {
       console.error('Erro ao criar memória:', error);
       toast({
@@ -75,9 +75,8 @@ const CreateMemoryModal = ({ isOpen, onClose }: CreateMemoryModalProps) => {
 
   const handleClose = () => {
     if (!loading) {
-      setTitle('');
       setContent('');
-      setCategory('');
+      setType('note');
       onClose();
     }
   };
@@ -97,31 +96,20 @@ const CreateMemoryModal = ({ isOpen, onClose }: CreateMemoryModalProps) => {
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-gray-900 dark:text-gray-100">
-              Título *
+            <Label htmlFor="type" className="text-gray-900 dark:text-gray-100">
+              Tipo de Memória
             </Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Receita de bolo de chocolate"
-              disabled={loading}
-              className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category" className="text-gray-900 dark:text-gray-100">
-              Categoria
-            </Label>
-            <Input
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Ex: Culinária, Trabalho, Pessoal..."
-              disabled={loading}
-              className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
-            />
+            <Select value={type} onValueChange={(value) => setType(value as typeof type)}>
+              <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="note">Nota</SelectItem>
+                <SelectItem value="fact">Fato</SelectItem>
+                <SelectItem value="preference">Preferência</SelectItem>
+                <SelectItem value="decision">Decisão</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">
@@ -151,7 +139,7 @@ const CreateMemoryModal = ({ isOpen, onClose }: CreateMemoryModalProps) => {
             </Button>
             <Button
               type="submit"
-              disabled={loading || !title.trim() || !content.trim()}
+              disabled={loading || !content.trim()}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {loading ? (

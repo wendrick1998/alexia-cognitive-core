@@ -12,17 +12,16 @@ import { ptBR } from 'date-fns/locale';
 
 const SemanticSearch = () => {
   const [query, setQuery] = useState('');
-  const { searchResults, isSearching, searchMemories, searchDocuments, searchConversations } = useSemanticSearch();
+  const { results, searching, searchDocuments, clearResults } = useSemanticSearch();
 
   const handleSearch = async () => {
     if (!query.trim()) return;
     
-    // Search across all content types
-    await Promise.all([
-      searchMemories(query),
-      searchDocuments(query),
-      searchConversations(query)
-    ]);
+    // Clear previous results
+    clearResults();
+    
+    // Search documents
+    await searchDocuments(query);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -70,6 +69,17 @@ const SemanticSearch = () => {
     }
   };
 
+  // Convert SearchResult to display format
+  const searchResults = results.map(result => ({
+    title: result.document_name || 'Documento sem título',
+    content: result.content,
+    source: 'document' as const,
+    category: 'Documento',
+    created_at: new Date().toISOString(), // Placeholder since SearchResult doesn't have created_at
+    similarity: result.similarity_score,
+    url: undefined
+  }));
+
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
       {/* Header */}
@@ -81,7 +91,7 @@ const SemanticSearch = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Busca Semântica</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Encontre qualquer informação em suas memórias, documentos e conversas
+              Encontre qualquer informação em seus documentos
             </p>
           </div>
         </div>
@@ -96,15 +106,15 @@ const SemanticSearch = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               className="pl-9 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
-              disabled={isSearching}
+              disabled={searching}
             />
           </div>
           <Button
             onClick={handleSearch}
-            disabled={!query.trim() || isSearching}
+            disabled={!query.trim() || searching}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            {isSearching ? (
+            {searching ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Buscando...
@@ -130,7 +140,7 @@ const SemanticSearch = () => {
             <p className="text-gray-600 dark:text-gray-400">
               {query 
                 ? 'Tente usar termos diferentes ou mais gerais.'
-                : 'Use a busca semântica para encontrar informações em todo seu conteúdo.'
+                : 'Use a busca semântica para encontrar informações em seus documentos.'
               }
             </p>
           </div>
@@ -160,7 +170,7 @@ const SemanticSearch = () => {
                             <span className="ml-1">{getSourceLabel(result.source)}</span>
                           </Badge>
                           {result.category && (
-                            <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600">
+                            <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
                               {result.category}
                             </Badge>
                           )}

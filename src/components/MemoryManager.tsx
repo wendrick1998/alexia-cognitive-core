@@ -14,41 +14,40 @@ import { useToast } from '@/hooks/use-toast';
 
 const MemoryManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const { memories, isLoading, deleteMemory } = useMemories();
+  const { memories, loading } = useMemories();
   const { toast } = useToast();
 
-  // Filter memories based on search and category
+  // Filter memories based on search and type
   const filteredMemories = useMemo(() => {
     if (!memories) return [];
     
     return memories.filter(memory => {
       const matchesSearch = searchTerm === '' || 
-        memory.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         memory.content.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesCategory = selectedCategory === 'all' || 
-        memory.category === selectedCategory;
+      const matchesType = selectedType === 'all' || 
+        memory.type === selectedType;
       
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesType;
     });
-  }, [memories, searchTerm, selectedCategory]);
+  }, [memories, searchTerm, selectedType]);
 
-  // Get unique categories
-  const categories = useMemo(() => {
+  // Get unique types
+  const types = useMemo(() => {
     if (!memories) return [];
-    const cats = [...new Set(memories.map(m => m.category).filter(Boolean))];
-    return cats.sort();
+    const memoryTypes = [...new Set(memories.map(m => m.type).filter(Boolean))];
+    return memoryTypes.sort();
   }, [memories]);
 
-  const handleDeleteMemory = async (id: string, title: string) => {
-    if (window.confirm(`Tem certeza que deseja excluir a memória "${title}"?`)) {
+  const handleDeleteMemory = async (id: string, content: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir esta memória?`)) {
       try {
-        await deleteMemory(id);
+        // TODO: Implement delete functionality
         toast({
-          title: "Memória excluída",
-          description: "A memória foi removida com sucesso.",
+          title: "Funcionalidade em desenvolvimento",
+          description: "A exclusão de memórias será implementada em breve.",
         });
       } catch (error) {
         toast({
@@ -60,7 +59,7 @@ const MemoryManager = () => {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
@@ -105,28 +104,28 @@ const MemoryManager = () => {
               placeholder="Buscar nas memórias..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
+              className="pl-9 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
             />
           </div>
           
           <div className="flex gap-2 flex-wrap">
             <Button
-              variant={selectedCategory === 'all' ? 'default' : 'outline'}
+              variant={selectedType === 'all' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setSelectedCategory('all')}
+              onClick={() => setSelectedType('all')}
               className="text-sm"
             >
               Todas
             </Button>
-            {categories.map(category => (
+            {types.map(type => (
               <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
+                key={type}
+                variant={selectedType === type ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className="text-sm"
+                onClick={() => setSelectedType(type)}
+                className="text-sm capitalize"
               >
-                {category}
+                {type}
               </Button>
             ))}
           </div>
@@ -139,15 +138,15 @@ const MemoryManager = () => {
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <Brain className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-              {searchTerm || selectedCategory !== 'all' ? 'Nenhuma memória encontrada' : 'Nenhuma memória criada'}
+              {searchTerm || selectedType !== 'all' ? 'Nenhuma memória encontrada' : 'Nenhuma memória criada'}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {searchTerm || selectedCategory !== 'all' 
+              {searchTerm || selectedType !== 'all' 
                 ? 'Tente ajustar os filtros de busca.' 
                 : 'Comece criando sua primeira memória.'
               }
             </p>
-            {!searchTerm && selectedCategory === 'all' && (
+            {!searchTerm && selectedType === 'all' && (
               <Button
                 onClick={() => setIsCreateModalOpen(true)}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -164,7 +163,7 @@ const MemoryManager = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
-                      {memory.title}
+                      Memória #{memory.id.slice(0, 8)}
                     </CardTitle>
                     <div className="flex gap-1 flex-shrink-0">
                       <Button
@@ -177,7 +176,7 @@ const MemoryManager = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteMemory(memory.id, memory.title)}
+                        onClick={() => handleDeleteMemory(memory.id, memory.content)}
                         className="w-8 h-8 p-0 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -186,12 +185,10 @@ const MemoryManager = () => {
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    {memory.category && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Tag className="w-3 h-3 mr-1" />
-                        {memory.category}
-                      </Badge>
-                    )}
+                    <Badge variant="secondary" className="text-xs">
+                      <Tag className="w-3 h-3 mr-1" />
+                      {memory.type}
+                    </Badge>
                     <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                       <Calendar className="w-3 h-3" />
                       {format(new Date(memory.created_at), 'dd/MM/yyyy', { locale: ptBR })}
