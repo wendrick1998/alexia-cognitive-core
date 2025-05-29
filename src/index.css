@@ -74,10 +74,15 @@
     -moz-osx-font-smoothing: grayscale;
     background: #000000;
     color: rgba(255, 255, 255, 0.9);
+    /* iOS safe area support */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }
 
-/* Safe area support for mobile devices */
+/* Enhanced safe area support for mobile devices */
 @supports (padding: max(0px)) {
   .pb-safe {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
@@ -85,6 +90,33 @@
   
   .pt-safe {
     padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .pl-safe {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .pr-safe {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* iOS-specific safe area utilities */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
   }
 }
 
@@ -95,16 +127,24 @@
   transition-duration: 300ms;
 }
 
+/* Enhanced touch interactions for iOS */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS scroll optimization */
+.ios-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
 /* Focus ring for accessibility */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2;
-}
-
-/* Support for iPhone notch */
-@supports (padding: env(safe-area-inset-bottom)) {
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
 }
 
 /* Mobile optimizations */
@@ -118,7 +158,50 @@
     padding: 12px 20px;
     border-radius: 14px;
     font-size: 0.9rem;
-    min-height: 44px;
+    min-height: 44px; /* iOS minimum touch target */
+  }
+  
+  /* Prevent zoom on iOS inputs */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  
+  /* Smooth scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Keyboard handling */
+  .keyboard-visible {
+    height: calc(100vh - env(keyboard-inset-height, 0px));
+  }
+}
+
+/* Enhanced haptic feedback for supported devices */
+@media (hover: none) and (pointer: coarse) {
+  .haptic-light {
+    transition: transform 0.1s ease-out;
+  }
+  
+  .haptic-light:active {
+    transform: scale(0.98);
+  }
+  
+  .haptic-medium {
+    transition: transform 0.15s ease-out;
+  }
+  
+  .haptic-medium:active {
+    transform: scale(0.95);
+  }
+  
+  .haptic-heavy {
+    transition: transform 0.2s ease-out;
+  }
+  
+  .haptic-heavy:active {
+    transform: scale(0.9);
   }
 }
 
@@ -138,4 +221,69 @@
 ::-moz-selection {
   background: rgba(99, 102, 241, 0.3);
   color: white;
+}
+
+/* iOS-style rubber band scrolling */
+.rubber-band-scroll {
+  overscroll-behavior: contain;
+}
+
+/* Gesture indicators */
+.swipe-indicator {
+  position: relative;
+}
+
+.swipe-indicator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -10px;
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent);
+  border-radius: 2px;
+  transform: translateY(-50%);
+  opacity: 0;
+  animation: swipe-hint 2s ease-in-out infinite;
+}
+
+@keyframes swipe-hint {
+  0%, 100% { opacity: 0; transform: translateY(-50%) translateX(0); }
+  50% { opacity: 1; transform: translateY(-50%) translateX(10px); }
+}
+
+/* Orientation-specific styles */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .mobile-landscape {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .mobile-landscape .safe-top {
+    padding-top: 0;
+  }
+}
+
+/* High refresh rate optimization */
+@media (min-resolution: 120dpi) {
+  * {
+    will-change: transform;
+  }
+  
+  .smooth-animation {
+    animation-duration: 0.2s;
+    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+}
+
+/* Dark mode optimizations for OLED */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #000000; /* True black for OLED */
+  }
+  
+  .glass-card {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
