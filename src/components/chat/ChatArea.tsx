@@ -40,15 +40,13 @@ const ChatArea = ({
         isNavigating={isNavigating}
       />
 
-      {/* Messages Area */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        <ChatContent
-          currentConversation={currentConversation}
-          messages={messages}
-          processing={processing}
-          isNavigating={isNavigating}
-        />
-      </div>
+      {/* Content Area - Apply flex-1 min-h-0 directly to ChatContent */}
+      <ChatContent
+        currentConversation={currentConversation}
+        messages={messages}
+        processing={processing}
+        isNavigating={isNavigating}
+      />
 
       {/* Input Area */}
       <ChatInputArea

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Plus, Loader2 } from 'lucide-react';
@@ -95,8 +96,8 @@ const PremiumChatLayout = ({
         </div>
       )}
 
-      {/* Main Chat Area - FIXED: Proper height and flex layout */}
-      <div className="flex-1 min-h-0 flex flex-col">
+      {/* Main Chat Area - Guaranteed full height */}
+      <div className="flex-1 min-h-0 h-full">
         <ChatArea
           currentConversation={currentConversation}
           messages={messages}

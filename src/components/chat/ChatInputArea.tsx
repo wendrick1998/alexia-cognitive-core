@@ -13,7 +13,7 @@ const ChatInputArea = ({
   currentConversation 
 }: ChatInputAreaProps) => {
   return (
-    <div className="glass-card border-t border-white/5 backdrop-blur-xl flex-shrink-0">
+    <div className="glass-card border-t border-white/5 backdrop-blur-xl flex-shrink-0 sticky bottom-0">
       <RevolutionaryInput
         processing={processing}
         onSendMessage={onSendMessage}

@@ -126,8 +126,7 @@ const RevolutionaryInput = ({
       <div 
         className={cn(
           "relative w-full",
-          isMobile && "px-4 py-3",
-          !isMobile && "px-6 py-4"
+          isMobile ? "p-3" : "p-4"
         )}
         style={adaptiveStyles}
       >
@@ -150,7 +149,7 @@ const RevolutionaryInput = ({
           )}
 
           {/* Main Input Area */}
-          <div className="flex items-end gap-3 p-4">
+          <div className="flex items-end gap-3 p-3">
             {/* Voice Recording Button (Mobile) */}
             {isMobile && (
               <VoiceRecordingButton

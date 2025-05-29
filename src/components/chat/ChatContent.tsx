@@ -18,11 +18,13 @@ const ChatContent = ({
 }: ChatContentProps) => {
   if (currentConversation) {
     return (
-      <ChatMessages 
-        messages={messages}
-        loading={isNavigating}
-        processing={processing}
-      />
+      <div className="flex-1 min-h-0">
+        <ChatMessages 
+          messages={messages}
+          loading={isNavigating}
+          processing={processing}
+        />
+      </div>
     );
   }
 
