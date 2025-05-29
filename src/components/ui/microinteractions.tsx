@@ -123,7 +123,7 @@ export const RippleButton = ({
 type FeedbackType = "success" | "error" | "copy";
 type FeedbackState = "success" | "error" | "copied" | null;
 
-interface FeedbackButtonProps extends InteractiveButtonProps {
+interface FeedbackButtonProps extends Omit<InteractiveButtonProps, 'type'> {
   type?: FeedbackType;
 }
 
@@ -178,6 +178,7 @@ export const FeedbackButton = ({
 
   return (
     <Button
+      type="button"
       className={cn(
         "transition-all duration-300",
         feedback && getFeedbackClass(),
