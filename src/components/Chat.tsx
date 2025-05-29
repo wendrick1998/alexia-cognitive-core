@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,11 +28,13 @@ const Chat = () => {
   const { generateConversationName, isGenerating } = useAutoNaming();
   const { 
     conversations, 
-    activeConversationId, 
-    addMessageToConversation, 
-    createConversation, 
-    loadConversation,
-    updateConversationName
+    currentConversation, 
+    messages,
+    createAndNavigateToNewConversation,
+    navigateToConversation,
+    setMessages,
+    updateConversation,
+    createConversation
   } = useConversations();
 
   const [inputMessage, setInputMessage] = useState('');
@@ -45,20 +48,10 @@ const Chat = () => {
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Load conversation on activeConversationId change
-  useEffect(() => {
-    if (activeConversationId) {
-      loadConversation(activeConversationId);
-      setIsNewConversation(false);
-    } else {
-      setIsNewConversation(true);
-    }
-  }, [activeConversationId, loadConversation]);
-
   // Auto scroll to bottom when new messages are added
   useEffect(() => {
     scrollToBottom();
-  }, [conversations, activeConversationId]);
+  }, [messages]);
 
   // Check if bottom is visible
   useEffect(() => {
@@ -90,18 +83,7 @@ const Chat = () => {
 
   const startNewConversation = async () => {
     setIsNewConversation(true);
-    const newConversationId = uuidv4();
-    
-    // Create a new conversation with a temporary name
-    await createConversation({
-      id: newConversationId,
-      name: 'Nova Conversa',
-      created_by: user?.id || '',
-      created_at: new Date().toISOString(),
-    });
-
-    // Load the new conversation
-    loadConversation(newConversationId);
+    await createAndNavigateToNewConversation();
   };
 
   const sendMessage = async () => {
@@ -111,34 +93,33 @@ const Chat = () => {
     setError(null);
 
     // Get current conversation or create new
-    let conversationId = activeConversationId;
-    if (!conversationId) {
-      conversationId = uuidv4();
-
-      // Create a new conversation with a temporary name
-      await createConversation({
-        id: conversationId,
-        name: 'Nova Conversa',
-        created_by: user?.id || '',
-        created_at: new Date().toISOString(),
-      });
+    let conversation = currentConversation;
+    if (!conversation) {
+      conversation = await createConversation();
+      if (!conversation) {
+        setIsLoading(false);
+        return;
+      }
     }
 
     // Add user message to conversation
     const userMessage: Message = {
       id: uuidv4(),
-      conversation_id: conversationId,
+      conversation_id: conversation.id,
       role: 'user',
       content: inputMessage,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
-    await addMessageToConversation(conversationId, userMessage);
+    
+    // Add message to local state
+    setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
 
     // Generate AI response
-    const aiMessage = await generateAIResponse(conversationId, inputMessage);
+    const aiMessage = await generateAIResponse(conversation.id, inputMessage);
     if (aiMessage) {
-      await addMessageToConversation(conversationId, aiMessage);
+      setMessages(prev => [...prev, aiMessage]);
     }
 
     setIsLoading(false);
@@ -168,9 +149,9 @@ const Chat = () => {
       const data = await response.json();
       if (data.result && data.result.content) {
         // Auto naming
-        if (isNewConversation && !isGenerating) {
+        if (isNewConversation && !isGenerating && currentConversation) {
           const newName = await generateConversationName(data.result.content);
-          await updateConversationName(conversationId, newName);
+          await updateConversation(currentConversation.id, { name: newName });
           setIsNewConversation(false);
         }
 
@@ -181,6 +162,7 @@ const Chat = () => {
           content: data.result.content,
           llm_used: data.result.llm_used,
           created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
         return aiMessage;
       } else {
@@ -258,8 +240,8 @@ const Chat = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Message List */}
         <div className="flex-1 overflow-y-auto p-4">
-          {activeConversationId ? (
-            conversations[activeConversationId]?.messages?.map((message, index) => (
+          {currentConversation ? (
+            messages?.map((message, index) => (
               <MessageCardRevamped key={message.id} message={message} index={index} />
             ))
           ) : (
@@ -330,7 +312,7 @@ const Chat = () => {
       <FloatingActionButton 
         onAction={handleFloatingAction}
         currentSection="chat"
-        hasActiveChat={!!activeConversationId}
+        hasActiveChat={!!currentConversation}
         hasDocument={false} // You can integrate with document state if needed
       />
     </div>
