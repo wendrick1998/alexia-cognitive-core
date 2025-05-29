@@ -44,7 +44,7 @@ const ChatMessages = ({ messages, loading, processing }: ChatMessagesProps) => {
       {processing && (
         <div className="flex items-start space-x-4 max-w-5xl mx-auto animate-fade-in">
           <div className="relative">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg avatar-thinking">
               <Bot className="w-6 h-6 text-white" />
             </div>
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full border-2 border-white animate-pulse" />
