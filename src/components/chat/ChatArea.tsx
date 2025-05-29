@@ -40,7 +40,7 @@ const ChatArea = ({
         isNavigating={isNavigating}
       />
 
-      {/* Content Area - Garantir altura mínima e overflow correto */}
+      {/* Content Area - Garantir altura e scroll adequado */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <ChatContent
           currentConversation={currentConversation}
@@ -51,7 +51,7 @@ const ChatArea = ({
       </div>
 
       {/* Input Area - Fixo na parte inferior */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 border-t border-gray-200/50 dark:border-gray-700/50">
         <ChatInputArea
           processing={processing}
           onSendMessage={onSendMessage}

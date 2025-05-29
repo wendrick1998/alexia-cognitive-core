@@ -132,7 +132,7 @@ const MemoryManager = () => {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content with scroll */}
       <ScrollArea className="flex-1 p-6">
         {filteredMemories.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">

@@ -129,7 +129,7 @@ const SemanticSearch = () => {
         </div>
       </div>
 
-      {/* Results */}
+      {/* Results with scroll */}
       <ScrollArea className="flex-1 p-6">
         {!searchResults || searchResults.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -150,7 +150,7 @@ const SemanticSearch = () => {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Resultados da busca
               </h2>
-              <Badge variant="secondary" className="text-sm">
+              <Badge variant="secondary" className="text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                 {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} encontrado{searchResults.length !== 1 ? 's' : ''}
               </Badge>
             </div>
@@ -183,7 +183,7 @@ const SemanticSearch = () => {
                         </div>
                       </div>
                       {result.similarity && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                           {Math.round(result.similarity * 100)}% relevante
                         </Badge>
                       )}
@@ -201,7 +201,7 @@ const SemanticSearch = () => {
                           variant="outline"
                           size="sm"
                           asChild
-                          className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-gray-300 dark:border-gray-600"
                         >
                           <a href={result.url} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="w-3 h-3 mr-1" />

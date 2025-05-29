@@ -35,10 +35,10 @@ const menuSections = [
     items: [
       { id: "dashboard", title: "Dashboard", icon: BarChart3, description: "Visão geral e insights" },
       { id: "chat", title: "Chat", icon: MessageCircle, description: "Conversas com IA" },
-      { id: "search", title: "Busca Semântica", icon: Search, description: "Encontre qualquer informação", badge: "Premium" },
+      { id: "search", title: "Busca Semântica", icon: Search, description: "Encontre qualquer informação" },
       { id: "memory", title: "Gerenciar Memória", icon: Brain, description: "Gestão de conhecimento" },
       { id: "documents", title: "Documentos Conectados", icon: FileText, description: "PDFs, textos e arquivos" },
-      { id: "actions", title: "Meus Projetos", icon: Zap, description: "Ações automáticas", badge: "Beta" }
+      { id: "actions", title: "Meus Projetos", icon: Zap, description: "Ações automáticas" }
     ]
   },
   {
@@ -178,14 +178,7 @@ const SlideOutSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: S
                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{item.title}</span>
-                            {item.badge && (
-                              <Badge variant="secondary" className="text-xs">
-                                {item.badge}
-                              </Badge>
-                            )}
-                          </div>
+                          <span className="font-medium">{item.title}</span>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.description}</p>
                         </div>
                       </button>
