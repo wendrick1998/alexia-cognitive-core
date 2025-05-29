@@ -55,7 +55,7 @@ const ChatMessages = memo(({ messages, loading, processing }: ChatMessagesProps)
   ), []);
 
   return (
-    <div className="h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+    <div className="h-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
       <div className="p-4 pb-8 min-h-full relative">
         {/* Welcome screen quando não há mensagens */}
         {messages.length === 0 && !loading && <ChatWelcome />}

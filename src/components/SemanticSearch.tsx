@@ -75,14 +75,14 @@ const SemanticSearch = () => {
     content: result.content,
     source: 'document' as const,
     category: 'Documento',
-    created_at: new Date().toISOString(), // Placeholder since SearchResult doesn't have created_at
+    created_at: new Date().toISOString(),
     similarity: result.similarity_score,
     url: undefined
   }));
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-      {/* Header */}
+      {/* Header - Garantindo tema consistente */}
       <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
@@ -96,7 +96,7 @@ const SemanticSearch = () => {
           </div>
         </div>
         
-        {/* Search input */}
+        {/* Search input com tema unificado */}
         <div className="flex gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -105,7 +105,7 @@ const SemanticSearch = () => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="pl-9 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+              className="pl-9 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
               disabled={searching}
             />
           </div>
@@ -129,94 +129,98 @@ const SemanticSearch = () => {
         </div>
       </div>
 
-      {/* Results with scroll */}
-      <ScrollArea className="flex-1 p-6">
-        {!searchResults || searchResults.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <Search className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-              {query ? 'Nenhum resultado encontrado' : 'Digite sua pesquisa'}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              {query 
-                ? 'Tente usar termos diferentes ou mais gerais.'
-                : 'Use a busca semântica para encontrar informações em seus documentos.'
-              }
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Resultados da busca
-              </h2>
-              <Badge variant="secondary" className="text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} encontrado{searchResults.length !== 1 ? 's' : ''}
-              </Badge>
-            </div>
-            
-            <div className="grid gap-4">
-              {searchResults.map((result, index) => (
-                <Card key={index} className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                          {result.title}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge className={getSourceColor(result.source)}>
-                            {getSourceIcon(result.source)}
-                            <span className="ml-1">{getSourceLabel(result.source)}</span>
-                          </Badge>
-                          {result.category && (
-                            <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
-                              {result.category}
+      {/* Results with proper scroll and unified theme */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-6">
+            {!searchResults || searchResults.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <Search className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  {query ? 'Nenhum resultado encontrado' : 'Digite sua pesquisa'}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {query 
+                    ? 'Tente usar termos diferentes ou mais gerais.'
+                    : 'Use a busca semântica para encontrar informações em seus documentos.'
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Resultados da busca
+                  </h2>
+                  <Badge variant="secondary" className="text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700">
+                    {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} encontrado{searchResults.length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
+                
+                <div className="grid gap-4">
+                  {searchResults.map((result, index) => (
+                    <Card key={index} className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                              {result.title}
+                            </CardTitle>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge className={getSourceColor(result.source)}>
+                                {getSourceIcon(result.source)}
+                                <span className="ml-1">{getSourceLabel(result.source)}</span>
+                              </Badge>
+                              {result.category && (
+                                <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-transparent">
+                                  {result.category}
+                                </Badge>
+                              )}
+                              {result.created_at && (
+                                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                                  <Calendar className="w-3 h-3" />
+                                  {format(new Date(result.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {result.similarity && (
+                            <Badge variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700">
+                              {Math.round(result.similarity * 100)}% relevante
                             </Badge>
                           )}
-                          {result.created_at && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                              <Calendar className="w-3 h-3" />
-                              {format(new Date(result.created_at), 'dd/MM/yyyy', { locale: ptBR })}
-                            </div>
-                          )}
                         </div>
-                      </div>
-                      {result.similarity && (
-                        <Badge variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                          {Math.round(result.similarity * 100)}% relevante
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <CardDescription className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {result.content}
-                    </CardDescription>
-                    
-                    {result.url && (
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-gray-300 dark:border-gray-600"
-                        >
-                          <a href={result.url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Ver original
-                          </a>
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      </CardHeader>
+                      
+                      <CardContent>
+                        <CardDescription className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                          {result.content}
+                        </CardDescription>
+                        
+                        {result.url && (
+                          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              asChild
+                              className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-gray-300 dark:border-gray-600"
+                            >
+                              <a href={result.url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Ver original
+                              </a>
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </ScrollArea>
+        </ScrollArea>
+      </div>
     </div>
   );
 };

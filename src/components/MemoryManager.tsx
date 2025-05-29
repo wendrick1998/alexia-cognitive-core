@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,7 +71,7 @@ const MemoryManager = () => {
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-      {/* Header */}
+      {/* Header - Flex-shrink-0 para não comprimir */}
       <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -132,80 +131,84 @@ const MemoryManager = () => {
         </div>
       </div>
 
-      {/* Content with scroll */}
-      <ScrollArea className="flex-1 p-6">
-        {filteredMemories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <Brain className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-              {searchTerm || selectedType !== 'all' ? 'Nenhuma memória encontrada' : 'Nenhuma memória criada'}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {searchTerm || selectedType !== 'all' 
-                ? 'Tente ajustar os filtros de busca.' 
-                : 'Comece criando sua primeira memória.'
-              }
-            </p>
-            {!searchTerm && selectedType === 'all' && (
-              <Button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Criar Primeira Memória
-              </Button>
+      {/* Content with guaranteed scroll */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-6">
+            {filteredMemories.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <Brain className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  {searchTerm || selectedType !== 'all' ? 'Nenhuma memória encontrada' : 'Nenhuma memória criada'}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  {searchTerm || selectedType !== 'all' 
+                    ? 'Tente ajustar os filtros de busca.' 
+                    : 'Comece criando sua primeira memória.'
+                  }
+                </p>
+                {!searchTerm && selectedType === 'all' && (
+                  <Button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Primeira Memória
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredMemories.map((memory) => (
+                  <Card key={memory.id} className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
+                          Memória #{memory.id.slice(0, 8)}
+                        </CardTitle>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-8 h-8 p-0 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteMemory(memory.id, memory.content)}
+                            className="w-8 h-8 p-0 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          <Tag className="w-3 h-3 mr-1" />
+                          {memory.type}
+                        </Badge>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                          <Calendar className="w-3 h-3" />
+                          {format(new Date(memory.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent>
+                      <CardDescription className="text-gray-600 dark:text-gray-400 line-clamp-4">
+                        {memory.content}
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredMemories.map((memory) => (
-              <Card key={memory.id} className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
-                      Memória #{memory.id.slice(0, 8)}
-                    </CardTitle>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 p-0 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteMemory(memory.id, memory.content)}
-                        className="w-8 h-8 p-0 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      <Tag className="w-3 h-3 mr-1" />
-                      {memory.type}
-                    </Badge>
-                    <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                      <Calendar className="w-3 h-3" />
-                      {format(new Date(memory.created_at), 'dd/MM/yyyy', { locale: ptBR })}
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                  <CardDescription className="text-gray-600 dark:text-gray-400 line-clamp-4">
-                    {memory.content}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </ScrollArea>
+        </ScrollArea>
+      </div>
       
       {/* Create Memory Modal */}
       <CreateMemoryModal

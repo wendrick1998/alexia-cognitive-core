@@ -24,7 +24,12 @@ export const ConnectionStatus = () => {
 
   if (!isOnline) {
     return (
-      <div className={`fixed ${isMobile ? 'bottom-4 right-4 left-4' : 'bottom-4 right-4'} z-20 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 ${isMobile ? 'mb-16' : ''}`}>
+      <div className={cn(
+        "fixed z-30 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2",
+        isMobile 
+          ? "bottom-24 right-4 left-4" // Acima da bottom navigation
+          : "bottom-4 right-4"
+      )}>
         <WifiOff className="w-4 h-4" />
         <span className="text-sm font-medium">Sem conexão</span>
       </div>
@@ -33,7 +38,12 @@ export const ConnectionStatus = () => {
 
   if (error && isAuthenticated) {
     return (
-      <div className={`fixed ${isMobile ? 'bottom-4 right-4 left-4' : 'bottom-4 right-4'} z-20 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 ${isMobile ? 'mb-16' : ''}`}>
+      <div className={cn(
+        "fixed z-30 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2",
+        isMobile 
+          ? "bottom-24 right-4 left-4" // Acima da bottom navigation
+          : "bottom-4 right-4"
+      )}>
         <AlertTriangle className="w-4 h-4" />
         <span className="text-sm font-medium">Problema de autenticação</span>
       </div>

@@ -1,9 +1,7 @@
-
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import {
   X,
   BarChart3,
@@ -15,9 +13,7 @@ import {
   Settings,
   User,
   LogOut,
-  Sparkles,
-  CreditCard,
-  Lock
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -29,6 +25,7 @@ interface SlideOutSidebarProps {
   onSectionChange: (section: string) => void;
 }
 
+// Unificando itens com desktop - removendo extras desnecessários
 const menuSections = [
   {
     title: "PRINCIPAL",
@@ -45,9 +42,7 @@ const menuSections = [
     title: "CONFIGURAÇÕES",
     items: [
       { id: "preferences", title: "Preferências do Usuário", icon: User, description: "Configurações pessoais" },
-      { id: "subscription", title: "Assinatura", icon: CreditCard, description: "Planos e pagamento" },
-      { id: "privacy", title: "Configurações de IA", icon: Settings, description: "Configurações do sistema" },
-      { id: "security", title: "Privacidade", icon: Lock, description: "Segurança e dados" }
+      { id: "privacy", title: "Configurações de IA", icon: Settings, description: "Configurações do sistema" }
     ]
   }
 ];
@@ -145,7 +140,7 @@ const SlideOutSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: S
           </Button>
         </div>
 
-        {/* Content */}
+        {/* Content with proper scroll */}
         <ScrollArea className="flex-1 px-6 py-4 h-[calc(100vh-200px)]">
           <div className="space-y-8">
             {menuSections.map((section) => (
