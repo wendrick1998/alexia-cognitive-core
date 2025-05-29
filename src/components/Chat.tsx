@@ -1,251 +1,338 @@
-import { useState, useEffect } from "react";
-import { useConversations } from "@/hooks/useConversations";
-import { useChatProcessor } from "@/hooks/useChatProcessor";
-import { useCognitiveSystem } from "@/hooks/useCognitiveSystem";
-import { useCognitiveOrchestrator } from "@/hooks/useCognitiveOrchestrator";
+import { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-import ChatHeaderMinimal from "./chat/ChatHeaderMinimal";
-import QuickActionsBar from "./chat/QuickActionsBar";
-import RevolutionaryInput from "./chat/RevolutionaryInput";
-import FloatingActionButton from "./chat/FloatingActionButton";
-import MessageCardRevamped from "./chat/MessageCardRevamped";
-import ChatWelcome from "./chat/ChatWelcome";
-import ConversationSidebar from "./ConversationSidebar";
-import { ChatLoadingSkeleton } from "./chat/ChatSkeleton";
-import { Button } from "@/components/ui/button";
-import { MessageCircle } from "lucide-react";
+import { useAuth } from '@/hooks/useAuth';
+import { useAutoNaming } from '@/hooks/useAutoNaming';
+import { Send, Mic, XCircle, Plus, Paperclip, ArrowUp, ArrowDown } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import { 
+  useConversations, 
+  Message, 
+  Conversation 
+} from '@/hooks/useConversations';
+import MessageCardRevamped from './chat/MessageCardRevamped';
+import AppSidebar from './AppSidebar';
+import FloatingActionButton from './chat/FloatingActionButton';
+
+interface ChatProps {
+  // Add any props here
+}
 
 const Chat = () => {
-  const [currentModel, setCurrentModel] = useState('auto');
-  const [aiTyping, setAiTyping] = useState(false);
-  const [showConversationSidebar, setShowConversationSidebar] = useState(false);
-  const isMobile = useIsMobile();
-  
-  const { 
-    currentConversation, 
-    messages, 
-    loading, 
-    conversationState,
-    createAndNavigateToNewConversation,
-    loadMessages,
-    updateConversationTimestamp,
-  } = useConversations();
-  
-  const { processing, processMessage } = useChatProcessor();
-  const { createCognitiveNode, cognitiveState } = useCognitiveSystem();
-  const { orchestrateCognitiveProcess } = useCognitiveOrchestrator();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const { generateConversationName, isGenerating } = useAutoNaming();
+  const { 
+    conversations, 
+    activeConversationId, 
+    addMessageToConversation, 
+    createConversation, 
+    loadConversation,
+    updateConversationName
+  } = useConversations();
 
-  // Auto-show conversation sidebar on desktop
+  const [inputMessage, setInputMessage] = useState('');
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isNewConversation, setIsNewConversation] = useState(true);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [isBottomVisible, setIsBottomVisible] = useState(true);
+  
+  const chatBottomRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Load conversation on activeConversationId change
   useEffect(() => {
-    if (!isMobile) {
-      setShowConversationSidebar(true);
+    if (activeConversationId) {
+      loadConversation(activeConversationId);
+      setIsNewConversation(false);
+    } else {
+      setIsNewConversation(true);
     }
-  }, [isMobile]);
+  }, [activeConversationId, loadConversation]);
 
-  const handleSendMessage = async (messageText: string) => {
-    let conversation = currentConversation;
-    
-    if (!conversation) {
-      console.log('🔥 Nenhuma conversa ativa, criando nova...');
-      conversation = await createAndNavigateToNewConversation();
-      if (!conversation) {
-        console.error('❌ Falha ao criar conversa para enviar mensagem');
-        return;
-      }
-    }
+  // Auto scroll to bottom when new messages are added
+  useEffect(() => {
+    scrollToBottom();
+  }, [conversations, activeConversationId]);
 
-    console.log(`📤 Enviando mensagem para conversa: ${conversation.id}`);
-    
-    setAiTyping(true);
-    
-    await createCognitiveNode(
-      messageText, 
-      'question', 
-      { source: 'user_message', urgency: 'medium' },
-      conversation.id
+  // Check if bottom is visible
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsBottomVisible(entry.isIntersecting);
+      },
+      { threshold: 1 }
     );
 
-    const cognitiveCommands = ['@deep-think', '@connect', '@evolve', '@simulate'];
-    const hasCommand = cognitiveCommands.some(cmd => messageText.includes(cmd));
-    
-    let response;
-    if (hasCommand || cognitiveState.currentMode.type !== 'focus') {
-      console.log('🧠 Usando processamento cognitivo avançado...');
-      const cognitiveResult = await orchestrateCognitiveProcess(messageText, {
-        conversationId: conversation.id,
-        currentMode: cognitiveState.currentMode.type
-      });
-      
-      response = await processMessage(messageText, conversation.id);
-      
-      if (cognitiveResult.success) {
-        await createCognitiveNode(
-          JSON.stringify(cognitiveResult.result),
-          'insight',
-          { 
-            source: 'cognitive_orchestration',
-            insights: cognitiveResult.insights,
-            connections: cognitiveResult.connectionsFound,
-            processingTime: cognitiveResult.processingTime
-          },
-          conversation.id
-        );
+    if (chatBottomRef.current) {
+      observer.observe(chatBottomRef.current);
+    }
+
+    return () => {
+      if (chatBottomRef.current) {
+        observer.unobserve(chatBottomRef.current);
       }
-    } else {
-      response = await processMessage(messageText, conversation.id);
-    }
-    
-    setAiTyping(false);
-    
-    if (response) {
-      await createCognitiveNode(
-        response.content || 'Resposta do AI',
-        'answer',
-        { source: 'ai_response', model: response.model },
-        conversation.id
-      );
-      
-      await updateConversationTimestamp(conversation.id);
-      await loadMessages(conversation.id);
-    }
+    };
+  }, [chatBottomRef]);
+
+  const scrollToBottom = () => {
+    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleQuickAction = (action: string) => {
-    console.log('Quick action:', action);
-    toast({
-      title: "Ação rápida",
-      description: `Ação ${action} será implementada em breve!`,
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputMessage(e.target.value);
+  };
+
+  const startNewConversation = async () => {
+    setIsNewConversation(true);
+    const newConversationId = uuidv4();
+    
+    // Create a new conversation with a temporary name
+    await createConversation({
+      id: newConversationId,
+      name: 'Nova Conversa',
+      created_by: user?.id || '',
+      created_at: new Date().toISOString(),
     });
+
+    // Load the new conversation
+    loadConversation(newConversationId);
   };
 
-  const handleFABAction = (action: string) => {
+  const sendMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    // Get current conversation or create new
+    let conversationId = activeConversationId;
+    if (!conversationId) {
+      conversationId = uuidv4();
+
+      // Create a new conversation with a temporary name
+      await createConversation({
+        id: conversationId,
+        name: 'Nova Conversa',
+        created_by: user?.id || '',
+        created_at: new Date().toISOString(),
+      });
+    }
+
+    // Add user message to conversation
+    const userMessage: Message = {
+      id: uuidv4(),
+      conversation_id: conversationId,
+      role: 'user',
+      content: inputMessage,
+      created_at: new Date().toISOString(),
+    };
+    await addMessageToConversation(conversationId, userMessage);
+    setInputMessage('');
+
+    // Generate AI response
+    const aiMessage = await generateAIResponse(conversationId, inputMessage);
+    if (aiMessage) {
+      await addMessageToConversation(conversationId, aiMessage);
+    }
+
+    setIsLoading(false);
+  };
+
+  const generateAIResponse = async (conversationId: string, messageContent: string): Promise<Message | null> => {
+    const currentAbortController = new AbortController();
+    setAbortController(currentAbortController);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          conversationId, 
+          messageContent 
+        }),
+        signal: currentAbortController.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao gerar resposta da IA: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.result && data.result.content) {
+        // Auto naming
+        if (isNewConversation && !isGenerating) {
+          const newName = await generateConversationName(data.result.content);
+          await updateConversationName(conversationId, newName);
+          setIsNewConversation(false);
+        }
+
+        const aiMessage: Message = {
+          id: uuidv4(),
+          conversation_id: conversationId,
+          role: 'assistant',
+          content: data.result.content,
+          llm_used: data.result.llm_used,
+          created_at: new Date().toISOString(),
+        };
+        return aiMessage;
+      } else {
+        throw new Error('Resposta da IA inválida');
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Geração da IA cancelada');
+      } else {
+        setError(error.message || 'Erro desconhecido ao gerar resposta da IA.');
+        toast({
+          variant: "destructive",
+          title: "Erro ao gerar resposta da IA",
+          description: error.message || 'Erro desconhecido ao gerar resposta da IA.',
+        });
+      }
+      return null;
+    } finally {
+      setIsLoading(false);
+      setAbortController(null);
+    }
+  };
+
+  const cancelGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+      setIsLoading(false);
+      toast({
+        title: "Geração da IA cancelada",
+        description: "A geração da resposta foi interrompida.",
+      });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const handleFloatingAction = (action: string) => {
     switch (action) {
       case 'new-chat':
-        createAndNavigateToNewConversation();
+        startNewConversation();
+        break;
+      case 'voice-mode':
+        setIsVoiceMode(!isVoiceMode);
+        toast({
+          title: isVoiceMode ? "Modo Voz Desativado" : "Modo Voz Ativado",
+          description: isVoiceMode ? "Voltando ao modo texto" : "Agora você pode falar com a AlexIA",
+        });
+        break;
+      case 'screenshot':
+        toast({
+          title: "Screenshot",
+          description: "Funcionalidade em desenvolvimento",
+        });
         break;
       case 'change-model':
+        toast({
+          title: "Mudar Modelo",
+          description: "Alternando entre modelos de IA disponíveis",
+        });
         break;
       default:
-        toast({
-          title: "Ação",
-          description: `${action} será implementada em breve!`,
-        });
+        console.log('Ação não reconhecida:', action);
     }
   };
 
-  const handleProfileClick = () => {
-    toast({
-      title: "Perfil",
-      description: "Menu de perfil será implementado em breve!",
-    });
-  };
-
-  const getContextualPlaceholder = () => {
-    if (processing) return "Processando...";
-    if (conversationState.isCreatingNew) return "Criando nova conversa...";
-    if (!currentConversation) return "Comece uma nova conversa...";
-    if (messages.length === 0) return "Digite sua primeira mensagem...";
-    return "Continue a conversa...";
-  };
-
-  const isLoadingState = loading || conversationState.isNavigating || conversationState.isLoadingMessages;
-
   return (
-    <div className="flex-1 flex bg-slate-50/50 min-h-screen">
-      {/* Conversation Sidebar */}
-      {(!isMobile || showConversationSidebar) && (
-        <ConversationSidebar
-          isOpen={showConversationSidebar}
-          onToggle={() => setShowConversationSidebar(!showConversationSidebar)}
-        />
-      )}
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Chat Header */}
-        <div className="bg-white/95 backdrop-blur-xl border-b border-slate-200/50">
-          <ChatHeaderMinimal
-            currentModel={currentModel}
-            onModelChange={setCurrentModel}
-            onProfileClick={handleProfileClick}
-          />
-          
-          {/* Mobile Conversation Toggle */}
-          {isMobile && (
-            <div className="px-4 pb-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowConversationSidebar(true)}
-                className="w-full justify-start glass-effect"
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                {currentConversation?.name || 'Selecionar conversa'}
-              </Button>
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+      {/* Chat Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Message List */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {activeConversationId ? (
+            conversations[activeConversationId]?.messages?.map((message, index) => (
+              <MessageCardRevamped key={message.id} message={message} index={index} />
+            ))
+          ) : (
+            <div className="text-center text-slate-500 dark:text-slate-400 mt-6">
+              Selecione uma conversa para começar a conversar.
             </div>
           )}
+          
+          {/* Loading Indicator */}
+          {isLoading && (
+            <div className="flex items-center space-x-3 max-w-md mx-auto mb-6 animate-fade-in">
+              <div className="relative flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-500 dark:to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Mic className="w-5 h-5 text-white animate-pulse" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="w-64 h-4 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                <div className="w-48 h-3 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+              </div>
+            </div>
+          )}
+
+          {/* Scroll Anchor */}
+          <div ref={chatBottomRef} />
         </div>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto premium-scrollbar bg-gradient-to-b from-slate-50/50 to-white/50">
-          <div className="px-4 py-6">
-            {isLoadingState ? (
-              <ChatLoadingSkeleton />
-            ) : messages.length === 0 ? (
-              <ChatWelcome />
-            ) : (
-              <div className="space-y-6 max-w-4xl mx-auto">
-                {messages.map((message, index) => (
-                  <div key={message.id} className="premium-fade-in">
-                    <MessageCardRevamped message={message} index={index} />
-                  </div>
-                ))}
-                
-                {processing && (
-                  <div className="flex items-start space-x-4 max-w-4xl mx-auto mb-4 premium-scale-in">
-                    <div className="relative flex-shrink-0">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-premium">
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      </div>
-                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse" />
-                    </div>
-                    <div className="max-w-2xl p-6 rounded-3xl glass-effect text-slate-800 shadow-premium">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                        <p className="text-base text-slate-700 font-medium">
-                          Analisando e processando sua mensagem...
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+        {/* Input Area */}
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-700/50 p-4">
+          <div className="relative flex items-center space-x-3">
+            {/* Cancel Button */}
+            {isLoading && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={cancelGeneration}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 rounded-full hover:bg-red-500/10 dark:hover:bg-red-500/20"
+              >
+                <XCircle className="w-5 h-5 text-red-500" />
+              </Button>
             )}
+            
+            {/* Input Field */}
+            <Input
+              type="text"
+              placeholder="Digite sua mensagem..."
+              value={inputMessage}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              disabled={isLoading}
+              className="flex-1 rounded-full py-2.5 pl-12 pr-4 shadow-sm focus-visible:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+            />
+            
+            {/* Send Button */}
+            <Button 
+              onClick={sendMessage} 
+              disabled={isLoading || !inputMessage.trim()}
+              className="rounded-full shadow-md hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
+            >
+              <Send className="w-4 h-4" />
+              <span className="sr-only">Enviar</span>
+            </Button>
           </div>
         </div>
-
-        {/* Quick Actions Bar */}
-        <QuickActionsBar onAction={handleQuickAction} />
-
-        {/* Revolutionary Input */}
-        <div className="bg-white/95 backdrop-blur-xl border-t border-slate-200/50">
-          <RevolutionaryInput
-            processing={processing || conversationState.isCreatingNew}
-            onSendMessage={handleSendMessage}
-            contextualPlaceholder={getContextualPlaceholder()}
-            aiTyping={aiTyping}
-          />
-        </div>
-
-        {/* Floating Action Button */}
-        <FloatingActionButton onAction={handleFABAction} />
       </div>
+      
+      {/* Floating Action Button - Updated with context */}
+      <FloatingActionButton 
+        onAction={handleFloatingAction}
+        currentSection="chat"
+        hasActiveChat={!!activeConversationId}
+        hasDocument={false} // You can integrate with document state if needed
+      />
     </div>
   );
 };
