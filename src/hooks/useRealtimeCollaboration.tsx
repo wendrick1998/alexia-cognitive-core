@@ -285,7 +285,7 @@ export function useRealtimeCollaboration() {
     if (!isConnected) return;
 
     const interval = setInterval(() => {
-      updateCognitiveState({ lastSeen: new Date() });
+      updateCognitiveState({ focusLevel: 0.8 }); // Update with valid property only
     }, 30000); // Update every 30 seconds
 
     return () => clearInterval(interval);

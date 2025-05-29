@@ -1,10 +1,9 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCognitiveSystem } from '@/hooks/useCognitiveSystem';
 import { useAdaptiveUI } from '@/hooks/useAdaptiveUI';
 import { usePerformanceOptimization } from '@/hooks/usePerformanceOptimization';
-import { useCognitiveSecurity } from '@/hooks/useCognitiveSecuirty';
+import { useCognitiveSecurity } from '@/hooks/useCognitiveSecurity';
 import { useRealtimeCollaboration } from '@/hooks/useRealtimeCollaboration';
 
 export interface SystemCapabilities {
