@@ -159,17 +159,17 @@ export const FeedbackButton = ({
     return children;
   };
 
-  const getFeedbackClass = () => {
-    switch (feedback) {
-      case "success":
-        return "bg-green-100 border-green-200 text-green-700";
-      case "error":
-        return "bg-red-100 border-red-200 text-red-700 animate-shake";
-      case "copied":
-        return "bg-blue-100 border-blue-200 text-blue-700";
-      default:
-        return "";
+  const getFeedbackClass = (): string => {
+    if (feedback === "success") {
+      return "bg-green-100 border-green-200 text-green-700";
     }
+    if (feedback === "error") {
+      return "bg-red-100 border-red-200 text-red-700 animate-shake";
+    }
+    if (feedback === "copied") {
+      return "bg-blue-100 border-blue-200 text-blue-700";
+    }
+    return "";
   };
 
   return (
