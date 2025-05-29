@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +14,7 @@ import {
   SidebarGroupContent,
 } from '@/components/ui/sidebar';
 import {
+  BarChart3,
   MessageCircle,
   Brain,
   FileText,
@@ -42,6 +42,13 @@ const AppSidebar = ({ currentSection, onSectionChange }: AppSidebarProps) => {
     {
       group: "Principal",
       items: [
+        {
+          id: "dashboard",
+          title: "Dashboard",
+          icon: BarChart3,
+          badge: null,
+          description: "Visão geral e insights"
+        },
         {
           id: "chat",
           title: "Chat",

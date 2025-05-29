@@ -3,6 +3,7 @@ import { useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import MultiPaneLayout from "../components/layout/MultiPaneLayout";
 import Chat from "../components/Chat";
+import Dashboard from "../components/dashboard/Dashboard";
 import ProjectsManager from "../components/ProjectsManager";
 import MemoryManager from "../components/MemoryManager";
 import DocumentsManager from "../components/DocumentsManager";
@@ -12,13 +13,15 @@ import { SplitSquareHorizontal, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
-  const [currentSection, setCurrentSection] = useState("chat");
+  const [currentSection, setCurrentSection] = useState("dashboard");
   const [isSplitView, setIsSplitView] = useState(false);
-  const [splitSections, setSplitSections] = useState({ left: "chat", right: "documents" });
+  const [splitSections, setSplitSections] = useState({ left: "dashboard", right: "chat" });
   const isMobile = useIsMobile();
 
   const renderContent = (section: string) => {
     switch (section) {
+      case "dashboard":
+        return <Dashboard />;
       case "chat":
         return <Chat />;
       case "memory":
@@ -30,12 +33,14 @@ const Index = () => {
       case "actions":
         return <ProjectsManager />;
       default:
-        return <Chat />;
+        return <Dashboard />;
     }
   };
 
   const getSectionTitle = (section: string) => {
     switch (section) {
+      case "dashboard":
+        return "Dashboard";
       case "chat":
         return "Chat";
       case "memory":
@@ -47,7 +52,7 @@ const Index = () => {
       case "actions":
         return "Projetos";
       default:
-        return "Chat";
+        return "Dashboard";
     }
   };
 
@@ -77,7 +82,7 @@ const Index = () => {
         ) : (
           <div className="relative h-full">
             {/* Split View Toggle - Desktop Only */}
-            {!isMobile && !isSplitView && (
+            {!isMobile && !isSplitView && currentSection !== "dashboard" && (
               <div className="absolute top-4 right-4 z-10">
                 <Button
                   onClick={enableSplitView}

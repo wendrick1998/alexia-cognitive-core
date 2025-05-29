@@ -33,6 +33,14 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) {
         switch (e.key) {
+          case 'd':
+            e.preventDefault();
+            onSectionChange('dashboard');
+            toast({
+              title: "Dashboard activated",
+              description: "Cmd/Ctrl + D for dashboard",
+            });
+            break;
           case 'k':
             e.preventDefault();
             onSectionChange('search');
@@ -76,6 +84,25 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
     setSidebarOpen(!sidebarOpen);
   };
 
+  const getSectionTitle = (section: string) => {
+    switch (section) {
+      case 'dashboard':
+        return 'Dashboard';
+      case 'chat':
+        return 'Chat';
+      case 'memory':
+        return 'Memórias';
+      case 'documents':
+        return 'Documentos';
+      case 'search':
+        return 'Busca';
+      case 'actions':
+        return 'Projetos';
+      default:
+        return 'AlexIA';
+    }
+  };
+
   return (
     <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex w-full transition-colors duration-300" style={{ background: '#000000' }}>
@@ -104,11 +131,7 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
               </SidebarTrigger>
               
               <h1 className="font-semibold text-white capitalize">
-                {currentSection === 'chat' ? 'Chat' : 
-                 currentSection === 'memory' ? 'Memórias' :
-                 currentSection === 'documents' ? 'Documentos' :
-                 currentSection === 'search' ? 'Busca' :
-                 currentSection === 'actions' ? 'Projetos' : 'AlexIA'}
+                {getSectionTitle(currentSection)}
               </h1>
               
               <DarkModeToggle />
@@ -119,15 +142,13 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
           {!isMobile && (
             <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300">
               <h1 className="font-semibold text-white capitalize text-xl">
-                {currentSection === 'chat' ? 'Chat' : 
-                 currentSection === 'memory' ? 'Memórias' :
-                 currentSection === 'documents' ? 'Documentos' :
-                 currentSection === 'search' ? 'Busca' :
-                 currentSection === 'actions' ? 'Projetos' : 'AlexIA'}
+                {getSectionTitle(currentSection)}
               </h1>
               
               <div className="flex items-center space-x-4">
                 <div className="hidden lg:flex items-center space-x-2 text-sm text-white/60">
+                  <kbd className="px-2 py-1 bg-white/10 rounded text-xs">⌘D</kbd>
+                  <span>Dashboard</span>
                   <kbd className="px-2 py-1 bg-white/10 rounded text-xs">⌘K</kbd>
                   <span>Search</span>
                   <kbd className="px-2 py-1 bg-white/10 rounded text-xs">⌘N</kbd>

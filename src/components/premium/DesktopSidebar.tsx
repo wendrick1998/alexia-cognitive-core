@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
+  BarChart3,
   MessageCircle, 
   Brain, 
   FileText, 
@@ -17,6 +18,12 @@ interface DesktopSidebarProps {
 }
 
 const navigationItems = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: BarChart3,
+    shortcut: "⌘D"
+  },
   {
     id: "chat",
     label: "Chat",
