@@ -1,29 +1,25 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { 
-  Brain, 
-  RefreshCw, 
-  Users, 
-  BarChart3, 
-  Target, 
-  Lightbulb,
-  Sparkles,
-  TrendingUp,
+  X, 
+  MessageCircle, 
+  FileText, 
+  Upload, 
+  Download,
+  Search,
+  Trash2,
   Settings,
-  X,
-  Copy,
-  Focus
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-
-interface QuickAction {
-  id: string;
-  icon: any;
-  label: string;
-  color: string;
-  command?: string;
-  action: () => void;
-}
+  Sparkles,
+  Brain,
+  Zap,
+  Camera,
+  Mic,
+  Share,
+  Star
+} from "lucide-react";
+import SettingsScreen from "@/components/settings/SettingsScreen";
 
 interface QuickActionsScreenProps {
   isOpen: boolean;
@@ -36,344 +32,203 @@ interface QuickActionsScreenProps {
 const QuickActionsScreen = ({ 
   isOpen, 
   onClose, 
-  currentSection = '',
-  hasActiveChat = false,
+  currentSection = '', 
+  hasActiveChat = false, 
   hasDocument = false 
 }: QuickActionsScreenProps) => {
-  const { toast } = useToast();
-  const [selectedAction, setSelectedAction] = useState<string | null>(null);
-
-  // Haptic feedback function
-  const triggerHaptic = (intensity: 'light' | 'medium' | 'heavy' = 'medium') => {
-    if ('vibrate' in navigator) {
-      const patterns = {
-        light: 30,
-        medium: 50,
-        heavy: 100
-      };
-      navigator.vibrate(patterns[intensity]);
-    }
-  };
-
-  // Base actions grid (3x3)
-  const baseActions: QuickAction[] = [
-    {
-      id: 'deep-think',
-      icon: Brain,
-      label: 'Deep Think',
-      color: 'from-purple-500 to-indigo-600',
-      command: '@deep-think',
-      action: () => {
-        toast({
-          title: "Deep Think Ativado",
-          description: "Iniciando análise profunda do contexto...",
-        });
-      }
-    },
-    {
-      id: 'sync',
-      icon: RefreshCw,
-      label: 'Sincronizar',
-      color: 'from-blue-500 to-cyan-600',
-      action: () => {
-        toast({
-          title: "Sincronização",
-          description: "Sincronizando dados com a nuvem...",
-        });
-      }
-    },
-    {
-      id: 'focus-mode',
-      icon: Focus,
-      label: 'Focus Mode',
-      color: 'from-slate-500 to-gray-700',
-      action: () => {
-        onClose(); // Close quick actions first
-        setTimeout(() => {
-          // Trigger focus mode through parent component
-          window.dispatchEvent(new CustomEvent('activate-focus-mode'));
-        }, 300);
-      }
-    },
-    {
-      id: 'collaborate',
-      icon: Users,
-      label: 'Colaborar',
-      color: 'from-green-500 to-emerald-600',
-      action: () => {
-        toast({
-          title: "Modo Colaboração",
-          description: "Compartilhando sessão para colaboração...",
-        });
-      }
-    },
-    {
-      id: 'analyze',
-      icon: BarChart3,
-      label: 'Análise',
-      color: 'from-orange-500 to-red-600',
-      action: () => {
-        toast({
-          title: "Análise Iniciada",
-          description: "Analisando padrões e insights...",
-        });
-      }
-    },
-    {
-      id: 'goals',
-      icon: Target,
-      label: 'Objetivos',
-      color: 'from-pink-500 to-rose-600',
-      action: () => {
-        toast({
-          title: "Definir Objetivos",
-          description: "Configurando metas e marcos...",
-        });
-      }
-    },
-    {
-      id: 'brainstorm',
-      icon: Lightbulb,
-      label: 'Brainstorm',
-      color: 'from-yellow-500 to-amber-600',
-      command: '@brainstorm',
-      action: () => {
-        toast({
-          title: "Brainstorm Mode",
-          description: "Gerando ideias criativas...",
-        });
-      }
-    },
-    {
-      id: 'simulate',
-      icon: Sparkles,
-      label: 'Simular',
-      color: 'from-teal-500 to-cyan-600',
-      command: '@simulate',
-      action: () => {
-        toast({
-          title: "Simulação",
-          description: "Criando cenários hipotéticos...",
-        });
-      }
-    },
-    {
-      id: 'dashboard',
-      icon: TrendingUp,
-      label: 'Dashboard',
-      color: 'from-indigo-500 to-purple-600',
-      action: () => {
-        toast({
-          title: "Dashboard",
-          description: "Abrindo visão geral do sistema...",
-        });
-      }
-    },
-    {
-      id: 'config',
-      icon: Settings,
-      label: 'Config',
-      color: 'from-slate-500 to-gray-600',
-      action: () => {
-        toast({
-          title: "Configurações",
-          description: "Acessando configurações do sistema...",
-        });
-      }
-    }
-  ];
-
-  // Contextual actions based on current state
-  const getContextualActions = (): QuickAction[] => {
-    const contextual: QuickAction[] = [];
-
-    if (hasDocument) {
-      contextual.push(
-        {
-          id: 'summarize',
-          icon: Brain,
-          label: 'Resumir',
-          color: 'from-blue-500 to-indigo-600',
-          action: () => toast({ title: "Resumindo documento..." })
-        },
-        {
-          id: 'questions',
-          icon: Target,
-          label: 'Questões',
-          color: 'from-green-500 to-teal-600',
-          action: () => toast({ title: "Gerando questões..." })
-        },
-        {
-          id: 'translate',
-          icon: RefreshCw,
-          label: 'Traduzir',
-          color: 'from-purple-500 to-pink-600',
-          action: () => toast({ title: "Traduzindo documento..." })
-        }
-      );
-    }
-
-    if (hasActiveChat) {
-      contextual.push(
-        {
-          id: 'export-chat',
-          icon: TrendingUp,
-          label: 'Exportar',
-          color: 'from-orange-500 to-red-600',
-          action: () => toast({ title: "Exportando conversa..." })
-        },
-        {
-          id: 'share-chat',
-          icon: Users,
-          label: 'Compartilhar',
-          color: 'from-cyan-500 to-blue-600',
-          action: () => toast({ title: "Compartilhando conversa..." })
-        },
-        {
-          id: 'focus-mode',
-          icon: Target,
-          label: 'Modo Focus',
-          color: 'from-emerald-500 to-green-600',
-          action: () => toast({ title: "Ativando modo foco..." })
-        }
-      );
-    }
-
-    return contextual;
-  };
-
-  // Command shortcuts
-  const commandShortcuts = [
-    { command: '@deep-think', description: 'análise profunda' },
-    { command: '@connect X Y', description: 'conectar ideias' },
-    { command: '@simulate', description: 'simular cenários' },
-    { command: '@brainstorm', description: 'sessão criativa' },
-    { command: '@focus', description: 'modo concentração' }
-  ];
-
-  const handleActionClick = (action: QuickAction) => {
-    triggerHaptic('medium');
-    setSelectedAction(action.id);
-    
-    // Visual feedback
-    setTimeout(() => {
-      setSelectedAction(null);
-      action.action();
-    }, 150);
-  };
-
-  const copyCommand = (command: string) => {
-    triggerHaptic('light');
-    navigator.clipboard.writeText(command);
-    toast({
-      title: "Comando copiado!",
-      description: `${command} foi copiado para a área de transferência.`,
-    });
-  };
-
-  const contextualActions = getContextualActions();
-  const displayActions = contextualActions.length > 0 ? contextualActions : baseActions;
+  const [showSettings, setShowSettings] = useState(false);
 
   if (!isOpen) return null;
 
+  const quickActions = [
+    {
+      id: 'new-chat',
+      title: 'Nova Conversa',
+      description: 'Iniciar uma nova conversa',
+      icon: MessageCircle,
+      color: 'bg-blue-500',
+      available: true
+    },
+    {
+      id: 'upload-document',
+      title: 'Upload Documento',
+      description: 'Adicionar novo documento',
+      icon: Upload,
+      color: 'bg-green-500',
+      available: true
+    },
+    {
+      id: 'voice-message',
+      title: 'Mensagem de Voz',
+      description: 'Gravar mensagem de voz',
+      icon: Mic,
+      color: 'bg-purple-500',
+      available: true
+    },
+    {
+      id: 'take-photo',
+      title: 'Tirar Foto',
+      description: 'Capturar imagem',
+      icon: Camera,
+      color: 'bg-orange-500',
+      available: true
+    },
+    {
+      id: 'search',
+      title: 'Buscar',
+      description: 'Pesquisar na base de conhecimento',
+      icon: Search,
+      color: 'bg-indigo-500',
+      available: true
+    },
+    {
+      id: 'export-chat',
+      title: 'Exportar Chat',
+      description: 'Baixar conversa atual',
+      icon: Download,
+      color: 'bg-teal-500',
+      available: hasActiveChat
+    },
+    {
+      id: 'share',
+      title: 'Compartilhar',
+      description: 'Compartilhar conversa',
+      icon: Share,
+      color: 'bg-pink-500',
+      available: hasActiveChat
+    },
+    {
+      id: 'focus-mode',
+      title: 'Modo Foco',
+      description: 'Concentração máxima',
+      icon: Sparkles,
+      color: 'bg-yellow-500',
+      available: true
+    },
+    {
+      id: 'memory-consolidate',
+      title: 'Consolidar Memórias',
+      description: 'Processar aprendizados',
+      icon: Brain,
+      color: 'bg-cyan-500',
+      available: true
+    },
+    {
+      id: 'quick-summary',
+      title: 'Resumo Rápido',
+      description: 'Resumir documento/chat',
+      icon: Zap,
+      color: 'bg-amber-500',
+      available: hasActiveChat || hasDocument
+    },
+    {
+      id: 'favorites',
+      title: 'Favoritos',
+      description: 'Acessar itens salvos',
+      icon: Star,
+      color: 'bg-red-500',
+      available: true
+    },
+    {
+      id: 'settings',
+      title: 'Configurações',
+      description: 'Ajustar preferências',
+      icon: Settings,
+      color: 'bg-gray-500',
+      available: true
+    }
+  ];
+
+  const handleActionClick = (actionId: string) => {
+    if (actionId === 'settings') {
+      setShowSettings(true);
+    } else {
+      // Handle other actions
+      console.log('Quick action:', actionId);
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 animate-fade-in">
-      {/* Animated background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 animate-pulse" />
-      
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between p-6 text-white">
-        <div>
-          <h1 className="text-2xl font-bold">⚡ Ações Rápidas</h1>
-          <p className="text-white/70 text-sm mt-1">
-            {contextualActions.length > 0 ? 'Ações contextuais disponíveis' : 'Escolha uma ação para executar'}
-          </p>
-        </div>
-        <Button
-          onClick={onClose}
-          variant="ghost"
-          size="sm"
-          className="text-white hover:bg-white/20 rounded-full w-10 h-10 p-0"
-        >
-          <X className="w-5 h-5" />
-        </Button>
-      </div>
-
-      {/* Actions Grid */}
-      <div className="relative z-10 px-6 py-4">
-        <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
-          {displayActions.map((action, index) => {
-            const Icon = action.icon;
-            const isSelected = selectedAction === action.id;
-            
-            return (
-              <button
-                key={action.id}
-                onClick={() => handleActionClick(action)}
-                className={`
-                  relative w-24 h-24 rounded-2xl bg-gradient-to-br ${action.color} 
-                  flex flex-col items-center justify-center text-white
-                  transform transition-all duration-200 hover:scale-105
-                  ${isSelected ? 'scale-95' : 'scale-100'}
-                  animate-scale-in shadow-xl
-                `}
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <Icon className="w-8 h-8 mb-1" />
-                <span className="text-xs font-medium text-center leading-tight">
-                  {action.label}
-                </span>
-                
-                {/* Ripple effect */}
-                {isSelected && (
-                  <div className="absolute inset-0 rounded-2xl bg-white/30 animate-ping" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Command Shortcuts */}
-      <div className="relative z-10 px-6 py-8 mt-8">
-        <h3 className="text-white text-lg font-semibold mb-4 text-center">
-          Comandos Especiais
-        </h3>
-        <div className="space-y-3 max-w-md mx-auto">
-          {commandShortcuts.map((shortcut, index) => (
-            <div
-              key={shortcut.command}
-              className="flex items-center justify-between bg-white/10 backdrop-blur-sm rounded-xl p-3 animate-slide-in"
-              style={{ animationDelay: `${(index + 9) * 0.05}s` }}
-            >
-              <div className="flex-1">
-                <code className="text-blue-300 font-mono text-sm">
-                  {shortcut.command}
-                </code>
-                <p className="text-white/70 text-xs mt-1">
-                  {shortcut.description}
-                </p>
+    <>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="w-full max-w-4xl max-h-[90vh] bg-white dark:bg-[#1A1A1A] rounded-3xl shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold">Ações Rápidas</h1>
+                <p className="text-purple-100 text-sm">Acesso rápido às principais funcionalidades</p>
               </div>
               <Button
-                onClick={() => copyCommand(shortcut.command)}
                 variant="ghost"
                 size="sm"
-                className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2"
+                onClick={onClose}
+                className="text-white hover:bg-white/20 rounded-full"
               >
-                <Copy className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </Button>
             </div>
-          ))}
+          </div>
+
+          {/* Actions Grid */}
+          <div className="p-6 overflow-y-auto max-h-[70vh]">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Card 
+                    key={action.id}
+                    className={`cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg border-0 ${
+                      !action.available ? 'opacity-50' : ''
+                    }`}
+                    onClick={() => action.available && handleActionClick(action.id)}
+                  >
+                    <CardContent className="p-4 text-center">
+                      <div className={`w-12 h-12 ${action.color} rounded-2xl flex items-center justify-center mx-auto mb-3`}>
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-sm mb-1">{action.title}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{action.description}</p>
+                      {!action.available && (
+                        <Badge variant="secondary" className="mt-2 text-xs">
+                          Indisponível
+                        </Badge>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Context Actions */}
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                Contexto Atual: {currentSection || 'Principal'}
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {hasActiveChat && (
+                  <Button variant="outline" className="justify-start" onClick={() => handleActionClick('clear-chat')}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Limpar Chat
+                  </Button>
+                )}
+                <Button variant="outline" className="justify-start" onClick={() => handleActionClick('keyboard-shortcuts')}>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Atalhos
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Bottom info */}
-      <div className="absolute bottom-6 left-6 right-6 text-center">
-        <p className="text-white/50 text-xs">
-          Pressione e segure uma ação para reordenar • Toque para executar
-        </p>
-      </div>
-    </div>
+      {/* Settings Screen */}
+      <SettingsScreen 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+      />
+    </>
   );
 };
 
