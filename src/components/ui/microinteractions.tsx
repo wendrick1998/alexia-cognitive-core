@@ -123,12 +123,16 @@ export const RippleButton = ({
 type FeedbackType = "success" | "error" | "copy";
 type FeedbackState = "success" | "error" | "copied" | null;
 
+interface FeedbackButtonProps extends InteractiveButtonProps {
+  type?: FeedbackType;
+}
+
 export const FeedbackButton = ({ 
   children, 
   className,
   type = "success",
   ...props 
-}: InteractiveButtonProps & { type?: FeedbackType }) => {
+}: FeedbackButtonProps) => {
   const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const handleFeedback = () => {
