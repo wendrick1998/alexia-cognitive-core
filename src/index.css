@@ -73,6 +73,17 @@
   }
 }
 
+/* Safe area support for mobile devices */
+@supports (padding: max(0px)) {
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}
+
 /* Premium Animations */
 @keyframes fade-in {
   from {
@@ -127,6 +138,30 @@
   }
 }
 
+@keyframes liquid-morph {
+  0% {
+    border-radius: 20px;
+    transform: scale(1);
+  }
+  50% {
+    border-radius: 50px;
+    transform: scale(1.05);
+  }
+  100% {
+    border-radius: 20px;
+    transform: scale(1);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.5s ease-out;
 }
@@ -147,6 +182,14 @@
   background: linear-gradient(110deg, #f1f5f9 8%, #e2e8f0 18%, #f1f5f9 33%);
   background-size: 200px 100%;
   animation: shimmer 1.5s infinite;
+}
+
+.animate-liquid-morph {
+  animation: liquid-morph 2s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
 }
 
 /* Premium scrollbar */
@@ -241,4 +284,18 @@
 
 .btn-premium:hover::before {
   left: 100%;
+}
+
+/* Mobile-first navigation enhancements */
+@media (max-width: 768px) {
+  .bottom-nav-item-active {
+    transform: translateY(-2px);
+  }
+}
+
+/* Support for iPhone notch */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
