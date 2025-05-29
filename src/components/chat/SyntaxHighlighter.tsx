@@ -113,7 +113,7 @@ const SyntaxHighlighter = ({ code, language = 'javascript', className = '' }: Sy
         {/* Code */}
         <div className="p-4 overflow-x-auto">
           <div className="table w-full">
-            {highlightedCode(code, language)}
+            {highlightCode(code, language)}
           </div>
         </div>
       </div>
