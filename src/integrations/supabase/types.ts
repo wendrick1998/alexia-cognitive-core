@@ -603,6 +603,173 @@ export type Database = {
           },
         ]
       }
+      llm_cache_metrics: {
+        Row: {
+          cache_item_id: string
+          id: string
+          timestamp: string | null
+          user_id: string
+        }
+        Insert: {
+          cache_item_id: string
+          id?: string
+          timestamp?: string | null
+          user_id: string
+        }
+        Update: {
+          cache_item_id?: string
+          id?: string
+          timestamp?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "llm_cache_metrics_cache_item_id_fkey"
+            columns: ["cache_item_id"]
+            isOneToOne: false
+            referencedRelation: "llm_response_cache"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      llm_execution_logs: {
+        Row: {
+          created_at: string | null
+          execution_time: number | null
+          id: string
+          input_hash: string
+          model_used: string
+          output_quality: number | null
+          success: boolean | null
+          tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          execution_time?: number | null
+          id?: string
+          input_hash: string
+          model_used: string
+          output_quality?: number | null
+          success?: boolean | null
+          tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          execution_time?: number | null
+          id?: string
+          input_hash?: string
+          model_used?: string
+          output_quality?: number | null
+          success?: boolean | null
+          tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      llm_orchestrator_preferences: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          preferred_model: string
+          task_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          preferred_model: string
+          task_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          preferred_model?: string
+          task_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      llm_response_cache: {
+        Row: {
+          answer: string
+          created_at: string | null
+          embedding: string
+          id: string
+          metadata: Json | null
+          model_name: string
+          provider: string
+          question: string
+          task_type: string
+          tokens_used: number
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          embedding: string
+          id?: string
+          metadata?: Json | null
+          model_name: string
+          provider: string
+          question: string
+          task_type: string
+          tokens_used: number
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          embedding?: string
+          id?: string
+          metadata?: Json | null
+          model_name?: string
+          provider?: string
+          question?: string
+          task_type?: string
+          tokens_used?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      llm_usage_stats: {
+        Row: {
+          avg_response_time: number | null
+          cost_to_date: number | null
+          failure_rate: number | null
+          id: string
+          model_name: string
+          total_calls: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_response_time?: number | null
+          cost_to_date?: number | null
+          failure_rate?: number | null
+          id?: string
+          model_name: string
+          total_calls?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_response_time?: number | null
+          cost_to_date?: number | null
+          failure_rate?: number | null
+          id?: string
+          model_name?: string
+          total_calls?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       memories: {
         Row: {
           content: string
@@ -1106,6 +1273,23 @@ export type Database = {
           similarity: number
           document_name: string
           title: string
+        }[]
+      }
+      match_question_embeddings: {
+        Args: {
+          query_embedding: string
+          similarity_threshold: number
+          match_count: number
+          min_created_at: string
+          task_type: string
+        }
+        Returns: {
+          id: string
+          question: string
+          answer: string
+          similarity: number
+          model_name: string
+          provider: string
         }[]
       }
       neural_cognitive_search: {
