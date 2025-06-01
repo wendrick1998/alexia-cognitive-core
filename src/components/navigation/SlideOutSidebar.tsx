@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -25,7 +26,7 @@ interface SlideOutSidebarProps {
   onSectionChange: (section: string) => void;
 }
 
-// Unificando itens com desktop - removendo extras desnecessários
+// Unificando itens com desktop - estrutura simplificada e consistente
 const menuSections = [
   {
     title: "PRINCIPAL",

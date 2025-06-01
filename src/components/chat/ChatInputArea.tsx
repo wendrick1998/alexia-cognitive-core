@@ -1,10 +1,11 @@
 
 import RevolutionaryInput from './RevolutionaryInput';
+import { Conversation } from '@/hooks/useConversations';
 
 interface ChatInputAreaProps {
   processing: boolean;
   onSendMessage: (message: string) => void;
-  currentConversation: any;
+  currentConversation: Conversation | null;
 }
 
 const ChatInputArea = ({ 
