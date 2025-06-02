@@ -23,14 +23,14 @@ export const SystemDiagnostics = () => {
         {
           name: 'Supabase Conectado',
           status: envStatus.supabaseConnected ? 'success' : 'error',
-          details: envStatus.supabaseConnected ? 'Configuração OK' : 'Não configurado'
+          details: envStatus.supabaseConnected ? 'Configuração OK' : (envStatus.connectionError || 'Não configurado')
         },
         {
           name: 'Variáveis de Ambiente',
-          status: envStatus.missingSecrets.length === 0 ? 'success' : 'error',
-          details: envStatus.missingSecrets.length === 0 
+          status: envStatus.warnings.length === 0 ? 'success' : 'warning',
+          details: envStatus.warnings.length === 0 
             ? 'Todas configuradas' 
-            : `Faltando: ${envStatus.missingSecrets.join(', ')}`
+            : `${envStatus.warnings.length} avisos`
         }
       ]
     },
