@@ -526,6 +526,69 @@ export type Database = {
           },
         ]
       }
+      cortex_decision_logs: {
+        Row: {
+          activated_nodes: Json | null
+          created_at: string | null
+          execution_time_ms: number | null
+          fallback_reason: string | null
+          fallback_used: boolean | null
+          id: string
+          insights_generated: Json | null
+          reasoning: string | null
+          response_stored_in: string | null
+          selected_model: string
+          session_id: string | null
+          user_id: string
+          user_request: string
+        }
+        Insert: {
+          activated_nodes?: Json | null
+          created_at?: string | null
+          execution_time_ms?: number | null
+          fallback_reason?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          insights_generated?: Json | null
+          reasoning?: string | null
+          response_stored_in?: string | null
+          selected_model: string
+          session_id?: string | null
+          user_id: string
+          user_request: string
+        }
+        Update: {
+          activated_nodes?: Json | null
+          created_at?: string | null
+          execution_time_ms?: number | null
+          fallback_reason?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          insights_generated?: Json | null
+          reasoning?: string | null
+          response_stored_in?: string | null
+          selected_model?: string
+          session_id?: string | null
+          user_id?: string
+          user_request?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cortex_decision_logs_response_stored_in_fkey"
+            columns: ["response_stored_in"]
+            isOneToOne: false
+            referencedRelation: "active_neural_network"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cortex_decision_logs_response_stored_in_fkey"
+            columns: ["response_stored_in"]
+            isOneToOne: false
+            referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_sections: {
         Row: {
           content: string
@@ -876,6 +939,66 @@ export type Database = {
           timestamp?: string | null
           tokens_used?: number
           used_fallback?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      llm_integrations: {
+        Row: {
+          active: boolean | null
+          api_key: string
+          avg_response_time: number | null
+          base_url: string
+          created_at: string | null
+          custom_headers: Json | null
+          endpoint_path: string | null
+          fallback_priority: number | null
+          id: string
+          last_tested_at: string | null
+          max_tokens: number | null
+          model: string
+          name: string
+          temperature: number | null
+          test_status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          api_key: string
+          avg_response_time?: number | null
+          base_url: string
+          created_at?: string | null
+          custom_headers?: Json | null
+          endpoint_path?: string | null
+          fallback_priority?: number | null
+          id?: string
+          last_tested_at?: string | null
+          max_tokens?: number | null
+          model: string
+          name: string
+          temperature?: number | null
+          test_status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          api_key?: string
+          avg_response_time?: number | null
+          base_url?: string
+          created_at?: string | null
+          custom_headers?: Json | null
+          endpoint_path?: string | null
+          fallback_priority?: number | null
+          id?: string
+          last_tested_at?: string | null
+          max_tokens?: number | null
+          model?: string
+          name?: string
+          temperature?: number | null
+          test_status?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

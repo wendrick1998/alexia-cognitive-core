@@ -1,49 +1,56 @@
-
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
-import Sidebar from "@/components/layout/Sidebar";
-import Dashboard from "@/components/dashboard/Dashboard";
-import Chat from "@/components/Chat";
-import Documents from "@/components/Documents";
-import SemanticSearch from "@/components/SemanticSearch";
-import MemoryManager from "@/components/MemoryManager";
-import ProjectsManager from "@/components/ProjectsManager";
-import UserPreferences from "@/components/settings/UserPreferences";
-import AIConfiguration from "@/components/settings/AIConfiguration";
-import SystemLogs from "@/components/admin/SystemLogs";
-import SecuritySettings from "@/components/admin/SecuritySettings";
-import SubscriptionManagement from "@/components/admin/SubscriptionManagement";
-import IntegrationsManager from "@/components/admin/IntegrationsManager";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/router';
+import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useAlexChatSessions } from '@/hooks/useAlexChatSessions';
+import { useDocuments } from '@/hooks/useDocuments';
+import { useProjects } from '@/hooks/useProjects';
+import Dashboard from '@/components/layout/Dashboard';
+import Chat from '@/components/Chat';
+import SemanticSearch from '@/components/search/SemanticSearch';
+import MemoryManager from '@/components/memory/MemoryManager';
+import DocumentsManager from '@/components/documents/DocumentsManager';
+import ProjectsManager from '@/components/projects/ProjectsManager';
+import SettingsScreen from '@/components/settings/SettingsScreen';
+import SecuritySettings from '@/components/settings/SecuritySettings';
+import SubscriptionManagement from '@/components/settings/SubscriptionManagement';
+import SystemLogs from '@/components/settings/SystemLogs';
+import Sidebar from '@/components/layout/Sidebar';
+import MobileBar from '@/components/layout/MobileBar';
+import CognitiveGraphPage from '@/components/cognitive/CognitiveGraphPage';
+import InsightsPage from '@/components/cognitive/InsightsPage';
+import CortexDashboard from '@/components/cognitive/CortexDashboard';
+import IntegrationsStatusPage from '@/components/integrations/IntegrationsStatusPage';
+import IntegrationsManagerPage from '@/components/integrations/IntegrationsManagerPage';
 
 const Index = () => {
-  const { user, loading } = useAuth();
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, loading } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
   const isMobile = useIsMobile();
+  const { subscription } = useSubscription();
+  const { preferences, updatePreferences } = useUserPreferences();
+  const { sessions } = useAlexChatSessions();
+  const { documents } = useDocuments();
+  const { projects } = useProjects();
 
   useEffect(() => {
-    if (!isMobile) {
-      setSidebarOpen(true);
+    if (!loading && !user) {
+      router.push('/sign-in');
     }
-  }, [isMobile]);
+  }, [user, loading, router]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <div className="h-screen flex items-center justify-center">Carregando...</div>;
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return null;
   }
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -51,84 +58,61 @@ const Index = () => {
         return <Dashboard />;
       case "chat":
         return <Chat />;
-      case "documents":
-        return <Documents />;
       case "search":
         return <SemanticSearch />;
       case "memory":
         return <MemoryManager />;
+      case "documents":
+        return <DocumentsManager />;
       case "projects":
         return <ProjectsManager />;
+      case "cognitive-graph":
+        return <CognitiveGraphPage />;
+      case "insights":
+        return <InsightsPage />;
+      case "cortex-dashboard":
+        return <CortexDashboard />;
+      case "integrations-status":
+        return <IntegrationsStatusPage />;
+      case "integrations-manager":
+        return <IntegrationsManagerPage />;
       case "preferences":
-        return <UserPreferences />;
+        return <SettingsScreen />;
       case "ai-config":
-        return <AIConfiguration />;
-      case "logs":
-        return <SystemLogs />;
+        return <SettingsScreen />;
       case "security":
         return <SecuritySettings />;
       case "subscription":
         return <SubscriptionManagement />;
-      case "integrations":
-        return <IntegrationsManager />;
+      case "logs":
+        return <SystemLogs />;
       default:
         return <Dashboard />;
     }
   };
 
   return (
-    <div className="h-screen bg-black text-white flex w-full overflow-hidden">
-      {/* Mobile Header */}
-      {isMobile && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10 px-4 py-3 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleSidebar}
-              className="text-white hover:bg-white/10"
-              aria-label="Toggle menu"
-            >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
-            <h1 className="text-lg font-semibold">Alexia</h1>
-            <div className="w-10" />
-          </div>
-        </div>
-      )}
-
+    <div className="h-screen flex bg-gradient-to-b from-black to-gray-900 overflow-hidden">
       {/* Sidebar */}
-      <div className={`
-        ${isMobile ? 'fixed inset-y-0 left-0 z-40' : 'relative flex-shrink-0'}
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        transition-transform duration-300 ease-in-out
-        ${isMobile ? 'w-80' : 'w-64'}
-        border-r border-white/10
-      `}>
+      {!isMobile && (
         <Sidebar
           activeSection={activeSection}
           onSectionChange={setActiveSection}
-          onClose={() => setSidebarOpen(false)}
-        />
-      </div>
-
-      {/* Mobile Overlay */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30"
-          onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Main Content */}
-      <div className={`
-        flex-1 min-w-0 flex-scroll-layout
-        ${isMobile ? 'pt-16' : ''}
-      `}>
-        <div className="flex-scroll-content scroll-container premium-scrollbar">
-          {renderContent()}
-        </div>
-      </div>
+      {/* Mobile Header */}
+      {isMobile && (
+        <MobileBar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+        />
+      )}
+
+      {/* Content Area */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        {renderContent()}
+      </main>
     </div>
   );
 };

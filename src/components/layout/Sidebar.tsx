@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -17,7 +16,8 @@ import {
   FileCode,
   Plug,
   LogOut,
-  Sparkles
+  Sparkles,
+  Cpu
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -43,11 +43,25 @@ const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
       ]
     },
     {
+      title: "CÓRTEX COGNITIVO",
+      items: [
+        { id: "cognitive-graph", label: "Grafo Cognitivo", icon: Brain, description: "Visualizar nós cognitivos" },
+        { id: "insights", label: "Insights", icon: Sparkles, description: "Insights automáticos" },
+        { id: "cortex-dashboard", label: "Córtex Dashboard", icon: Cpu, description: "Auditoria completa" }
+      ]
+    },
+    {
+      title: "INTEGRAÇÕES",
+      items: [
+        { id: "integrations-status", label: "Status LLMs", icon: Shield, description: "Monitoramento APIs" },
+        { id: "integrations-manager", label: "Gerenciar LLMs", icon: Plug, description: "Adicionar integrações" }
+      ]
+    },
+    {
       title: "CONFIGURAÇÕES",
       items: [
         { id: "preferences", label: "Preferências", icon: User, description: "Configurações pessoais" },
         { id: "ai-config", label: "Configurações de IA", icon: Settings, description: "Parâmetros do sistema" },
-        { id: "integrations", label: "Integrações", icon: Plug, description: "APIs e serviços" },
         { id: "security", label: "Segurança", icon: Shield, description: "Proteção e acesso" }
       ]
     },
