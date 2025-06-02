@@ -1,8 +1,9 @@
+
 /**
- * @modified_by Manus AI
- * @date 1 de junho de 2025
- * @description Correção de alinhamentos e padronização de espaçamentos no componente Chat
- * Implementa tokens de espaçamento e melhora consistência visual
+ * @modified_by Manus AI - FASE 1: Integração Completa de Memória Cognitiva
+ * @date 2 de junho de 2025
+ * @description Integração completa do sistema de memória cognitiva com chat
+ * Inclui recuperação automática de contexto, indicadores de confiança e validação em tempo real
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -11,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useConversations } from '@/hooks/useConversations';
 import { useChatProcessor } from '@/hooks/useChatProcessor';
 import { useFocusMode } from '@/hooks/useFocusMode';
-import { useIntegratedMemory, IntegratedMemoryResponse } from '@/hooks/useIntegratedMemory';
+import { useCognitiveMemoryIntegration } from '@/hooks/useCognitiveMemoryIntegration';
 import PremiumChatLayout from './chat/PremiumChatLayout';
 import FocusMode from './focus/FocusMode';
 import FloatingActionButton from './chat/FloatingActionButton';
@@ -37,10 +38,12 @@ const Chat = () => {
 
   const { processing, processMessage } = useChatProcessor();
   const { isActive: isFocusModeActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
-  const { processMemoryForMessage } = useIntegratedMemory();
+  
+  // NOVA INTEGRAÇÃO: Sistema Cognitivo Completo
+  const cognitiveMemory = useCognitiveMemoryIntegration();
 
-  // Map para armazenar dados de memória por mensagem
-  const [memoryDataMap, setMemoryDataMap] = useState<Map<string, IntegratedMemoryResponse>>(new Map());
+  // Map para armazenar dados de memória por mensagem - agora melhorado
+  const [cognitiveDataMap, setCognitiveDataMap] = useState<Map<string, any>>(new Map());
 
   // Função para scroll suave até a última mensagem
   const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
@@ -57,18 +60,18 @@ const Chat = () => {
   }, [messages.length]);
 
   const handleNewConversation = async () => {
-    console.log('🔥 Criando nova conversa...');
+    console.log('🔥 Criando nova conversa com sistema cognitivo...');
     const newConversation = await createAndNavigateToNewConversation();
     if (newConversation) {
       toast({
         title: "Nova conversa criada",
-        description: "Conversa pronta para uso!",
+        description: "Sistema cognitivo ativado e pronto!",
       });
     }
   };
 
   const handleConversationSelect = async (conversation: any) => {
-    console.log(`🧭 Selecionando conversa: ${conversation.id}`);
+    console.log(`🧭 Selecionando conversa com contexto cognitivo: ${conversation.id}`);
     await navigateToConversation(conversation);
   };
 
@@ -91,7 +94,7 @@ const Chat = () => {
 
     // Adicionar mensagem do usuário imediatamente
     const userMessage = {
-      id: `temp-${Date.now()}`,
+      id: `temp-user-${Date.now()}`,
       conversation_id: conversationId,
       role: 'user' as const,
       content: message,
@@ -103,15 +106,24 @@ const Chat = () => {
     scrollToBottom();
 
     try {
-      // 1. Processar memória ANTES de enviar para o LLM
-      console.log('🧠 Processando memória integrada...');
-      const memoryData = await processMemoryForMessage(
+      console.log('🧠 FASE 1: Processamento Cognitivo Integrado Iniciado');
+
+      // 1. NOVO: Processar mensagem com sistema cognitivo COMPLETO
+      const cognitiveResult = await cognitiveMemory.processMessageWithCognition(
         message,
         conversationId,
         currentConversation?.project_id
       );
 
-      // 2. Processar mensagem com LLM
+      console.log('🔍 Resultado do processamento cognitivo:', {
+        memoryUsed: cognitiveResult.memoryData?.context_used,
+        contextsFound: cognitiveResult.memoryData?.contexts_found,
+        confidenceScore: cognitiveResult.memoryData?.confidence_score,
+        validationStatus: cognitiveResult.memoryData?.validation_status,
+        cognitiveNodes: cognitiveResult.cognitiveNodes.length
+      });
+
+      // 2. Processar mensagem com LLM (mantém compatibilidade)
       const response = await processMessage(message, conversationId);
       
       if (response) {
@@ -128,37 +140,54 @@ const Chat = () => {
             usedFallback: response.metadata?.usedFallback || false,
             originalModel: response.metadata?.originalModel || '',
             currentModel: response.model || '',
-            responseTime: response.metadata?.responseTime || 0
+            responseTime: response.metadata?.responseTime || 0,
+            // NOVO: Dados cognitivos
+            cognitiveData: cognitiveResult
           }
         };
 
-        // 3. Armazenar dados de memória para a resposta
-        if (memoryData) {
-          const updatedMemoryData = {
-            ...memoryData,
-            document_contexts: [], // TODO: Integrar com documentos do response
-            contexts_found: memoryData.contexts_found + (response.chunks_found || 0)
-          };
-          
-          setMemoryDataMap(prev => new Map(prev.set(aiMessageId, updatedMemoryData)));
+        // 3. NOVO: Processar resposta da IA com sistema cognitivo
+        await cognitiveMemory.processAIResponseWithCognition(
+          response.response,
+          message,
+          conversationId,
+          currentConversation?.project_id,
+          cognitiveResult.memoryData
+        );
+
+        // 4. Armazenar dados cognitivos completos para a UI
+        if (cognitiveResult.memoryData) {
+          setCognitiveDataMap(prev => new Map(prev.set(aiMessageId, {
+            memoryData: cognitiveResult.memoryData,
+            cognitiveNodes: cognitiveResult.cognitiveNodes,
+            validationResult: cognitiveResult.validationResult,
+            thoughtMode: cognitiveMemory.cognitiveState.currentMode
+          })));
         }
 
         setMessages(prev => [...prev, aiMessage]);
         await updateConversationTimestamp(conversationId);
         scrollToBottom();
 
-        toast({
-          title: "Mensagem enviada",
-          description: memoryData?.context_used 
-            ? `IA respondeu com ${memoryData.contexts_found} contexto(s)` 
-            : "IA respondeu",
-        });
+        // Mostrar toast com informações cognitivas
+        const memoryInfo = cognitiveResult.memoryData;
+        if (memoryInfo?.context_used) {
+          toast({
+            title: "Resposta com Memória Cognitiva",
+            description: `${memoryInfo.contexts_found} contexto(s) | ${Math.round(memoryInfo.confidence_score * 100)}% confiança | Status: ${memoryInfo.validation_status}`,
+          });
+        } else {
+          toast({
+            title: "Resposta gerada",
+            description: "Nova informação adicionada à memória cognitiva",
+          });
+        }
       }
     } catch (error) {
-      console.error('❌ Erro ao enviar mensagem:', error);
+      console.error('❌ Erro no processamento cognitivo completo:', error);
       toast({
         title: "Erro",
-        description: "Falha ao enviar mensagem",
+        description: "Falha no sistema cognitivo integrado",
         variant: "destructive",
       });
     }
@@ -173,7 +202,7 @@ const Chat = () => {
         activateFocusMode();
         toast({
           title: "Focus Mode Ativado",
-          description: "Modo de escrita minimalista ativado",
+          description: "Modo de escrita com memória cognitiva ativa",
         });
         break;
       default:
@@ -222,12 +251,13 @@ const Chat = () => {
     );
   };
 
-  console.log('🗨️ Chat renderizado com memória integrada:', {
+  console.log('🗨️ Chat FASE 1 renderizado com sistema cognitivo completo:', {
     conversations: conversations.length,
     currentConversation: currentConversation?.id,
     messages: messages.length,
-    memoryDataEntries: memoryDataMap.size,
-    processing
+    cognitiveDataEntries: cognitiveDataMap.size,
+    processing: processing || cognitiveMemory.processing,
+    cognitiveState: cognitiveMemory.cognitiveState.currentMode.type
   });
 
   return (
@@ -237,14 +267,14 @@ const Chat = () => {
           conversations={conversations}
           currentConversation={currentConversation}
           messages={messages}
-          processing={processing}
+          processing={processing || cognitiveMemory.processing}
           onConversationSelect={handleConversationSelect}
           onNewConversation={handleNewConversation}
           onSendMessage={handleSendMessage}
           isCreatingNew={conversationState.isCreatingNew}
           isNavigating={conversationState.isNavigating}
           renderMessageExtras={renderMessageWithSource}
-          memoryDataMap={memoryDataMap}
+          memoryDataMap={cognitiveDataMap}
           className="messages-container"
         />
 
