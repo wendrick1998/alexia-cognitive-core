@@ -86,6 +86,83 @@ export type Database = {
         }
         Relationships: []
       }
+      cognitive_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          alert_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          related_project_id: string | null
+          related_task_id: string | null
+          resolved_at: string | null
+          severity: string
+          status: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          alert_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          related_project_id?: string | null
+          related_task_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          alert_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          related_project_id?: string | null
+          related_task_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cognitive_alerts_related_project_id_fkey"
+            columns: ["related_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_status_dashboard"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "cognitive_alerts_related_project_id_fkey"
+            columns: ["related_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_alerts_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "task_priority_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_alerts_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cognitive_clusters: {
         Row: {
           centroid_embedding: string | null
@@ -373,6 +450,13 @@ export type Database = {
             foreignKeyName: "cognitive_nodes_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "project_status_dashboard"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "cognitive_nodes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -507,6 +591,13 @@ export type Database = {
             foreignKeyName: "conversations_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "project_status_dashboard"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "conversations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -585,6 +676,75 @@ export type Database = {
             columns: ["response_stored_in"]
             isOneToOne: false
             referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decisions: {
+        Row: {
+          approved_at: string | null
+          approved_by_user: boolean | null
+          confidence_score: number | null
+          context: Json
+          created_at: string | null
+          decision_type: string
+          executed: boolean | null
+          executed_at: string | null
+          id: string
+          impact_assessment: Json | null
+          options: Json
+          outcome_quality: number | null
+          rationale: string | null
+          selected_option: string | null
+          task_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by_user?: boolean | null
+          confidence_score?: number | null
+          context?: Json
+          created_at?: string | null
+          decision_type: string
+          executed?: boolean | null
+          executed_at?: string | null
+          id?: string
+          impact_assessment?: Json | null
+          options?: Json
+          outcome_quality?: number | null
+          rationale?: string | null
+          selected_option?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by_user?: boolean | null
+          confidence_score?: number | null
+          context?: Json
+          created_at?: string | null
+          decision_type?: string
+          executed?: boolean | null
+          executed_at?: string | null
+          id?: string
+          impact_assessment?: Json | null
+          options?: Json
+          outcome_quality?: number | null
+          rationale?: string | null
+          selected_option?: string | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decisions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "task_priority_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decisions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -693,6 +853,13 @@ export type Database = {
             foreignKeyName: "documents_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "project_status_dashboard"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -739,6 +906,66 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epics: {
+        Row: {
+          actual_hours: number | null
+          created_at: string | null
+          description: string | null
+          end_date: string | null
+          estimated_hours: number | null
+          id: string
+          name: string
+          priority: number | null
+          project_id: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_hours?: number | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          name: string
+          priority?: number | null
+          project_id?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_hours?: number | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          name?: string
+          priority?: number | null
+          project_id?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_status_dashboard"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "epics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1210,6 +1437,13 @@ export type Database = {
             foreignKeyName: "memories_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "project_status_dashboard"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "memories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -1345,29 +1579,53 @@ export type Database = {
       }
       projects: {
         Row: {
+          actual_hours: number | null
+          completion_percentage: number | null
           created_at: string | null
           description: string | null
+          end_date: string | null
+          estimated_hours: number | null
           id: string
+          metadata: Json | null
           name: string
+          priority: number | null
+          start_date: string | null
           status: string | null
+          tags: string[] | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          actual_hours?: number | null
+          completion_percentage?: number | null
           created_at?: string | null
           description?: string | null
+          end_date?: string | null
+          estimated_hours?: number | null
           id?: string
+          metadata?: Json | null
           name: string
+          priority?: number | null
+          start_date?: string | null
           status?: string | null
+          tags?: string[] | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          actual_hours?: number | null
+          completion_percentage?: number | null
           created_at?: string | null
           description?: string | null
+          end_date?: string | null
+          estimated_hours?: number | null
           id?: string
+          metadata?: Json | null
           name?: string
+          priority?: number | null
+          start_date?: string | null
           status?: string | null
+          tags?: string[] | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1416,6 +1674,259 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      task_context_references: {
+        Row: {
+          cognitive_node_id: string | null
+          id: string
+          linked_at: string | null
+          memory_id: string | null
+          metadata: Json | null
+          reference_type: string
+          relevance_score: number | null
+          task_id: string | null
+        }
+        Insert: {
+          cognitive_node_id?: string | null
+          id?: string
+          linked_at?: string | null
+          memory_id?: string | null
+          metadata?: Json | null
+          reference_type: string
+          relevance_score?: number | null
+          task_id?: string | null
+        }
+        Update: {
+          cognitive_node_id?: string | null
+          id?: string
+          linked_at?: string | null
+          memory_id?: string | null
+          metadata?: Json | null
+          reference_type?: string
+          relevance_score?: number | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_context_references_cognitive_node_id_fkey"
+            columns: ["cognitive_node_id"]
+            isOneToOne: false
+            referencedRelation: "active_neural_network"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_context_references_cognitive_node_id_fkey"
+            columns: ["cognitive_node_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_context_references_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memory_embeddings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_context_references_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "task_priority_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_context_references_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_logs: {
+        Row: {
+          action: string
+          changed_by: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          metadata: Json | null
+          status_after: string | null
+          status_before: string | null
+          task_id: string | null
+        }
+        Insert: {
+          action: string
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          status_after?: string | null
+          status_before?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          status_after?: string | null
+          status_before?: string | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "task_priority_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_performance_metrics: {
+        Row: {
+          actual_value: number | null
+          id: string
+          learning_factor: number | null
+          metadata: Json | null
+          metric_type: string
+          predicted_value: number | null
+          recorded_at: string | null
+          task_id: string | null
+          variance: number | null
+        }
+        Insert: {
+          actual_value?: number | null
+          id?: string
+          learning_factor?: number | null
+          metadata?: Json | null
+          metric_type: string
+          predicted_value?: number | null
+          recorded_at?: string | null
+          task_id?: string | null
+          variance?: number | null
+        }
+        Update: {
+          actual_value?: number | null
+          id?: string
+          learning_factor?: number | null
+          metadata?: Json | null
+          metric_type?: string
+          predicted_value?: number | null
+          recorded_at?: string | null
+          task_id?: string | null
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_performance_metrics_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "task_priority_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_performance_metrics_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          actual_hours: number | null
+          assigned_to: string | null
+          completion_percentage: number | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          epic_id: string | null
+          estimated_hours: number | null
+          id: string
+          metadata: Json | null
+          owner: string
+          parent_task_id: string | null
+          priority: number | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          epic_id?: string | null
+          estimated_hours?: number | null
+          id?: string
+          metadata?: Json | null
+          owner: string
+          parent_task_id?: string | null
+          priority?: number | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          epic_id?: string | null
+          estimated_hours?: number | null
+          id?: string
+          metadata?: Json | null
+          owner?: string
+          parent_task_id?: string | null
+          priority?: number | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_epic_id_fkey"
+            columns: ["epic_id"]
+            isOneToOne: false
+            referencedRelation: "epics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "task_priority_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       thought_sessions: {
         Row: {
@@ -1548,6 +2059,83 @@ export type Database = {
           user_id: string | null
         }
         Relationships: []
+      }
+      project_status_dashboard: {
+        Row: {
+          blocked_tasks: number | null
+          completed_tasks: number | null
+          created_at: string | null
+          end_date: string | null
+          overdue_tasks: number | null
+          project_completion: number | null
+          project_id: string | null
+          project_name: string | null
+          project_status: string | null
+          start_date: string | null
+          total_actual_hours: number | null
+          total_epics: number | null
+          total_estimated_hours: number | null
+          total_tasks: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_priority_view: {
+        Row: {
+          actual_hours: number | null
+          assigned_to: string | null
+          calculated_priority: number | null
+          completion_percentage: number | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          epic_id: string | null
+          epic_name: string | null
+          estimated_hours: number | null
+          id: string | null
+          metadata: Json | null
+          owner: string | null
+          parent_task_id: string | null
+          priority: number | null
+          project_name: string | null
+          status: string | null
+          tags: string[] | null
+          title: string | null
+          updated_at: string | null
+          urgency_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_epic_id_fkey"
+            columns: ["epic_id"]
+            isOneToOne: false
+            referencedRelation: "epics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "task_priority_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {

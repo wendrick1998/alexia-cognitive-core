@@ -4,6 +4,7 @@ import PremiumAppLayout from "../components/layout/PremiumAppLayout";
 import Chat from "../components/Chat";
 import Dashboard from "../components/dashboard/Dashboard";
 import ProjectsManager from "../components/ProjectsManager";
+import AutonomousProjectsManager from "../components/autonomous/AutonomousProjectsManager";
 import MemoryManager from "../components/MemoryManager";
 import DocumentsManager from "../components/DocumentsManager";
 import SemanticSearch from "../components/SemanticSearch";
@@ -44,6 +45,8 @@ const Index = () => {
         return <SemanticSearch />;
       case "actions":
         return <ProjectsManager />;
+      case "autonomous":
+        return <AutonomousProjectsManager />;
       case "preferences":
         return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Preferências do Usuário - Em desenvolvimento</div>;
       case "privacy":
@@ -62,9 +65,11 @@ const Index = () => {
     <AuthGuard>
       <div className="min-h-screen bg-white dark:bg-gray-950">
         <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
-          <PageTransition>
-            {renderContent(currentSection)}
-          </PageTransition>
+          <div className="relative h-full overflow-hidden">
+            <PageTransition>
+              {renderContent(currentSection)}
+            </PageTransition>
+          </div>
         </PremiumAppLayout>
         
         <ConnectionStatus />
