@@ -1,77 +1,108 @@
 
-import { useState } from "react";
-import PremiumAppLayout from "../components/layout/PremiumAppLayout";
-import Chat from "../components/Chat";
-import Dashboard from "../components/dashboard/Dashboard";
-import ProjectsManager from "../components/ProjectsManager";
-import MemoryManager from "../components/MemoryManager";
-import DocumentsManager from "../components/DocumentsManager";
-import SemanticSearch from "../components/SemanticSearch";
-import AuthGuard from "../components/auth/AuthGuard";
-import { ConnectionStatus } from "../components/ui/connection-status";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { PageTransition } from "@/components/ui/transitions";
+import { Navigate } from "react-router-dom";
+import Sidebar from "@/components/layout/Sidebar";
+import Dashboard from "@/components/dashboard/Dashboard";
+import Chat from "@/components/Chat";
+import Documents from "@/components/Documents";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
 
 const Index = () => {
-  const [currentSection, setCurrentSection] = useState("dashboard");
-  const { isAuthenticated } = useAuth();
+  const { user, loading } = useAuth();
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
 
-  const handleSectionChange = (section: string, id?: string) => {
-    console.log(`🔗 Navegando para seção: ${section}`, id ? `com ID: ${id}` : '');
-    
-    if (section !== currentSection) {
-      setCurrentSection(section);
-      
-      if (id) {
-        console.log(`Navegando para ${section} com ID: ${id}`);
-      }
+  useEffect(() => {
+    if (!isMobile) {
+      setSidebarOpen(true);
     }
-  };
+  }, [isMobile]);
 
-  const renderContent = (section: string) => {
-    console.log(`🎨 Renderizando conteúdo para seção: ${section}`);
-    
-    switch (section) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+  const renderContent = () => {
+    switch (activeSection) {
       case "dashboard":
         return <Dashboard />;
       case "chat":
         return <Chat />;
-      case "memory":
-        return <MemoryManager />;
       case "documents":
-        return <DocumentsManager />;
-      case "search":
-        return <SemanticSearch />;
-      case "actions":
-        return <ProjectsManager />;
-      case "preferences":
-        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Preferências do Usuário - Em desenvolvimento</div>;
-      case "privacy":
-        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Configurações de IA - Em desenvolvimento</div>;
-      case "subscription":
-        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Assinatura - Em desenvolvimento</div>;
-      case "security":
-        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Privacidade - Em desenvolvimento</div>;
+        return <Documents />;
       default:
-        console.log(`⚠️ Seção desconhecida: ${section}, retornando para Dashboard`);
         return <Dashboard />;
     }
   };
 
   return (
-    <AuthGuard>
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
-          <div className="relative h-full overflow-hidden">
-            <PageTransition>
-              {renderContent(currentSection)}
-            </PageTransition>
+    <div className="min-h-screen bg-black text-white flex w-full">
+      {/* Mobile Header */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="text-white hover:bg-white/10"
+              aria-label="Toggle menu"
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+            <h1 className="text-lg font-semibold">Alexia</h1>
+            <div className="w-10" />
           </div>
-        </PremiumAppLayout>
-        
-        <ConnectionStatus />
+        </div>
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        ${isMobile ? 'fixed inset-y-0 left-0 z-40' : 'relative'}
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        transition-transform duration-300 ease-in-out
+        ${isMobile ? 'w-80' : 'w-64'}
+        border-r border-white/10
+      `}>
+        <Sidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          onClose={() => setSidebarOpen(false)}
+        />
       </div>
-    </AuthGuard>
+
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className={`
+        flex-1 min-w-0 flex flex-col
+        ${isMobile ? 'pt-16' : ''}
+      `}>
+        <div className="flex-1 overflow-y-auto">
+          {renderContent()}
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -56,7 +56,6 @@ const Dashboard = () => {
       if (error) {
         await refreshSession();
       } else {
-        // Simulate refresh delay
         setTimeout(() => {
           window.location.reload();
         }, 1000);
@@ -68,11 +67,10 @@ const Dashboard = () => {
     }
   };
 
-  // Show auth guard for unauthenticated users
   return (
     <AuthGuard>
-      <div className="h-full overflow-auto">
-        <div className="p-6 space-y-6 animate-premium-fade-in">
+      <div className="h-full w-full overflow-y-auto">
+        <div className="min-h-full p-6 space-y-6 animate-premium-fade-in">
           {/* Header */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -90,6 +88,7 @@ const Dashboard = () => {
                   onClick={handleRefresh}
                   disabled={refreshing}
                   className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
+                  aria-label="Atualizar dashboard"
                 >
                   <RefreshCw className={`w-5 h-5 text-white/60 ${refreshing ? 'animate-spin' : ''}`} />
                 </button>
@@ -149,7 +148,7 @@ const Dashboard = () => {
           {/* Dashboard Grid */}
           {!statsLoading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Activity Chart - Largo */}
+              {/* Activity Chart */}
               <div className="md:col-span-2">
                 <PremiumCard variant="elevated" className="h-full">
                   <div className="flex items-center gap-3 mb-4">
@@ -180,7 +179,7 @@ const Dashboard = () => {
                 tokenLimit={statsError ? 0 : stats.tokenLimit}
               />
 
-              {/* Insights Card - Largo */}
+              {/* Insights Card */}
               <div className="md:col-span-2">
                 <InsightsCard 
                   insights={insightsError ? [] : insights} 

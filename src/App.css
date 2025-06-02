@@ -1,28 +1,198 @@
 
-/* Reset some default styles for a cleaner look */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset básico para garantir scroll nativo */
 * {
   box-sizing: border-box;
 }
 
-/* Ensure smooth scrolling */
-html {
-  scroll-behavior: smooth;
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-/* Custom scrollbar styles */
-::-webkit-scrollbar {
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Scroll nativo com estilo personalizado */
+.premium-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.premium-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+.premium-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+.premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Scroll para iOS - garantir comportamento nativo */
+@supports (-webkit-overflow-scrolling: touch) {
+  .ios-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+}
+
+/* Garantir que elementos com overflow funcionem corretamente */
+.overflow-y-auto {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Estilo para links e botões acessíveis */
+.btn-accessible {
+  min-height: 44px;
+  min-width: 44px;
+  transition: all 0.2s ease;
+}
+
+.btn-accessible:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Animações premium */
+@keyframes premium-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes premium-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-premium-fade-in {
+  animation: premium-fade-in 0.3s ease-out;
+}
+
+.animate-premium-scale-in {
+  animation: premium-scale-in 0.2s ease-out;
+}
+
+/* Gradientes personalizados */
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 btn-accessible;
+}
+
+/* Efeitos hover premium */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Estilos para estados vazios */
+.empty-state-icon {
+  @apply w-12 h-12 bg-white/10 rounded-full flex items-center justify-center;
+}
+
+/* Containers responsivos */
+.container-responsive {
+  @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Touch targets para mobile */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Garantir que modals e overlays funcionem corretamente */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+/* Estados de loading */
+.loading-spinner {
+  @apply animate-spin rounded-full border-2 border-white/20 border-t-white;
+}
+
+/* Fixes para WebKit no iOS */
+input, textarea, select {
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+/* Garantir que elementos focáveis tenham indicação visual */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Otimizações para performance */
+.gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Classes utilitárias para texto */
+.text-title {
+  @apply text-white font-semibold;
+}
+
+.text-subtitle {
+  @apply text-white/80;
+}
+
+.text-caption {
+  @apply text-white/60 text-sm;
+}
+
+.text-muted {
+  @apply text-white/40 text-xs;
 }
