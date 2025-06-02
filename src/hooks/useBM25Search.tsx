@@ -191,13 +191,24 @@ export function useBM25Search() {
               return match ? match[0] : term;
             });
 
+          // Safely extract numeric values from details
+          const termFrequency = Object.values(details).reduce((sum: number, d: any) => {
+            const tf = typeof d.tf === 'number' ? d.tf : 0;
+            return sum + tf;
+          }, 0);
+
+          const inverseDocumentFrequency = Object.values(details).reduce((sum: number, d: any) => {
+            const idf = typeof d.idf === 'number' ? d.idf : 0;
+            return sum + idf;
+          }, 0);
+
           results.push({
             ...doc,
             score: boostedScore,
             highlights,
             relevanceFactors: {
-              termFrequency: Object.values(details).reduce((sum: number, d: any) => sum + Number(d.tf || 0), 0),
-              inverseDocumentFrequency: Object.values(details).reduce((sum: number, d: any) => sum + Number(d.idf || 0), 0),
+              termFrequency,
+              inverseDocumentFrequency,
               documentLength: documentLengths.current.get(doc.id) || 0,
               fieldBoosts: boostFields
             }
