@@ -13,6 +13,8 @@ import { useAutonomousProjects } from '@/hooks/useAutonomousProjects';
 import { useProjects } from '@/hooks/useProjects';
 import { Brain, CheckCircle, Clock, AlertTriangle, Plus, Calendar, Users, Target, Lightbulb } from 'lucide-react';
 import ExecutionDashboard from './ExecutionDashboard';
+import PersonalizedCoaching from '../learning/PersonalizedCoaching';
+import ProcessOptimization from '../learning/ProcessOptimization';
 
 const AutonomousProjectsManager = () => {
   const { projects } = useProjects();
@@ -167,10 +169,13 @@ const AutonomousProjectsManager = () => {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="execution">Execução</TabsTrigger>
+            <TabsTrigger value="coaching">Coaching</TabsTrigger>
+            <TabsTrigger value="optimization">Otimização</TabsTrigger>
             <TabsTrigger value="epics">Épicos</TabsTrigger>
             <TabsTrigger value="tasks">Tarefas</TabsTrigger>
-            <TabsTrigger value="decisions">Decisões Autônomas</TabsTrigger>
-            <TabsTrigger value="alerts">Alertas Cognitivos</TabsTrigger>
+            <TabsTrigger value="decisions">Decisões</TabsTrigger>
+            <TabsTrigger value="alerts">Alertas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -263,6 +268,18 @@ const AutonomousProjectsManager = () => {
                 })}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="execution" className="space-y-6">
+            <ExecutionDashboard />
+          </TabsContent>
+
+          <TabsContent value="coaching" className="space-y-6">
+            <PersonalizedCoaching />
+          </TabsContent>
+
+          <TabsContent value="optimization" className="space-y-6">
+            <ProcessOptimization />
           </TabsContent>
 
           <TabsContent value="epics" className="space-y-6">
