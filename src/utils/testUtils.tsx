@@ -37,7 +37,7 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
       queries: {
         retry: false,
         staleTime: 0,
-        cacheTime: 0,
+        gcTime: 0,
       },
       mutations: {
         retry: false,
@@ -79,7 +79,7 @@ export const createTestQueryClient = () =>
       queries: {
         retry: false,
         staleTime: 0,
-        cacheTime: 0,
+        gcTime: 0,
       },
       mutations: {
         retry: false,
