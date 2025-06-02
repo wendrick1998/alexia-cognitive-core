@@ -44,26 +44,64 @@ const Index = () => {
   const renderContent = (section: string) => {
     console.log(`🎨 Renderizando conteúdo para seção: ${section}`);
     
+    const contentStyle = "h-full overflow-y-auto premium-scrollbar momentum-scroll";
+    
     switch (section) {
       case "dashboard":
-        return <Dashboard />;
+        return (
+          <div className={contentStyle}>
+            <Dashboard />
+          </div>
+        );
       case "chat":
-        return <Chat />;
+        return (
+          <div className="h-full flex flex-col">
+            <Chat />
+          </div>
+        );
       case "memory":
-        return <MemoryManager />;
+        return (
+          <div className={contentStyle}>
+            <MemoryManager />
+          </div>
+        );
       case "documents":
-        return <DocumentsManager />;
+        return (
+          <div className={contentStyle}>
+            <DocumentsManager />
+          </div>
+        );
       case "search":
-        return <SemanticSearch />;
+        return (
+          <div className={contentStyle}>
+            <SemanticSearch />
+          </div>
+        );
       case "actions":
-        return <ProjectsManager />;
+        return (
+          <div className={contentStyle}>
+            <ProjectsManager />
+          </div>
+        );
       case "privacy":
-        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Configurações de IA - Em desenvolvimento</div>;
+        return (
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            Configurações de IA - Em desenvolvimento
+          </div>
+        );
       case "subscription":
-        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Assinatura - Em desenvolvimento</div>;
+        return (
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            Assinatura - Em desenvolvimento
+          </div>
+        );
       default:
         console.log(`⚠️ Seção desconhecida: ${section}, retornando para Dashboard`);
-        return <Dashboard />;
+        return (
+          <div className={contentStyle}>
+            <Dashboard />
+          </div>
+        );
     }
   };
 
@@ -71,7 +109,7 @@ const Index = () => {
     <AuthGuard>
       <div className="min-h-screen bg-white dark:bg-gray-950">
         <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
-          <div className="relative h-full overflow-hidden">
+          <div className="h-full overflow-hidden">
             <PageTransition>
               {renderContent(currentSection)}
             </PageTransition>
