@@ -198,11 +198,9 @@
   animation: slideUpFadeIn 0.3s ease-out;
 }
 
-/* Responsive PWA Optimizations */
-@media (max-width: 768px) {
-  .ios-pwa .fixed {
-    bottom: calc(1rem + env(safe-area-inset-bottom));
-  }
+/* Bottom Navigation Safe Area */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Prevent zoom on iOS form inputs */
@@ -224,5 +222,18 @@
   input[type="tel"],
   input[type="color"] {
     font-size: 16px !important;
+  }
+}
+
+/* Mobile specific layout adjustments */
+@media (max-width: 768px) {
+  /* Ensure bottom navigation doesn't interfere with chat input */
+  .chat-input-container {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
+  }
+  
+  /* Fix for PWA standalone mode */
+  .ios-pwa .fixed {
+    bottom: calc(1rem + env(safe-area-inset-bottom));
   }
 }

@@ -7,6 +7,8 @@ import ChatInput from "./chat/ChatInput";
 import ChatWelcome from "./chat/ChatWelcome";
 import ChatHeader from "./chat/ChatHeader";
 import { ConnectionStatus } from "./ui/connection-status";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 const Chat = () => {
   const { user } = useAuth();
@@ -21,6 +23,7 @@ const Chat = () => {
 
   const [processing, setProcessing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -71,7 +74,7 @@ const Chat = () => {
       <div className="flex-shrink-0">
         <ChatHeader 
           currentConversation={currentConversation}
-          isMobile={false}
+          isMobile={isMobile}
         />
       </div>
 
@@ -93,8 +96,11 @@ const Chat = () => {
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+      {/* Input Area with Mobile Safe Area */}
+      <div className={cn(
+        "flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950",
+        isMobile ? "chat-input-container" : ""
+      )}>
         <div className="p-4">
           <ChatInput
             processing={processing}

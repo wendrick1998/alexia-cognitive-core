@@ -4,7 +4,9 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import DesktopSidebar from "@/components/premium/DesktopSidebar";
 import ConversationSidebar from "@/components/ConversationSidebar";
+import BottomNavigation from "@/components/navigation/BottomNavigation";
 import { PWALayout } from "@/components/layout/PWALayout";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PremiumAppLayoutProps {
   children: React.ReactNode;
@@ -16,6 +18,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isConversationSidebarOpen, setIsConversationSidebarOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleResize = () => {
@@ -28,6 +31,10 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleMenuToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
   if (!isAuthenticated) {
     return (
@@ -51,7 +58,10 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Main Content with Proper Scroll */}
-          <main className="flex-1 overflow-y-auto bg-white dark:bg-gray-950 premium-scrollbar momentum-scroll">
+          <main className={cn(
+            "flex-1 overflow-y-auto bg-white dark:bg-gray-950 premium-scrollbar momentum-scroll",
+            isMobile && "pb-20" // Add bottom padding for mobile navigation
+          )}>
             <div className="h-full">
               {children}
             </div>
@@ -75,6 +85,15 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
               />
             </div>
           </div>
+        )}
+
+        {/* Bottom Navigation - Mobile Only */}
+        {isMobile && (
+          <BottomNavigation 
+            currentSection={currentSection}
+            onSectionChange={onSectionChange}
+            onMenuToggle={handleMenuToggle}
+          />
         )}
 
         {/* Conversation Sidebar */}
