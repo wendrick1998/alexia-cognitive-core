@@ -1,7 +1,8 @@
 
 import { Conversation, Message } from '@/hooks/useConversations';
+import { IntegratedMemoryResponse } from '@/hooks/useIntegratedMemory';
 import ChatHeader from './ChatHeader';
-import ChatContent from './ChatContent';
+import EnhancedChatContent from './EnhancedChatContent';
 import ChatInputArea from './ChatInputArea';
 
 interface ChatAreaProps {
@@ -13,6 +14,7 @@ interface ChatAreaProps {
   isMobile: boolean;
   isNavigating?: boolean;
   renderMessageExtras?: (message: Message) => React.ReactNode;
+  memoryDataMap?: Map<string, IntegratedMemoryResponse>;
 }
 
 const ChatArea = ({ 
@@ -23,11 +25,13 @@ const ChatArea = ({
   onBackToConversations, 
   isMobile,
   isNavigating = false,
-  renderMessageExtras
+  renderMessageExtras,
+  memoryDataMap = new Map()
 }: ChatAreaProps) => {
-  console.log('🎨 ChatArea renderizado:', {
+  console.log('🎨 ChatArea renderizado com memória:', {
     conversation: currentConversation?.id,
     messages: messages.length,
+    memoryEntries: memoryDataMap.size,
     processing,
     isNavigating
   });
@@ -44,12 +48,13 @@ const ChatArea = ({
         />
       </div>
 
-      {/* Content Area - Scrollable section with proper overflow */}
-      <ChatContent
+      {/* Content Area - Enhanced with memory integration */}
+      <EnhancedChatContent
         currentConversation={currentConversation}
         messages={messages}
         processing={processing}
         isNavigating={isNavigating}
+        memoryDataMap={memoryDataMap}
         renderMessageExtras={renderMessageExtras}
       />
 

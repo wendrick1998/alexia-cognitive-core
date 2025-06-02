@@ -1,134 +1,282 @@
+/**
+ * @modified_by Manus AI
+ * @date 1 de junho de 2025
+ * @description Correção de alinhamentos e padronização de espaçamentos no componente Chat
+ * Implementa tokens de espaçamento e melhora consistência visual
+ */
 
-import { useState, useEffect, useRef } from "react";
-import { useConversations } from "@/hooks/useConversations";
-import { useAuth } from "@/hooks/useAuth";
-import ChatMessages from "./chat/ChatMessages";
-import ChatInput from "./chat/ChatInput";
-import ChatWelcome from "./chat/ChatWelcome";
-import ChatHeader from "./chat/ChatHeader";
-import { ConnectionStatus } from "./ui/connection-status";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
-import { MobileScrollWrapper } from "./layout/MobileScrollWrapper";
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from "@/hooks/use-toast";
+import { useConversations } from '@/hooks/useConversations';
+import { useChatProcessor } from '@/hooks/useChatProcessor';
+import { useFocusMode } from '@/hooks/useFocusMode';
+import { useIntegratedMemory, IntegratedMemoryResponse } from '@/hooks/useIntegratedMemory';
+import PremiumChatLayout from './chat/PremiumChatLayout';
+import FocusMode from './focus/FocusMode';
+import FloatingActionButton from './chat/FloatingActionButton';
+import { useIsMobile } from '@/hooks/use-mobile';
+import ResponseSource from './ResponseSource';
 
 const Chat = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const isMobile = useIsMobile();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
   const {
-    messages,
-    currentConversation,
     conversations,
-    loading,
+    currentConversation,
+    messages,
     createAndNavigateToNewConversation,
-    setCurrentConversation
+    navigateToConversation,
+    conversationState,
+    setMessages,
+    updateConversationTimestamp
   } = useConversations();
 
-  const [processing, setProcessing] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
+  const { processing, processMessage } = useChatProcessor();
+  const { isActive: isFocusModeActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
+  const { processMemoryForMessage } = useIntegratedMemory();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Map para armazenar dados de memória por mensagem
+  const [memoryDataMap, setMemoryDataMap] = useState<Map<string, IntegratedMemoryResponse>>(new Map());
+
+  // Função para scroll suave até a última mensagem
+  const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    }
   };
 
+  // Scroll automático quando novas mensagens são adicionadas
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (messages.length > 0) {
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  }, [messages.length]);
+
+  const handleNewConversation = async () => {
+    console.log('🔥 Criando nova conversa...');
+    const newConversation = await createAndNavigateToNewConversation();
+    if (newConversation) {
+      toast({
+        title: "Nova conversa criada",
+        description: "Conversa pronta para uso!",
+      });
+    }
+  };
+
+  const handleConversationSelect = async (conversation: any) => {
+    console.log(`🧭 Selecionando conversa: ${conversation.id}`);
+    await navigateToConversation(conversation);
+  };
 
   const handleSendMessage = async (message: string) => {
-    if (!message.trim() || processing) return;
+    if (!currentConversation) {
+      console.log('⚠️ Criando nova conversa automaticamente...');
+      const newConversation = await createAndNavigateToNewConversation();
+      if (!newConversation) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar uma nova conversa",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
-    setProcessing(true);
+    const conversationId = currentConversation?.id;
+    if (!conversationId) return;
+
+    // Adicionar mensagem do usuário imediatamente
+    const userMessage = {
+      id: `temp-${Date.now()}`,
+      conversation_id: conversationId,
+      role: 'user' as const,
+      content: message,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    scrollToBottom();
 
     try {
-      // Process message logic here
-      console.log("Sending message:", message);
+      // 1. Processar memória ANTES de enviar para o LLM
+      console.log('🧠 Processando memória integrada...');
+      const memoryData = await processMemoryForMessage(
+        message,
+        conversationId,
+        currentConversation?.project_id
+      );
+
+      // 2. Processar mensagem com LLM
+      const response = await processMessage(message, conversationId);
       
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      if (response) {
+        const aiMessageId = `temp-ai-${Date.now()}`;
+        const aiMessage = {
+          id: aiMessageId,
+          conversation_id: conversationId,
+          role: 'assistant' as const,
+          content: response.response,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          metadata: {
+            fromCache: response.metadata?.fromCache || false,
+            usedFallback: response.metadata?.usedFallback || false,
+            originalModel: response.metadata?.originalModel || '',
+            currentModel: response.model || '',
+            responseTime: response.metadata?.responseTime || 0
+          }
+        };
+
+        // 3. Armazenar dados de memória para a resposta
+        if (memoryData) {
+          const updatedMemoryData = {
+            ...memoryData,
+            document_contexts: [], // TODO: Integrar com documentos do response
+            contexts_found: memoryData.contexts_found + (response.chunks_found || 0)
+          };
+          
+          setMemoryDataMap(prev => new Map(prev.set(aiMessageId, updatedMemoryData)));
+        }
+
+        setMessages(prev => [...prev, aiMessage]);
+        await updateConversationTimestamp(conversationId);
+        scrollToBottom();
+
+        toast({
+          title: "Mensagem enviada",
+          description: memoryData?.context_used 
+            ? `IA respondeu com ${memoryData.contexts_found} contexto(s)` 
+            : "IA respondeu",
+        });
+      }
     } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
-    } finally {
-      setProcessing(false);
+      console.error('❌ Erro ao enviar mensagem:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao enviar mensagem",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleNewChat = async () => {
-    try {
-      await createAndNavigateToNewConversation();
-    } catch (error) {
-      console.error("Erro ao criar nova conversa:", error);
+  const handleFloatingAction = (action: string) => {
+    switch (action) {
+      case 'new-chat':
+        handleNewConversation();
+        break;
+      case 'focus-mode':
+        activateFocusMode();
+        toast({
+          title: "Focus Mode Ativado",
+          description: "Modo de escrita minimalista ativado",
+        });
+        break;
+      default:
+        console.log('Ação não reconhecida:', action);
     }
   };
 
-  if (!user) {
+  // Listen for keyboard shortcuts
+  useEffect(() => {
+    const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey) {
+        switch (e.key) {
+          case 'n':
+            e.preventDefault();
+            handleNewConversation();
+            break;
+          case 'f':
+            e.preventDefault();
+            activateFocusMode();
+            break;
+        }
+      }
+      
+      if (e.key === 'Escape' && isFocusModeActive) {
+        deactivateFocusMode();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyboardShortcuts);
+    return () => window.removeEventListener('keydown', handleKeyboardShortcuts);
+  }, [isFocusModeActive, deactivateFocusMode, activateFocusMode]);
+
+  const renderMessageWithSource = (message: any) => {
+    if (message.role !== 'assistant' || !message.metadata) {
+      return null;
+    }
+    
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500">Faça login para acessar o chat</p>
-      </div>
+      <ResponseSource 
+        fromCache={message.metadata.fromCache}
+        usedFallback={message.metadata.usedFallback}
+        originalModel={message.metadata.originalModel}
+        currentModel={message.metadata.currentModel}
+        responseTime={message.metadata.responseTime}
+      />
     );
-  }
+  };
 
-  // 🚫 SEM BOUNCE SCROLL - Wrapper específico para mobile
-  const ChatContent = () => (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-950 overscroll-contain">
-      {/* Header */}
-      <div className="flex-shrink-0">
-        <ChatHeader 
+  console.log('🗨️ Chat renderizado com memória integrada:', {
+    conversations: conversations.length,
+    currentConversation: currentConversation?.id,
+    messages: messages.length,
+    memoryDataEntries: memoryDataMap.size,
+    processing
+  });
+
+  return (
+    <>
+      <div className="h-full relative">
+        <PremiumChatLayout
+          conversations={conversations}
           currentConversation={currentConversation}
-          isMobile={isMobile}
+          messages={messages}
+          processing={processing}
+          onConversationSelect={handleConversationSelect}
+          onNewConversation={handleNewConversation}
+          onSendMessage={handleSendMessage}
+          isCreatingNew={conversationState.isCreatingNew}
+          isNavigating={conversationState.isNavigating}
+          renderMessageExtras={renderMessageWithSource}
+          memoryDataMap={memoryDataMap}
+          className="messages-container"
         />
-      </div>
 
-      {/* Messages Area with Controlled Scroll */}
-      <div className="flex-1 overflow-hidden">
-        <div className={cn(
-          "h-full overflow-y-auto overscroll-contain",
-          "premium-scrollbar momentum-scroll chat-messages-container"
-        )}>
-          <div className="h-full flex flex-col">
-            {messages.length === 0 ? (
-              <ChatWelcome />
-            ) : (
-              <div className="flex-1 px-4 py-6">
-                <ChatMessages 
-                  messages={messages} 
-                  loading={loading}
-                  processing={processing}
-                />
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+        <div ref={messagesEndRef} />
 
-      {/* Input Area with Mobile Safe Area */}
-      <div className={cn(
-        "flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950",
-        isMobile ? "chat-input-container" : ""
-      )}>
-        <div className="p-4">
-          <ChatInput
-            processing={processing}
-            currentConversation={currentConversation}
-            onSendMessage={handleSendMessage}
-            placeholder="Digite sua mensagem..."
+        {isMobile && (
+          <FloatingActionButton 
+            onAction={(action) => {
+              switch (action) {
+                case 'new-chat':
+                  handleNewConversation();
+                  break;
+                case 'focus-mode':
+                  activateFocusMode();
+                  break;
+              }
+            }}
+            currentSection="chat"
+            hasActiveChat={!!currentConversation}
+            hasDocument={false}
+            className="touch-target"
           />
-        </div>
+        )}
       </div>
 
-      <ConnectionStatus />
-    </div>
-  );
-
-  // Renderizar com wrapper mobile ou sem wrapper para desktop
-  return isMobile ? (
-    <MobileScrollWrapper className="h-full">
-      <ChatContent />
-    </MobileScrollWrapper>
-  ) : (
-    <ChatContent />
+      <FocusMode
+        isActive={isFocusModeActive}
+        onExit={deactivateFocusMode}
+        onSendMessage={handleSendMessage}
+        initialText=""
+      />
+    </>
   );
 };
 
