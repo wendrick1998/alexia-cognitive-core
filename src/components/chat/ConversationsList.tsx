@@ -36,7 +36,6 @@ const ConversationsList = ({
     conv.last_message_preview?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Separar conversas fixadas das normais
   const pinnedConversations = filteredConversations.filter(conv => conv.is_favorite);
   const normalConversations = filteredConversations.filter(conv => !conv.is_favorite);
 
@@ -109,7 +108,6 @@ const ConversationsList = ({
             </div>
           </div>
 
-          {/* Menu de opções */}
           <div className="flex-shrink-0">
             <ConversationMenu
               conversation={conversation}
@@ -147,8 +145,7 @@ const ConversationsList = ({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Barra de pesquisa */}
-      <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+      <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50 flex-shrink-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
@@ -156,15 +153,20 @@ const ConversationsList = ({
             placeholder="Buscar conversas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100"
           />
         </div>
       </div>
 
-      {/* Lista de conversas */}
-      <div className="flex-1 overflow-y-auto premium-scrollbar">
-        <div className="p-2 space-y-1">
-          {/* Conversas fixadas */}
+      <div 
+        className="flex-1 overflow-y-auto overflow-x-hidden"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          scrollBehavior: 'smooth'
+        }}
+      >
+        <div className="p-2 space-y-1 pb-8">
           {pinnedConversations.length > 0 && (
             <div className="mb-4">
               <h5 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2 mb-2">
@@ -174,7 +176,6 @@ const ConversationsList = ({
             </div>
           )}
 
-          {/* Conversas normais */}
           {normalConversations.length > 0 && (
             <div>
               {pinnedConversations.length > 0 && (

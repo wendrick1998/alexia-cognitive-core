@@ -46,7 +46,6 @@ const ChatMessages = ({ messages, processing, loading = false, renderMessageExtr
   // Auto-scroll immediately when loading existing conversation
   useEffect(() => {
     if (messages.length > 0 && !loading) {
-      // Immediate scroll for existing conversations
       scrollToBottom('auto');
     }
   }, [messages.length, loading, scrollToBottom]);
@@ -74,13 +73,14 @@ const ChatMessages = ({ messages, processing, loading = false, renderMessageExtr
   return (
     <div 
       ref={containerRef}
-      className="h-full overflow-y-auto overflow-x-hidden chat-messages-scroll"
+      className="h-full overflow-y-auto overflow-x-hidden"
       style={{
         WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain'
+        overscrollBehavior: 'contain',
+        scrollBehavior: 'smooth'
       }}
     >
-      <div className="pb-32 md:pb-8">
+      <div className="pb-48 md:pb-32">
         <div className="p-4 space-y-4 min-h-full">
           {messages.map((message, index) => (
             <div key={message.id} className="space-y-2">

@@ -56,36 +56,6 @@
   background-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Chat Messages Scroll - Optimized for mobile */
-.chat-messages-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  scroll-behavior: smooth;
-}
-
-.chat-messages-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-
-.chat-messages-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chat-messages-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 2px;
-}
-
-.dark .chat-messages-scroll {
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-}
-
-.dark .chat-messages-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
 /* Layout utilities */
 .flex-scroll-layout {
   display: flex;
@@ -189,9 +159,9 @@
     min-height: 100dvh;
   }
   
-  /* Chat mobile with enhanced padding for bottom nav */
+  /* Chat mobile with enhanced padding for bottom nav and keyboard */
   .chat-messages-mobile {
-    padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -199,19 +169,39 @@
   
   /* Dashboard mobile with proper padding */
   .dashboard-content-mobile {
-    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
 
-  /* General content area for mobile */
+  /* General content area for mobile - increased padding */
   .mobile-content-safe {
-    padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
     height: calc(100vh - 80px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+  }
+  
+  /* Keyboard virtual detection */
+  @supports (height: 100dvh) {
+    .mobile-content-safe {
+      height: calc(100dvh - 80px);
+    }
+  }
+  
+  /* Special handling for chat in mobile */
+  .mobile-chat-container {
+    height: calc(100vh - 60px);
+    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+  }
+  
+  @supports (height: 100dvh) {
+    .mobile-chat-container {
+      height: calc(100dvh - 60px);
+    }
   }
 }
 
@@ -293,7 +283,12 @@
   }
   
   .pb-safe-bottom-nav {
-    padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+  }
+  
+  /* Enhanced mobile chat padding */
+  .pb-safe-chat-mobile {
+    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Auto-scroll utilities */
@@ -316,5 +311,17 @@
 
   .z-sidebar {
     z-index: 50;
+  }
+  
+  .z-dropdown {
+    z-index: 60;
+  }
+}
+
+/* Enhanced dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
   }
 }
