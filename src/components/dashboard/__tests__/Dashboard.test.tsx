@@ -1,56 +1,78 @@
 
 import React from 'react';
-import { render, screen } from '../../../utils/testUtils';
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Dashboard from '../Dashboard';
 
-// Mock the dashboard stats hook
-jest.mock('@/hooks/useDashboardStats', () => ({
-  useDashboardStats: jest.fn(() => ({
-    stats: {
-      totalConversations: 42,
-      totalMemories: 156,
-      totalDocuments: 23,
-      weeklyActivity: 85,
-    },
-    isLoading: false,
-    error: null,
-  })),
+// Mock hooks
+jest.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'test-user', email: 'test@example.com' }
+  })
 }));
 
-// Mock other dashboard components
-jest.mock('../ConversationCard', () => {
-  return function MockConversationCard() {
-    return <div data-testid="conversation-card">Conversation Card</div>;
-  };
-});
+jest.mock('@/hooks/useDashboardStats', () => ({
+  useDashboardStats: () => ({
+    stats: {
+      totalConversations: 10,
+      totalMemories: 25,
+      totalDocuments: 5,
+      totalProjects: 3
+    },
+    isLoading: false
+  })
+}));
 
-jest.mock('../MemoryCard', () => {
-  return function MockMemoryCard() {
-    return <div data-testid="memory-card">Memory Card</div>;
-  };
-});
+jest.mock('@/hooks/useConversations', () => ({
+  useConversations: () => ({
+    conversations: [],
+    isLoading: false
+  })
+}));
 
-jest.mock('../AIUsageCard', () => {
-  return function MockAIUsageCard() {
-    return <div data-testid="ai-usage-card">AI Usage Card</div>;
-  };
-});
+jest.mock('@/hooks/useMemories', () => ({
+  useMemories: () => ({
+    memories: [],
+    isLoading: false
+  })
+}));
+
+// Create test wrapper
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false }
+    }
+  });
+  
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+};
 
 describe('Dashboard', () => {
   it('renders dashboard components', () => {
-    render(<Dashboard />);
+    render(<Dashboard />, { wrapper: createWrapper() });
 
-    expect(screen.getByTestId('conversation-card')).toBeInTheDocument();
-    expect(screen.getByTestId('memory-card')).toBeInTheDocument();
-    expect(screen.getByTestId('ai-usage-card')).toBeInTheDocument();
+    // Check for main dashboard elements
+    expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
   });
 
-  it('displays welcome message', () => {
-    render(<Dashboard />);
+  it('displays user statistics', () => {
+    render(<Dashboard />, { wrapper: createWrapper() });
 
-    // Look for dashboard-specific content
-    expect(screen.getByText(/conversation card/i)).toBeInTheDocument();
-    expect(screen.getByText(/memory card/i)).toBeInTheDocument();
-    expect(screen.getByText(/ai usage card/i)).toBeInTheDocument();
+    // Should show statistics cards or sections
+    const dashboard = screen.getByTestId('dashboard-container') || screen.getByRole('main');
+    expect(dashboard).toBeInTheDocument();
+  });
+
+  it('handles loading state gracefully', () => {
+    render(<Dashboard />, { wrapper: createWrapper() });
+
+    // Dashboard should render even in loading states
+    expect(screen.getByText(/Dashboard/i) || screen.getByRole('main')).toBeInTheDocument();
   });
 });

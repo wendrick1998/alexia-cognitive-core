@@ -1,285 +1,198 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 export interface CacheEntry<T = any> {
-  key: string;
   data: T;
   timestamp: number;
   accessCount: number;
-  lastAccessed: number;
-  ttl?: number;
-  size: number;
-  priority: number;
-}
-
-export interface CacheConfig {
-  maxSize: number;
-  defaultTTL: number;
-  compressionThreshold: number;
-  preloadStrategies: string[];
-  evictionPolicy: 'LRU' | 'LFU' | 'FIFO';
+  lastAccess: number;
+  expiresAt?: number;
 }
 
 export interface CacheMetrics {
   hitRate: number;
   missRate: number;
-  evictionCount: number;
   totalSize: number;
   entryCount: number;
   averageAccessTime: number;
 }
 
-export function useOptimizedCache() {
-  const { user } = useAuth();
-  const [cache, setCache] = useState<Map<string, CacheEntry>>(new Map());
+export function useOptimizedCache(maxSize: number = 100, ttl: number = 5 * 60 * 1000) {
+  const cache = useRef<Map<string, CacheEntry>>(new Map());
   const [metrics, setMetrics] = useState<CacheMetrics>({
     hitRate: 0,
     missRate: 0,
-    evictionCount: 0,
     totalSize: 0,
     entryCount: 0,
     averageAccessTime: 0
   });
 
-  const config = useRef<CacheConfig>({
-    maxSize: 50 * 1024 * 1024, // 50MB
-    defaultTTL: 300000, // 5 minutes
-    compressionThreshold: 1024, // 1KB
-    preloadStrategies: ['user_behavior', 'temporal_patterns'],
-    evictionPolicy: 'LRU'
-  });
-
   const accessTimes = useRef<number[]>([]);
-
-  // Calculate entry size (simplified)
-  const calculateSize = useCallback((data: any): number => {
-    return JSON.stringify(data).length * 2; // Rough estimate
-  }, []);
-
-  // Compress data if needed
-  const compressData = useCallback((data: any): any => {
-    const size = calculateSize(data);
-    if (size > config.current.compressionThreshold) {
-      // Simple compression simulation - in real app use actual compression
-      return {
-        compressed: true,
-        data: data,
-        originalSize: size
-      };
-    }
-    return data;
-  }, [calculateSize]);
-
-  // Decompress data
-  const decompressData = useCallback((entry: CacheEntry): any => {
-    if (entry.data?.compressed) {
-      return entry.data.data;
-    }
-    return entry.data;
-  }, []);
-
-  // Eviction strategies
-  const evictEntries = useCallback(() => {
-    const entries = Array.from(cache.entries());
-    let evicted = 0;
-
-    switch (config.current.evictionPolicy) {
-      case 'LRU':
-        entries.sort(([, a], [, b]) => a.lastAccessed - b.lastAccessed);
-        break;
-      case 'LFU':
-        entries.sort(([, a], [, b]) => a.accessCount - b.accessCount);
-        break;
-      case 'FIFO':
-        entries.sort(([, a], [, b]) => a.timestamp - b.timestamp);
-        break;
-    }
-
-    // Remove oldest 25% of entries
-    const toRemove = Math.ceil(entries.length * 0.25);
-    
-    setCache(prev => {
-      const newCache = new Map(prev);
-      for (let i = 0; i < toRemove && i < entries.length; i++) {
-        newCache.delete(entries[i][0]);
-        evicted++;
-      }
-      return newCache;
-    });
-
-    setMetrics(prev => ({
-      ...prev,
-      evictionCount: prev.evictionCount + evicted
-    }));
-
-    return evicted;
-  }, [cache]);
-
-  // Set cache entry
-  const set = useCallback((key: string, data: any, options?: { ttl?: number; priority?: number }) => {
-    const startTime = Date.now();
-    
-    const compressedData = compressData(data);
-    const size = calculateSize(compressedData);
-    
-    // Check if we need to evict
-    const currentSize = Array.from(cache.values()).reduce((acc, entry) => acc + entry.size, 0);
-    if (currentSize + size > config.current.maxSize) {
-      evictEntries();
-    }
-
-    const entry: CacheEntry = {
-      key,
-      data: compressedData,
-      timestamp: Date.now(),
-      accessCount: 0,
-      lastAccessed: Date.now(),
-      ttl: options?.ttl || config.current.defaultTTL,
-      size,
-      priority: options?.priority || 1
-    };
-
-    setCache(prev => new Map(prev).set(key, entry));
-    
-    const accessTime = Date.now() - startTime;
-    accessTimes.current.push(accessTime);
-    if (accessTimes.current.length > 100) {
-      accessTimes.current = accessTimes.current.slice(-100);
-    }
-
-    console.log(`📦 Cache SET: ${key} (${size} bytes)`);
-  }, [cache, compressData, calculateSize, evictEntries]);
-
-  // Get cache entry
-  const get = useCallback((key: string): any => {
-    const startTime = Date.now();
-    const entry = cache.get(key);
-    
-    if (!entry) {
-      setMetrics(prev => ({
-        ...prev,
-        missRate: prev.missRate + 1
-      }));
-      console.log(`📦 Cache MISS: ${key}`);
-      return null;
-    }
-
-    // Check TTL
-    if (entry.ttl && Date.now() - entry.timestamp > entry.ttl) {
-      setCache(prev => {
-        const newCache = new Map(prev);
-        newCache.delete(key);
-        return newCache;
-      });
-      console.log(`📦 Cache EXPIRED: ${key}`);
-      return null;
-    }
-
-    // Update access stats
-    setCache(prev => {
-      const newCache = new Map(prev);
-      const updatedEntry = {
-        ...entry,
-        accessCount: entry.accessCount + 1,
-        lastAccessed: Date.now()
-      };
-      newCache.set(key, updatedEntry);
-      return newCache;
-    });
-
-    setMetrics(prev => ({
-      ...prev,
-      hitRate: prev.hitRate + 1
-    }));
-
-    const accessTime = Date.now() - startTime;
-    accessTimes.current.push(accessTime);
-    if (accessTimes.current.length > 100) {
-      accessTimes.current = accessTimes.current.slice(-100);
-    }
-
-    console.log(`📦 Cache HIT: ${key}`);
-    return decompressData(entry);
-  }, [cache, decompressData]);
-
-  // Remove cache entry
-  const remove = useCallback((key: string) => {
-    setCache(prev => {
-      const newCache = new Map(prev);
-      newCache.delete(key);
-      return newCache;
-    });
-    console.log(`📦 Cache REMOVE: ${key}`);
-  }, []);
-
-  // Clear cache
-  const clear = useCallback(() => {
-    setCache(new Map());
-    console.log('📦 Cache CLEARED');
-  }, []);
-
-  // Preload strategy
-  const preload = useCallback(async (keys: string[], dataFetcher: (key: string) => Promise<any>) => {
-    console.log(`📦 Cache PRELOAD: ${keys.length} keys`);
-    
-    const promises = keys.map(async (key) => {
-      if (!cache.has(key)) {
-        try {
-          const data = await dataFetcher(key);
-          set(key, data, { priority: 2 }); // Higher priority for preloaded data
-        } catch (error) {
-          console.error(`Failed to preload ${key}:`, error);
-        }
-      }
-    });
-
-    await Promise.allSettled(promises);
-  }, [cache, set]);
-
-  // Update metrics
-  useEffect(() => {
-    const totalOperations = metrics.hitRate + metrics.missRate;
-    const avgAccessTime = accessTimes.current.length > 0 
-      ? accessTimes.current.reduce((a, b) => a + b, 0) / accessTimes.current.length 
-      : 0;
-
-    setMetrics(prev => ({
-      ...prev,
-      totalSize: Array.from(cache.values()).reduce((acc, entry) => acc + entry.size, 0),
-      entryCount: cache.size,
-      averageAccessTime: avgAccessTime,
-      hitRate: totalOperations > 0 ? prev.hitRate / totalOperations : 0,
-      missRate: totalOperations > 0 ? prev.missRate / totalOperations : 0
-    }));
-  }, [cache, metrics.hitRate, metrics.missRate]);
+  const hitCount = useRef(0);
+  const missCount = useRef(0);
 
   // Cleanup expired entries
-  useEffect(() => {
-    const cleanup = setInterval(() => {
-      const now = Date.now();
-      setCache(prev => {
-        const newCache = new Map();
-        for (const [key, entry] of prev.entries()) {
-          if (!entry.ttl || now - entry.timestamp < entry.ttl) {
-            newCache.set(key, entry);
-          }
-        }
-        return newCache;
-      });
-    }, 60000); // Check every minute
+  const cleanupExpired = useCallback(() => {
+    const now = Date.now();
+    const expired: string[] = [];
 
-    return () => clearInterval(cleanup);
+    for (const [key, entry] of cache.current) {
+      if (entry.expiresAt && entry.expiresAt < now) {
+        expired.push(key);
+      }
+    }
+
+    expired.forEach(key => cache.current.delete(key));
+    
+    if (expired.length > 0) {
+      console.log(`🧹 Cache cleanup: ${expired.length} entries expired`);
+    }
   }, []);
 
+  // LRU eviction when cache is full
+  const evictLRU = useCallback(() => {
+    if (cache.current.size < maxSize) return;
+
+    let oldestKey = '';
+    let oldestAccess = Date.now();
+
+    for (const [key, entry] of cache.current) {
+      if (entry.lastAccess < oldestAccess) {
+        oldestAccess = entry.lastAccess;
+        oldestKey = key;
+      }
+    }
+
+    if (oldestKey) {
+      cache.current.delete(oldestKey);
+      console.log(`📤 Cache eviction: ${oldestKey}`);
+    }
+  }, [maxSize]);
+
+  // Get item from cache
+  const get = useCallback(<T,>(key: string): T | null => {
+    const startTime = performance.now();
+    
+    cleanupExpired();
+    
+    const entry = cache.current.get(key);
+    
+    if (entry) {
+      // Update access tracking
+      entry.accessCount++;
+      entry.lastAccess = Date.now();
+      hitCount.current++;
+      
+      const accessTime = performance.now() - startTime;
+      accessTimes.current.push(accessTime);
+      
+      console.log(`✅ Cache hit: ${key} (${accessTime.toFixed(2)}ms)`);
+      return entry.data as T;
+    } else {
+      missCount.current++;
+      console.log(`❌ Cache miss: ${key}`);
+      return null;
+    }
+  }, [cleanupExpired]);
+
+  // Set item in cache
+  const set = useCallback(<T,>(key: string, data: T, customTTL?: number): void => {
+    cleanupExpired();
+    evictLRU();
+
+    const now = Date.now();
+    const expiresAt = customTTL ? now + customTTL : now + ttl;
+
+    cache.current.set(key, {
+      data,
+      timestamp: now,
+      accessCount: 1,
+      lastAccess: now,
+      expiresAt
+    });
+
+    console.log(`💾 Cache set: ${key} (expires in ${((expiresAt - now) / 1000).toFixed(1)}s)`);
+  }, [cleanupExpired, evictLRU, ttl]);
+
+  // Remove item from cache
+  const remove = useCallback((key: string): boolean => {
+    const deleted = cache.current.delete(key);
+    if (deleted) {
+      console.log(`🗑️ Cache remove: ${key}`);
+    }
+    return deleted;
+  }, []);
+
+  // Clear entire cache
+  const clear = useCallback((): void => {
+    const size = cache.current.size;
+    cache.current.clear();
+    hitCount.current = 0;
+    missCount.current = 0;
+    accessTimes.current = [];
+    console.log(`🧽 Cache cleared: ${size} entries removed`);
+  }, []);
+
+  // Check if key exists
+  const has = useCallback((key: string): boolean => {
+    cleanupExpired();
+    return cache.current.has(key);
+  }, [cleanupExpired]);
+
+  // Get cache statistics
+  const getStats = useCallback(() => {
+    cleanupExpired();
+    
+    const totalRequests = hitCount.current + missCount.current;
+    const hitRate = totalRequests > 0 ? (hitCount.current / totalRequests) : 0;
+    const missRate = totalRequests > 0 ? (missCount.current / totalRequests) : 0;
+    
+    // Calculate total size (rough estimate)
+    let totalSize = 0;
+    for (const entry of cache.current.values()) {
+      totalSize += JSON.stringify(entry.data).length;
+    }
+
+    // Calculate average access time
+    const avgAccessTime = accessTimes.current.length > 0 
+      ? accessTimes.current.reduce((a, b) => a + b, 0) / accessTimes.current.length
+      : 0;
+
+    return {
+      hitRate,
+      missRate,
+      totalSize,
+      entryCount: cache.current.size,
+      averageAccessTime: avgAccessTime,
+      totalRequests,
+      hitCount: hitCount.current,
+      missCount: missCount.current
+    };
+  }, [cleanupExpired]);
+
+  // Update metrics periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMetrics(getStats());
+    }, 5000); // Update every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [getStats]);
+
+  // Cleanup expired entries periodically
+  useEffect(() => {
+    const interval = setInterval(cleanupExpired, 60000); // Cleanup every minute
+    return () => clearInterval(interval);
+  }, [cleanupExpired]);
+
   return {
-    set,
     get,
+    set,
     remove,
     clear,
-    preload,
+    has,
+    getStats,
     metrics,
-    config: config.current,
-    size: cache.size
+    size: cache.current.size
   };
 }

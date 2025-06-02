@@ -1,46 +1,54 @@
 
 import React from 'react';
-import { render, screen, fireEvent } from '../../../utils/testUtils';
-import { BackButton } from '../back-button';
-
-const mockNavigate = jest.fn();
-
-jest.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate,
-}));
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import BackButton from '../back-button';
 
 describe('BackButton', () => {
+  const mockOnClick = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders with default label', () => {
-    render(<BackButton />);
+  it('renders with default props', () => {
+    render(<BackButton onClick={mockOnClick} />);
     
-    expect(screen.getByText('Voltar')).toBeInTheDocument();
+    const button = screen.getByRole('button');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveTextContent('Voltar');
   });
 
-  it('renders with custom label', () => {
-    render(<BackButton label="Retornar" />);
-    
-    expect(screen.getByText('Retornar')).toBeInTheDocument();
-  });
-
-  it('navigates to specified path when clicked', () => {
-    render(<BackButton to="/dashboard" />);
+  it('calls onClick when clicked', () => {
+    render(<BackButton onClick={mockOnClick} />);
     
     const button = screen.getByRole('button');
     fireEvent.click(button);
     
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+    expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 
-  it('navigates back when no path specified', () => {
-    render(<BackButton />);
+  it('can be disabled', () => {
+    render(<BackButton onClick={mockOnClick} disabled />);
     
     const button = screen.getByRole('button');
-    fireEvent.click(button);
+    expect(button).toBeDisabled();
     
-    expect(mockNavigate).toHaveBeenCalledWith(-1);
+    fireEvent.click(button);
+    expect(mockOnClick).not.toHaveBeenCalled();
+  });
+
+  it('can hide text', () => {
+    render(<BackButton onClick={mockOnClick} showText={false} />);
+    
+    const button = screen.getByRole('button');
+    expect(button).not.toHaveTextContent('Voltar');
+  });
+
+  it('accepts custom text', () => {
+    render(<BackButton onClick={mockOnClick} text="Retornar" />);
+    
+    const button = screen.getByRole('button');
+    expect(button).toHaveTextContent('Retornar');
   });
 });

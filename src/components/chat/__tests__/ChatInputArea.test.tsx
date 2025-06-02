@@ -1,41 +1,37 @@
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '../../../utils/testUtils';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import ChatInputArea from '../ChatInputArea';
-import { Conversation } from '@/hooks/useConversationsData';
 
 // Mock hooks
-jest.mock('@/hooks/use-mobile', () => ({
-  useIsMobile: jest.fn(() => false),
+jest.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({
+    toast: jest.fn()
+  })
 }));
 
-jest.mock('@/hooks/useMobileSafeArea', () => ({
-  useMobileSafeArea: jest.fn(() => ({ isIOSPWA: false })),
+jest.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'test-user' }
+  })
 }));
 
 describe('ChatInputArea', () => {
   const mockOnSendMessage = jest.fn();
-  const mockConversation: Conversation = {
-    id: '1',
-    user_id: 'test-user',
-    project_id: undefined,
-    session_id: 'test-session',
-    name: 'Test Conversation',
-    tags: [],
-    is_favorite: false,
-    is_archived: false,
-    category_id: undefined,
-    last_message_preview: undefined,
-    message_count: 1,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+  const mockConversation = {
+    id: 'test-conversation',
+    title: 'Test Conversation',
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: '2023-01-01T00:00:00Z',
+    user_id: 'test-user'
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders chat input area', () => {
+  it('renders textarea and send button', () => {
     render(
       <ChatInputArea
         processing={false}
@@ -44,22 +40,11 @@ describe('ChatInputArea', () => {
       />
     );
 
-    expect(screen.getByPlaceholderText(/digite sua mensagem/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(screen.getByRole('button')).toBeInTheDocument();
   });
 
-  it('shows different placeholder when no conversation', () => {
-    render(
-      <ChatInputArea
-        processing={false}
-        onSendMessage={mockOnSendMessage}
-        currentConversation={null}
-      />
-    );
-
-    expect(screen.getByPlaceholderText(/digite sua primeira mensagem/i)).toBeInTheDocument();
-  });
-
-  it('disables send when processing', () => {
+  it('disables input when processing', () => {
     render(
       <ChatInputArea
         processing={true}
@@ -68,14 +53,14 @@ describe('ChatInputArea', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText(/digite sua mensagem/i);
-    fireEvent.change(input, { target: { value: 'test message' } });
+    const textarea = screen.getByRole('textbox');
+    const button = screen.getByRole('button');
     
-    // The send functionality should be disabled when processing
-    expect(input).toBeInTheDocument();
+    expect(textarea).toBeDisabled();
+    expect(button).toBeDisabled();
   });
 
-  it('calls onSendMessage with correct text', async () => {
+  it('calls onSendMessage when form is submitted', async () => {
     render(
       <ChatInputArea
         processing={false}
@@ -84,14 +69,51 @@ describe('ChatInputArea', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText(/digite sua mensagem/i);
-    fireEvent.change(input, { target: { value: 'Hello Alex!' } });
-    
-    // Simulate send action (this will depend on the actual implementation)
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+    const textarea = screen.getByRole('textbox');
+    const button = screen.getByRole('button');
+
+    fireEvent.change(textarea, { target: { value: 'Test message' } });
+    fireEvent.click(button);
 
     await waitFor(() => {
-      expect(mockOnSendMessage).toHaveBeenCalledWith('Hello Alex!');
+      expect(mockOnSendMessage).toHaveBeenCalledWith('Test message');
     });
+  });
+
+  it('clears input after sending message', async () => {
+    render(
+      <ChatInputArea
+        processing={false}
+        onSendMessage={mockOnSendMessage}
+        currentConversation={mockConversation}
+      />
+    );
+
+    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
+    const button = screen.getByRole('button');
+
+    fireEvent.change(textarea, { target: { value: 'Test message' } });
+    expect(textarea.value).toBe('Test message');
+
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(textarea.value).toBe('');
+    });
+  });
+
+  it('prevents sending empty messages', () => {
+    render(
+      <ChatInputArea
+        processing={false}
+        onSendMessage={mockOnSendMessage}
+        currentConversation={mockConversation}
+      />
+    );
+
+    const button = screen.getByRole('button');
+    fireEvent.click(button);
+
+    expect(mockOnSendMessage).not.toHaveBeenCalled();
   });
 });
