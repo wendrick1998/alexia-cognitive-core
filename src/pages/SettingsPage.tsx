@@ -1,11 +1,17 @@
 
 import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import SettingsScreen from '@/components/settings/SettingsScreen';
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
+
+  const handleClose = () => {
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
       <div className="sticky top-0 z-40 bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50">
@@ -27,7 +33,7 @@ const SettingsPage = () => {
       </div>
       
       <div className="h-[calc(100vh-80px)]">
-        <SettingsScreen />
+        <SettingsScreen isOpen={true} onClose={handleClose} />
       </div>
     </div>
   );
