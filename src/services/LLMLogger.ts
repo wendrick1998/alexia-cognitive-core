@@ -340,9 +340,10 @@ export class LLMLogger {
           fallbackReason: log.fallback_reason,
           fallbackModel: log.fallback_model,
           cacheHit: log.cache_hit,
-          status: log.status,
+          status: log.status as 'success' | 'error' | 'timeout',
           errorMessage: log.error_message,
-          metadata: log.metadata
+          metadata: typeof log.metadata === 'object' && log.metadata !== null ? 
+            log.metadata as Record<string, any> : {}
         };
         
         logsByModel[log.model_name].push(convertedLog);

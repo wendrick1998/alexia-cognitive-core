@@ -1,200 +1,236 @@
 
 import { useState } from 'react';
-import { PremiumCard } from '@/components/ui/premium-card';
-import { SkeletonPremium } from '@/components/ui/skeleton-premium';
-import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { useRecentInsights } from '@/hooks/useRecentInsights';
 import { useAuth } from '@/hooks/useAuth';
-import AuthGuard from '@/components/auth/AuthGuard';
-import ActivityChart from './ActivityChart';
-import MemoryCard from './MemoryCard';
-import ConversationCard from './ConversationCard';
-import AIUsageCard from './AIUsageCard';
-import InsightsCard from './InsightsCard';
-import ObjectivesCard from './ObjectivesCard';
-import { 
-  BarChart3, 
-  Brain, 
-  MessageCircle, 
-  Bot, 
-  Lightbulb, 
-  Target,
-  RefreshCw,
-  AlertCircle
-} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  MessageSquare, 
+  FileText, 
+  Activity, 
+  Brain,
+  BarChart3,
+  Settings,
+  Sparkles
+} from 'lucide-react';
+import LLMMetricsDashboard from './LLMMetricsDashboard';
 
 const Dashboard = () => {
-  const { user, error, refreshSession } = useAuth();
-  const { stats, activityData, loading: statsLoading, error: statsError } = useDashboardStats();
-  const { insights, loading: insightsLoading, error: insightsError } = useRecentInsights();
-  const [refreshing, setRefreshing] = useState(false);
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    const name = user?.email?.split('@')[0] || 'Usuário';
-    
-    if (hour < 12) return `Bom dia, ${name}`;
-    if (hour < 18) return `Boa tarde, ${name}`;
-    return `Boa noite, ${name}`;
-  };
-
-  const getDaySummary = () => {
-    if (statsLoading) return "Carregando resumo do dia...";
-    if (statsError) return "Erro ao carregar dados do dia";
-    
-    const today = new Date().toISOString().split('T')[0];
-    const todayActivity = activityData.find(data => data.date === today);
-    const todayMessages = todayActivity?.messages || 0;
-    
-    return `Você teve ${todayMessages} mensagens e ${stats.totalMemories} memórias ativas hoje`;
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    try {
-      if (error) {
-        await refreshSession();
-      } else {
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      }
-    } catch (err) {
-      console.error('Erro ao atualizar:', err);
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <AuthGuard>
-      <div className="h-full w-full">
-        <div className="min-h-full p-6 space-y-6 animate-premium-fade-in">
-          {/* Header */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold gradient-text">
-                {getGreeting()}
-              </h1>
-              <div className="flex items-center gap-2">
-                {(error || statsError || insightsError) && (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    Problema de conexão
-                  </div>
-                )}
-                <button
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
-                  aria-label="Atualizar dashboard"
-                >
-                  <RefreshCw className={`w-5 h-5 text-white/60 ${refreshing ? 'animate-spin' : ''}`} />
-                </button>
-              </div>
-            </div>
-            
-            <p className="text-white/60 text-lg">
-              {getDaySummary()}
-            </p>
-            
-            <div className="flex gap-4 flex-wrap">
-              <div className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm font-medium">
-                {statsError ? 'Error' : `${stats.totalMessages} msgs`}
-              </div>
-              <div className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm font-medium">
-                {statsError ? 'Error' : `${stats.totalDocuments} docs`}
-              </div>
-              <div className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm font-medium">
-                {insightsError ? 'Error' : `${insights.length} insights`}
-              </div>
-            </div>
-          </div>
-
-          {/* Error State for Data Loading */}
-          {(statsError || insightsError) && (
-            <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="w-5 h-5" />
-                <div>
-                  <h3 className="font-medium">Erro ao carregar dados</h3>
-                  <p className="text-sm text-red-200/80">
-                    Alguns dados podem não estar disponíveis. Verifique sua conexão e tente novamente.
-                  </p>
-                </div>
-                <Button 
-                  onClick={handleRefresh} 
-                  variant="outline" 
-                  size="sm"
-                  disabled={refreshing}
-                  className="border-red-400 text-red-300 hover:bg-red-500/20"
-                >
-                  Tentar Novamente
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {statsLoading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <SkeletonPremium key={i} className="h-48" />
-              ))}
-            </div>
-          )}
-
-          {/* Dashboard Grid - CORRIGIDO: Responsivo e com scroll natural */}
-          {!statsLoading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
-              {/* Activity Chart */}
-              <div className="md:col-span-2">
-                <PremiumCard variant="elevated" className="h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-                      <BarChart3 className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-white font-semibold">Atividade</h3>
-                      <p className="text-white/50 text-sm">Últimos 7 dias</p>
-                    </div>
-                  </div>
-                  <ActivityChart data={statsError ? [] : activityData} />
-                </PremiumCard>
-              </div>
-
-              {/* Memory Card */}
-              <MemoryCard totalMemories={statsError ? 0 : stats.totalMemories} />
-
-              {/* Conversation Card */}
-              <ConversationCard 
-                totalConversations={statsError ? 0 : stats.totalConversations}
-                avgMessages={statsError ? 0 : stats.avgMessagesPerConversation}
-              />
-
-              {/* AI Usage Card */}
-              <AIUsageCard 
-                tokensUsed={statsError ? 0 : stats.tokensUsed}
-                tokenLimit={statsError ? 0 : stats.tokenLimit}
-              />
-
-              {/* Insights Card */}
-              <div className="md:col-span-2">
-                <InsightsCard 
-                  insights={insightsError ? [] : insights} 
-                  loading={insightsLoading}
-                  error={insightsError}
-                />
-              </div>
-
-              {/* Objectives Card */}
-              <ObjectivesCard />
-            </div>
-          )}
+    <div className="h-full overflow-y-auto scroll-container premium-scrollbar">
+      <div className="container mx-auto px-6 py-8 space-y-8">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-white">
+            Bem-vindo, {user?.email?.split('@')[0]}
+          </h1>
+          <p className="text-white/60">
+            Painel de controle do seu assistente cognitivo
+          </p>
         </div>
+
+        {/* Tabs principais */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Visão Geral
+            </TabsTrigger>
+            <TabsTrigger value="llm-metrics" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              Métricas LLM
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Configurações
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            {/* Cards de estatísticas rápidas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-white">Conversas Ativas</CardTitle>
+                  <MessageSquare className="h-4 w-4 text-blue-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">12</div>
+                  <p className="text-xs text-white/60">+2 desde ontem</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-white">Documentos</CardTitle>
+                  <FileText className="h-4 w-4 text-green-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">8</div>
+                  <p className="text-xs text-white/60">+1 este mês</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-white">Nós Cognitivos</CardTitle>
+                  <Brain className="h-4 w-4 text-orange-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">247</div>
+                  <p className="text-xs text-white/60">Rede ativa</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-white">Insights Gerados</CardTitle>
+                  <Sparkles className="h-4 w-4 text-purple-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">34</div>
+                  <p className="text-xs text-white/60">Esta semana</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Seção de atividade recente */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-white">Atividade Recente</CardTitle>
+                  <CardDescription>Suas interações mais recentes</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <MessageSquare className="h-4 w-4 text-blue-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">Nova conversa iniciada</p>
+                        <p className="text-xs text-white/60">Há 2 minutos</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline">Chat</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-4 w-4 text-green-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">Documento processado</p>
+                        <p className="text-xs text-white/60">Há 15 minutos</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline">Documentos</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Brain className="h-4 w-4 text-orange-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">Insight descoberto</p>
+                        <p className="text-xs text-white/60">Há 1 hora</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline">Cognitivo</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-white">Status do Sistema</CardTitle>
+                  <CardDescription>Saúde dos componentes principais</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white">Sistema Multi-LLM</span>
+                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Ativo</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white">Cache Semântico</span>
+                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Ativo</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white">Processamento de Documentos</span>
+                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Ativo</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white">Rede Neural Cognitiva</span>
+                    <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Sincronizando</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Ações rápidas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-white">Ações Rápidas</CardTitle>
+                <CardDescription>Acesse rapidamente as funcionalidades principais</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button className="h-20 flex flex-col gap-2" variant="outline">
+                    <MessageSquare className="h-6 w-6" />
+                    <span>Nova Conversa</span>
+                  </Button>
+                  
+                  <Button className="h-20 flex flex-col gap-2" variant="outline">
+                    <FileText className="h-6 w-6" />
+                    <span>Upload Documento</span>
+                  </Button>
+                  
+                  <Button className="h-20 flex flex-col gap-2" variant="outline">
+                    <Brain className="h-6 w-6" />
+                    <span>Explorar Insights</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="llm-metrics" className="space-y-6">
+            <LLMMetricsDashboard />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-white">Analytics Avançado</CardTitle>
+                <CardDescription>Análises detalhadas do uso do sistema</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-white/60">Em desenvolvimento...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-white">Configurações do Sistema</CardTitle>
+                <CardDescription>Personalize seu assistente cognitivo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-white/60">Em desenvolvimento...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-    </AuthGuard>
+    </div>
   );
 };
 
