@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,7 +20,7 @@ const Header = () => {
     if (error) {
       toast({
         title: "Erro ao sair",
-        description: error.message,
+        description: error,
         variant: "destructive",
       });
     } else {

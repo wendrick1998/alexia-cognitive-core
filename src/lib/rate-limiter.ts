@@ -1,91 +1,45 @@
 
-/**
- * @description Client-side rate limiter for security and performance
- * @created_by Security Audit - Alex iA
- */
-
+// Simple rate limiter implementation
 interface RateLimitOptions {
   maxRequests: number;
   windowMs: number;
   identifier: string;
 }
 
-interface RateLimitEntry {
-  count: number;
-  resetTime: number;
-}
-
-class RateLimiter {
-  private limits = new Map<string, RateLimitEntry>();
-  private cleanupInterval: NodeJS.Timeout;
-
-  constructor() {
-    // Clean up expired entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
-  }
-
-  isAllowed(options: RateLimitOptions): boolean {
-    const { maxRequests, windowMs, identifier } = options;
+export const rateLimiter = {
+  isAllowed: (options: RateLimitOptions): boolean => {
+    // Simple implementation - in production this would use a more sophisticated system
+    const key = `rate_limit_${options.identifier}`;
     const now = Date.now();
-    const resetTime = now + windowMs;
-
-    const existing = this.limits.get(identifier);
-
-    if (!existing || existing.resetTime <= now) {
-      // First request or window expired
-      this.limits.set(identifier, {
-        count: 1,
-        resetTime
-      });
+    const stored = localStorage.getItem(key);
+    
+    if (!stored) {
+      localStorage.setItem(key, JSON.stringify({ count: 1, windowStart: now }));
       return true;
     }
-
-    if (existing.count >= maxRequests) {
-      return false;
-    }
-
-    // Increment count
-    existing.count++;
-    return true;
-  }
-
-  getRemainingRequests(identifier: string, maxRequests: number): number {
-    const existing = this.limits.get(identifier);
-    if (!existing || existing.resetTime <= Date.now()) {
-      return maxRequests;
-    }
-    return Math.max(0, maxRequests - existing.count);
-  }
-
-  getResetTime(identifier: string): number | null {
-    const existing = this.limits.get(identifier);
-    if (!existing || existing.resetTime <= Date.now()) {
-      return null;
-    }
-    return existing.resetTime;
-  }
-
-  reset(identifier: string): void {
-    this.limits.delete(identifier);
-  }
-
-  private cleanup(): void {
-    const now = Date.now();
-    for (const [key, entry] of this.limits.entries()) {
-      if (entry.resetTime <= now) {
-        this.limits.delete(key);
+    
+    try {
+      const data = JSON.parse(stored);
+      const timeElapsed = now - data.windowStart;
+      
+      if (timeElapsed > options.windowMs) {
+        // Reset window
+        localStorage.setItem(key, JSON.stringify({ count: 1, windowStart: now }));
+        return true;
       }
+      
+      if (data.count >= options.maxRequests) {
+        return false;
+      }
+      
+      // Increment count
+      data.count++;
+      localStorage.setItem(key, JSON.stringify(data));
+      return true;
+    } catch {
+      // If parsing fails, allow the request
+      localStorage.setItem(key, JSON.stringify({ count: 1, windowStart: now }));
+      return true;
     }
   }
-
-  destroy(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-    }
-    this.limits.clear();
-  }
-}
-
-export const rateLimiter = new RateLimiter();
+};

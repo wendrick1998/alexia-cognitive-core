@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,7 +53,7 @@ const AuthPage = () => {
         if (error) {
           toast({
             title: "Erro no login",
-            description: error.message || "Credenciais inválidas",
+            description: error, // error is already a string
             variant: "destructive",
           });
         } else {
@@ -68,7 +67,7 @@ const AuthPage = () => {
         if (error) {
           toast({
             title: "Erro no cadastro",
-            description: error.message || "Erro ao criar conta",
+            description: error, // error is already a string
             variant: "destructive",
           });
         } else {
