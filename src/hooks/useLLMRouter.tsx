@@ -175,5 +175,3 @@ export function useLLMRouter() {
     availableModels: Object.keys(LLM_MODELS)
   };
 }
-
-export { TaskType };
