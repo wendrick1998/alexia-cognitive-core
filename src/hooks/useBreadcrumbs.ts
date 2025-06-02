@@ -21,6 +21,7 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
       'settings': 'Configurações',
       'integrations-manager': 'Gerenciar Integrações',
       'security': 'Segurança & Privacidade',
+      'cortex-dashboard': 'Cortex Dashboard',
       'chat': 'Chat',
       'memory': 'Memória',
       'documents': 'Documentos',

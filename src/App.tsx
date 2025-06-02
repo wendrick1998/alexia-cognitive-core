@@ -23,6 +23,7 @@ const NotFound = lazy(() => import("./pages/404"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const IntegrationsManagerPage = lazy(() => import("./pages/IntegrationsManagerPage"));
 const SecurityPage = lazy(() => import("./pages/SecurityPage"));
+const CortexDashboard = lazy(() => import("./pages/CortexDashboard"));
 
 // Create a client com configurações otimizadas
 const queryClient = new QueryClient({
@@ -63,6 +64,7 @@ function AppContent() {
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/integrations-manager" element={<IntegrationsManagerPage />} />
               <Route path="/security" element={<SecurityPage />} />
+              <Route path="/cortex-dashboard" element={<CortexDashboard />} />
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>
