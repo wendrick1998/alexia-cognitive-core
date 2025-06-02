@@ -25,6 +25,7 @@ export interface LLMModel {
   costPerToken: number;
   avgResponseTime: number;
   isAvailable: boolean;
+  capabilities?: string[];
 }
 
 export interface LLMRouterConfig {
@@ -41,7 +42,8 @@ const DEFAULT_MODELS: LLMModel[] = [
     maxTokens: 4096,
     costPerToken: 0.00003,
     avgResponseTime: 2500,
-    isAvailable: true
+    isAvailable: true,
+    capabilities: ['general', 'code', 'creative', 'reasoning', 'academic']
   },
   {
     name: 'gpt-3.5-turbo',
@@ -49,7 +51,8 @@ const DEFAULT_MODELS: LLMModel[] = [
     maxTokens: 4096,
     costPerToken: 0.000002,
     avgResponseTime: 1500,
-    isAvailable: true
+    isAvailable: true,
+    capabilities: ['general', 'summarization', 'extraction']
   },
   {
     name: 'claude-3-sonnet',
@@ -57,7 +60,8 @@ const DEFAULT_MODELS: LLMModel[] = [
     maxTokens: 4096,
     costPerToken: 0.000015,
     avgResponseTime: 2000,
-    isAvailable: false
+    isAvailable: false,
+    capabilities: ['creative', 'academic', 'reasoning']
   }
 ];
 
@@ -232,12 +236,14 @@ export const useLLMRouter = () => {
   // Função para obter estatísticas dos modelos
   const getModelStats = useCallback(() => {
     return config.models.map(model => ({
+      id: model.name, // Use name as id for the dashboard
       name: model.name,
       provider: model.provider,
       costPerToken: model.costPerToken,
       avgResponseTime: model.avgResponseTime,
       isAvailable: model.isAvailable,
-      maxTokens: model.maxTokens
+      maxTokens: model.maxTokens,
+      capabilities: model.capabilities?.length || 0 // Number of capabilities
     }));
   }, [config.models]);
 
