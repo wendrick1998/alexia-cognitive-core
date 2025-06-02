@@ -1,122 +1,62 @@
 
-import { ReactNode } from 'react';
+import { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, RefreshCw, Wifi } from 'lucide-react';
-import Logo from '@/components/branding/Logo';
-import { useNavigate, useLocation } from 'react-router-dom';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { motion } from 'framer-motion';
 
 interface AuthGuardProps {
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: React.ReactNode;
 }
 
-const AuthGuard = ({ children, fallback }: AuthGuardProps) => {
-  const { user, loading, error, isAuthenticated, refreshSession, clearError } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+const AuthGuard = ({ children }: AuthGuardProps) => {
+  const { user, loading, refreshSession } = useAuth();
 
-  // Loading state
+  useEffect(() => {
+    // Tentar renovar a sessão se não há usuário mas ainda está carregando
+    if (!user && !loading) {
+      refreshSession?.();
+    }
+  }, [user, loading, refreshSession]);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Logo size="lg" animate />
-          <div className="text-white/60">
-            <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-lg font-medium">Verificando autenticação...</p>
-          </div>
+      <motion.div 
+        className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-900 flex items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="text-center space-y-6">
+          <LoadingSpinner size="large" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="space-y-2"
+          >
+            <h2 className="text-xl font-semibold text-white">Alex iA</h2>
+            <p className="text-gray-400">Inicializando assistente premium...</p>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
-  // Error state
-  if (error && !isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <Card className="max-w-md w-full bg-gray-900 border-gray-800 text-white">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-                <AlertCircle className="w-8 h-8 text-red-400" />
-              </div>
-            </div>
-            <CardTitle className="text-red-400">Problema de Autenticação</CardTitle>
-            <CardDescription className="text-gray-400">
-              {error}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                onClick={refreshSession}
-                variant="outline"
-                className="border-gray-700 text-gray-300 hover:bg-gray-800"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Tentar Novamente
-              </Button>
-              <Button
-                onClick={() => {
-                  clearError();
-                  navigate('/auth');
-                }}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Wifi className="w-4 h-4 mr-2" />
-                Ir para Login
-              </Button>
-            </div>
-            
-            <div className="pt-4 border-t border-gray-800">
-              <p className="text-xs text-gray-500 text-center">
-                Se o problema persistir, verifique sua conexão com a internet
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (!user) {
+    return <Navigate to="/auth" replace />;
   }
 
-  // Not authenticated - show fallback or redirect
-  if (!isAuthenticated) {
-    // If we're already on auth page, don't redirect to avoid loops
-    if (location.pathname === '/auth') {
-      return fallback ? <>{fallback}</> : null;
-    }
-    
-    if (fallback) {
-      return <>{fallback}</>;
-    }
-    
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <Card className="max-w-md w-full bg-gray-900 border-gray-800 text-white">
-          <CardHeader className="text-center">
-            <Logo size="lg" animate />
-            <CardTitle className="text-white">Acesso Restrito</CardTitle>
-            <CardDescription className="text-gray-400">
-              Você precisa estar logado para acessar esta página
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => navigate('/auth')}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              Fazer Login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Authenticated - render children
-  return <>{children}</>;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="h-full w-full"
+    >
+      {children}
+    </motion.div>
+  );
 };
 
 export default AuthGuard;
