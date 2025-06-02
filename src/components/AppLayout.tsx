@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import PremiumSidebar from '@/components/premium/PremiumSidebar';
 import BottomNavigation from '@/components/navigation/BottomNavigation';
@@ -8,15 +8,15 @@ import SkipNavigation from './accessibility/SkipNavigation';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isPremiumSidebarOpen, setIsPremiumSidebarOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState('chat');
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      navigate('/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
