@@ -73,14 +73,13 @@ const ChatMessages = ({ messages, processing, loading = false, renderMessageExtr
   return (
     <div 
       ref={containerRef}
-      className="h-full overflow-y-auto overflow-x-hidden"
+      className="h-full overflow-y-auto overflow-x-hidden scroll-smooth chat-messages-container"
       style={{
         WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-        scrollBehavior: 'smooth'
+        overscrollBehavior: 'contain'
       }}
     >
-      <div className="pb-48 md:pb-32">
+      <div className="pb-64 md:pb-32">
         <div className="p-4 space-y-4 min-h-full">
           {messages.map((message, index) => (
             <div key={message.id} className="space-y-2">

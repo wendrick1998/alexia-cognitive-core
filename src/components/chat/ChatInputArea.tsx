@@ -14,7 +14,7 @@ const ChatInputArea = ({
   currentConversation 
 }: ChatInputAreaProps) => {
   return (
-    <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50 pb-safe-area-bottom">
+    <div className="sticky bottom-0 z-30 bg-white/98 dark:bg-gray-950/98 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50 pb-safe-chat-mobile">
       <div className="p-4">
         <RevolutionaryInput
           processing={processing}

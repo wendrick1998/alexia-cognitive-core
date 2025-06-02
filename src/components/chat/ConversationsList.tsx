@@ -159,11 +159,11 @@ const ConversationsList = ({
       </div>
 
       <div 
-        className="flex-1 overflow-y-auto overflow-x-hidden"
+        className="flex-1 overflow-y-auto overflow-x-hidden conversations-scroll-container"
         style={{
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain',
-          scrollBehavior: 'smooth'
+          maxHeight: 'calc(100vh - 200px)'
         }}
       >
         <div className="p-2 space-y-1 pb-8">

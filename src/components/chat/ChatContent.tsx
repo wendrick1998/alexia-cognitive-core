@@ -21,7 +21,7 @@ const ChatContent = memo(({
 }: ChatContentProps) => {
   if (currentConversation) {
     return (
-      <div className="flex-1 h-full relative overflow-hidden">
+      <div className="h-full relative">
         <ChatMessages 
           messages={messages}
           loading={isNavigating}
@@ -33,7 +33,7 @@ const ChatContent = memo(({
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+    <div className="h-full flex items-center justify-center p-8">
       <div className="text-center max-w-md mx-auto animate-fade-in">
         <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
           <Sparkles className="w-8 h-8 text-white" />

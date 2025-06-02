@@ -129,6 +129,65 @@
   position: relative;
 }
 
+/* Chat messages container - OPTIMIZED */
+.chat-messages-container {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.chat-messages-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.dark .chat-messages-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Conversations sidebar scroll container - OPTIMIZED */
+.conversations-scroll-container {
+  height: auto;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+.conversations-scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.conversations-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conversations-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+}
+
+.dark .conversations-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
 /* Dashboard scroll container */
 .dashboard-scroll-container {
   height: 100%;
@@ -161,7 +220,7 @@
   
   /* Chat mobile with enhanced padding for bottom nav and keyboard */
   .chat-messages-mobile {
-    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -194,7 +253,7 @@
   /* Special handling for chat in mobile */
   .mobile-chat-container {
     height: calc(100vh - 60px);
-    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px));
     overflow: hidden;
   }
   
@@ -286,9 +345,9 @@
     padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
   }
   
-  /* Enhanced mobile chat padding */
+  /* Enhanced mobile chat padding - INCREASED TO 220px */
   .pb-safe-chat-mobile {
-    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Auto-scroll utilities */
@@ -300,7 +359,7 @@
     scroll-snap-align: end;
   }
 
-  /* Z-index layers */
+  /* Z-index layers - OPTIMIZED HIERARCHY */
   .z-bottom-nav {
     z-index: 40;
   }
