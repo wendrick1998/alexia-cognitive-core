@@ -1,6 +1,6 @@
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface BlackboardEntry {
   id: string;
@@ -436,21 +436,39 @@ export function useBlackboardSystem() {
     }
   }, [user, isInitialized, initializeBlackboard]);
 
+  // Clear blackboard
+  const clearBlackboard = useCallback(() => {
+    setBlackboardState(prev => ({
+      ...prev,
+      entries: [],
+      processingQueue: []
+    }));
+  }, []);
+
+  // Get recent entries
+  const getRecentEntries = useCallback(() => {
+    return blackboardState.entries.filter(e => e.status === 'completed').slice(0, 10);
+  }, [blackboardState.entries]);
+
+  // Initialize knowledge sources
+  const initializeKnowledgeSources = useCallback(() => {
+    console.log('🚀 Initializing knowledge sources...');
+    // Implementation for initialization
+  }, []);
+
   return {
     // Core functions
     processWithBlackboard,
     addBlackboardEntry,
-    
-    // State management
-    blackboardState,
     getBlackboardStatus,
     
-    // Status
+    // State
     isInitialized,
     isProcessing,
     
-    // Utilities
-    loadKnowledgeSources,
-    initializeBlackboard
+    // Blackboard management
+    clearBlackboard,
+    getRecentEntries,
+    initializeKnowledgeSources
   };
 }

@@ -22,21 +22,14 @@ import { useToast } from '@/hooks/use-toast';
 const MultiAgentDashboard = () => {
   const { toast } = useToast();
   const {
-    blackboard,
     processWithBlackboard,
     getBlackboardStatus,
-    initializeKnowledgeSources,
     isInitialized
   } = useBlackboardSystem();
 
   const [processing, setProcessing] = useState(false);
   const [testInput, setTestInput] = useState('');
   const [lastResult, setLastResult] = useState<any>(null);
-
-  // Initialize system on mount
-  useEffect(() => {
-    initializeKnowledgeSources();
-  }, [initializeKnowledgeSources]);
 
   const handleTestProcessing = async () => {
     if (!testInput.trim()) {
@@ -59,7 +52,7 @@ const MultiAgentDashboard = () => {
       
       toast({
         title: "Processamento Concluído",
-        description: `${result.partialResults?.length || 0} agentes contribuíram para a solução`,
+        description: `Processamento realizado com sucesso`,
       });
     } catch (error) {
       console.error('Erro no processamento:', error);
@@ -100,7 +93,7 @@ const MultiAgentDashboard = () => {
               <Brain className="w-6 h-6 text-purple-400" />
             </div>
             <div className="text-sm text-white/60">Agentes Ativos</div>
-            <div className="text-2xl font-bold text-purple-400">{status.activeKnowledgeSources}</div>
+            <div className="text-2xl font-bold text-purple-400">{status.knowledgeSourcesCount}</div>
           </CardContent>
         </Card>
 
@@ -150,26 +143,20 @@ const MultiAgentDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
-            {status.knowledgeSources.map((ks) => (
-              <div key={ks.id} className="p-4 bg-white/5 rounded-lg">
+            {status.activeAgents.map((agent) => (
+              <div key={agent} className="p-4 bg-white/5 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    {ks.id === 'analytical' && <Brain className="w-5 h-5 text-blue-400" />}
-                    {ks.id === 'creative' && <Lightbulb className="w-5 h-5 text-yellow-400" />}
-                    {ks.id === 'critical' && <Eye className="w-5 h-5 text-red-400" />}
-                    {ks.id === 'integrator' && <Network className="w-5 h-5 text-green-400" />}
-                    <span className="font-medium text-white">{ks.name}</span>
+                    {agent === 'analytical' && <Brain className="w-5 h-5 text-blue-400" />}
+                    {agent === 'creative' && <Lightbulb className="w-5 h-5 text-yellow-400" />}
+                    {agent === 'critical' && <Eye className="w-5 h-5 text-red-400" />}
+                    {agent === 'integrator' && <Network className="w-5 h-5 text-green-400" />}
+                    <span className="font-medium text-white capitalize">{agent}</span>
                   </div>
-                  <Badge variant={ks.isActive ? 'default' : 'outline'}>
-                    {ks.isActive ? 'Ativo' : 'Inativo'}
-                  </Badge>
+                  <Badge variant="default">Ativo</Badge>
                 </div>
-                <div className="space-y-1">
-                  {ks.capabilities.map((cap) => (
-                    <Badge key={cap} variant="outline" className="text-xs mr-1">
-                      {cap}
-                    </Badge>
-                  ))}
+                <div className="text-xs text-white/60">
+                  Agente especializado em processamento {agent}
                 </div>
               </div>
             ))}
@@ -229,58 +216,25 @@ const MultiAgentDashboard = () => {
           <CardContent className="space-y-4">
             <div className="p-4 bg-white/5 rounded-lg">
               <h4 className="font-medium text-white mb-2">Resultado Integrado:</h4>
-              <p className="text-white/80">{lastResult.result?.result}</p>
+              <p className="text-white/80">{lastResult.result?.result || 'Processamento concluído'}</p>
             </div>
             
-            {lastResult.partialResults && lastResult.partialResults.length > 0 && (
+            <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <h4 className="font-medium text-white mb-3">Contribuições dos Agentes:</h4>
-                <div className="space-y-3">
-                  {lastResult.partialResults.map((partial: any, index: number) => (
-                    <div key={index} className="p-3 bg-white/5 rounded border-l-4 border-blue-400">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-white">{partial.result?.agent}</span>
-                        <Badge variant="outline">
-                          Confiança: {(partial.result?.confidence * 100).toFixed(0)}%
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-white/70">{partial.result?.result}</p>
-                    </div>
-                  ))}
-                </div>
+                <span className="text-white/60">Status:</span>
+                <span className="ml-2 font-medium text-white">
+                  {lastResult.success ? 'Sucesso' : 'Falha'}
+                </span>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Recent Blackboard Entries */}
-      {status.recentEntries.length > 0 && (
-        <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Layers className="w-5 h-5" />
-              Blackboard Recente
-            </CardTitle>
-            <CardDescription className="text-white/60">
-              Últimas entradas no quadro colaborativo
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {status.recentEntries.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between p-2 bg-white/5 rounded">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      {entry.type}
-                    </Badge>
-                    <span className="text-sm text-white/80">{entry.source}</span>
-                  </div>
-                  <div className="text-xs text-white/60">
-                    {(entry.confidence * 100).toFixed(0)}% confiança
-                  </div>
-                </div>
-              ))}
+              <div>
+                <span className="text-white/60">Confiança:</span>
+                <span className="ml-2 font-medium text-white">
+                  {lastResult.result?.confidence ? 
+                    `${(lastResult.result.confidence * 100).toFixed(0)}%` : 
+                    'N/A'
+                  }
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>

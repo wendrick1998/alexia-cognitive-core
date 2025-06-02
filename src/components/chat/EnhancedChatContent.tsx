@@ -61,7 +61,6 @@ const EnhancedChatContent = ({
         <ChatMessages
           messages={processedMessages}
           processing={processing}
-          currentConversation={currentConversation}
         />
       ) : (
         <ChatWelcome currentConversation={currentConversation} />

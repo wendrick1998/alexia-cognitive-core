@@ -1,8 +1,7 @@
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useBM25Search } from '@/hooks/useBM25Search';
-import { useSemanticSearch } from '@/hooks/useSemanticSearch';
+import { useBM25Search, type BM25SearchResult } from '@/hooks/useBM25Search';
+import { useNeuralSystem } from '@/hooks/useNeuralSystem';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface RAGDocument {
@@ -34,7 +33,7 @@ export interface RerankingConfig {
 export function useHybridRAG() {
   const { user } = useAuth();
   const { bm25Search } = useBM25Search();
-  const { searchDocuments } = useSemanticSearch();
+  const { searchDocuments } = useNeuralSystem();
   
   const [isSearching, setIsSearching] = useState(false);
   const [lastQuery, setLastQuery] = useState('');
@@ -231,6 +230,25 @@ export function useHybridRAG() {
     });
   }, []);
 
+  // BM25 to cognitive node conversion
+  const convertBM25ToCognitiveNode = useCallback((result: BM25SearchResult) => {
+    return {
+      id: result.id,
+      content: result.content,
+      title: result.title,
+      node_type: result.type || 'document' as any,
+      relevance_score: result.score || 0.5,
+      access_count: 0,
+      activation_strength: 0.5,
+      connected_nodes: [],
+      metadata: result.metadata || {},
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      score: result.score,
+      similarity: result.score
+    };
+  }, []);
+
   // Main hybrid search function
   const hybridSearch = useCallback(async (
     query: string,
@@ -354,7 +372,7 @@ export function useHybridRAG() {
     } finally {
       setIsSearching(false);
     }
-  }, [user, bm25Search, searchDocuments, graphTraversalSearch, applyRRF, applyTemporalDecay, injectDiversity, calculateTextSimilarity]);
+  }, [user, bm25Search, searchDocuments, graphTraversalSearch, applyRRF, applyTemporalDecay, injectDiversity, calculateTextSimilarity, convertBM25ToCognitiveNode]);
 
   return {
     // State

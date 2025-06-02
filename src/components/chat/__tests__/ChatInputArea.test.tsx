@@ -21,10 +21,18 @@ describe('ChatInputArea', () => {
   const mockOnSendMessage = jest.fn();
   const mockConversation = {
     id: 'test-conversation',
-    title: 'Test Conversation',
+    session_id: 'test-session',
+    name: 'Test Conversation',
+    user_id: 'test-user',
+    project_id: null,
     created_at: '2023-01-01T00:00:00Z',
     updated_at: '2023-01-01T00:00:00Z',
-    user_id: 'test-user'
+    is_favorite: false,
+    is_archived: false,
+    category_id: null,
+    message_count: 0,
+    tags: [],
+    last_message_preview: null
   };
 
   beforeEach(() => {

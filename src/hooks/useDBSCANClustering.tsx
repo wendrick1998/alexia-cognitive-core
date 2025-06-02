@@ -1,6 +1,6 @@
-
 import { useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ClusterPoint {
   id: string;
@@ -430,23 +430,39 @@ export function useDBSCANClustering() {
     }
   }, [user]);
 
+  // Visualize clusters
+  const visualizeClusters = useCallback(async (clusters: Cluster[]): Promise<void> => {
+    // Implement visualization logic here
+    console.log('Visualizing clusters:', clusters);
+  }, []);
+
+  // Export clusters
+  const exportClusters = useCallback(async (clusters: Cluster[]): Promise<void> => {
+    // Implement export logic here
+    console.log('Exporting clusters:', clusters);
+  }, []);
+
+  // Reset clustering
+  const resetClustering = useCallback(() => {
+    setClusters([]);
+    setMetrics({
+      totalPoints: 0,
+      totalClusters: 0,
+      noisePoints: 0,
+      avgClusterSize: 0,
+      silhouetteScore: 0,
+      dunnIndex: 0,
+      processingTime: 0
+    });
+  }, []);
+
   return {
-    // Core clustering function
     runDBSCANClustering,
-    
-    // Utility functions
-    calculateDistance,
-    convertNodesToPoints,
-    
-    // State
     clusters,
     metrics,
     isProcessing,
-    
-    // Cache management
-    clearCache: () => {
-      distanceCache.current.clear();
-      pointsCache.current.clear();
-    }
+    visualizeClusters,
+    exportClusters,
+    resetClustering
   };
 }

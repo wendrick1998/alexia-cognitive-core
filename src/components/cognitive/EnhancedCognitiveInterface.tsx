@@ -66,7 +66,6 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [activeSearchType, setActiveSearchType] = useState<'bm25' | 'hybrid' | 'fuzzy' | 'neural' | 'blackboard'>('neural');
-  const [blackboardQuery, setBlackboardQuery] = useState('');
   const [isBlackboardProcessing, setIsBlackboardProcessing] = useState(false);
   const [blackboardResult, setBlackboardResult] = useState<any>(null);
 
@@ -84,7 +83,7 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
           results = await hybridSearch(searchQuery, 10);
           break;
         case 'fuzzy':
-          results = await fuzzySearch(searchQuery, 10);
+          results = await fuzzySearch(searchQuery, { maxDistance: 2 });
           break;
         case 'neural':
           results = await neuralSearch(searchQuery, 'general', 10);
@@ -107,8 +106,7 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
     try {
       const result = await processWithBlackboard(
         searchQuery,
-        { source: 'enhanced-search', type: 'complex-query' },
-        ['logical-reasoning', 'creativity', 'validation', 'synthesis']
+        { source: 'enhanced-search', type: 'complex-query' }
       );
       setBlackboardResult(result);
     } catch (error) {
@@ -245,9 +243,9 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
       {searchMetrics && (
         <Card className="p-3">
           <div className="text-xs text-gray-600 space-y-1">
-            <div>Documentos: {searchMetrics.total_documents}</div>
-            <div>Tempo: {searchMetrics.execution_time}ms</div>
-            <div>Termos: {searchMetrics.query_terms.join(', ')}</div>
+            <div>Documentos: {searchMetrics.totalDocuments}</div>
+            <div>Tempo: {searchMetrics.searchLatency}ms</div>
+            <div>Termos indexados: {searchMetrics.indexedTerms}</div>
           </div>
         </Card>
       )}
@@ -272,19 +270,19 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-600">Clusters:</span>
-              <span className="ml-2 font-medium">{clusterMetrics.total_clusters}</span>
+              <span className="ml-2 font-medium">{clusterMetrics.totalClusters}</span>
             </div>
             <div>
               <span className="text-gray-600">Ruído:</span>
-              <span className="ml-2 font-medium">{clusterMetrics.noise_points}</span>
+              <span className="ml-2 font-medium">{clusterMetrics.noisePoints}</span>
             </div>
             <div>
               <span className="text-gray-600">Silhouette:</span>
-              <span className="ml-2 font-medium">{clusterMetrics.silhouette_score.toFixed(3)}</span>
+              <span className="ml-2 font-medium">{clusterMetrics.silhouetteScore.toFixed(3)}</span>
             </div>
             <div>
               <span className="text-gray-600">Tempo:</span>
-              <span className="ml-2 font-medium">{clusterMetrics.execution_time}ms</span>
+              <span className="ml-2 font-medium">{clusterMetrics.executionTime}ms</span>
             </div>
           </div>
         </Card>
@@ -297,13 +295,13 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <Badge>Cluster {cluster.id}</Badge>
                 <div className="text-xs text-gray-500">
-                  {cluster.total_points} pontos
+                  {cluster.size} pontos
                 </div>
               </div>
               <div className="text-xs text-gray-600">
-                <div>Core: {cluster.core_points} | Border: {cluster.border_points}</div>
-                <div>Densidade: {cluster.density_score.toFixed(2)}</div>
-                <div>Coerência: {cluster.coherence_score.toFixed(2)}</div>
+                <div>Core: {cluster.corePoints} | Border: {cluster.borderPoints}</div>
+                <div>Densidade: {cluster.density.toFixed(2)}</div>
+                <div>Coerência: {cluster.coherence.toFixed(2)}</div>
               </div>
             </Card>
           ))}
@@ -335,7 +333,7 @@ const EnhancedCognitiveInterface: React.FC<EnhancedCognitiveInterfaceProps> = ({
       <Card>
         <CardContent className="p-4 text-center">
           <div className="text-2xl font-bold text-green-600">
-            {predictiveCache.length}
+            {predictiveCache.size}
           </div>
           <div className="text-sm text-gray-600">Cache Preditivo</div>
         </CardContent>
