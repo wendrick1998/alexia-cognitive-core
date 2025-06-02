@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '../../../utils/testUtils';
 import ChatInputArea from '../ChatInputArea';
 import { Conversation } from '@/hooks/useConversationsData';
 

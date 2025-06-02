@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '../../../utils/testUtils';
 import Dashboard from '../Dashboard';
 
 // Mock the dashboard stats hook

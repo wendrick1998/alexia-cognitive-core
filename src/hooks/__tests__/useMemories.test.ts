@@ -1,5 +1,5 @@
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '../../utils/testUtils';
 import { useMemories } from '../useMemories';
 
 // Mock the useQuery hook

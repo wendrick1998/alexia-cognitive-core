@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '../../../utils/testUtils';
 import { BackButton } from '../back-button';
 
 const mockNavigate = jest.fn();
