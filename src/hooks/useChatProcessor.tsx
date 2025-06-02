@@ -6,7 +6,8 @@ import { useMultiLLM } from '@/hooks/useMultiLLM';
 import { useSecurity } from '@/hooks/useSecurity';
 import { supabase } from '@/integrations/supabase/client';
 import { llmLogger } from '@/services/LLMLogger';
-import type { TaskType as LLMTaskType, Priority } from '@/services/MultiLLMRouter';
+import type { Priority } from '@/services/MultiLLMRouter';
+import type { TaskType } from '@/hooks/useLLMRouter';
 
 export interface ChatResponse {
   response: string;
@@ -119,7 +120,7 @@ export function useChatProcessor() {
       await llmLogger.logCall({
         modelName: llmResponse.model,
         provider: llmResponse.provider.toLowerCase(),
-        taskType,
+        taskType: taskType as any, // Type conversion for compatibility
         question: sanitizedMessage,
         answer: llmResponse.content,
         startTime,
@@ -162,15 +163,15 @@ export function useChatProcessor() {
   };
 }
 
-function detectTaskType(message: string): LLMTaskType {
+function detectTaskType(message: string): TaskType {
   const lowerMessage = message.toLowerCase();
   
   if (lowerMessage.includes('código') || lowerMessage.includes('programar') || lowerMessage.includes('function') || lowerMessage.includes('debug')) {
-    return 'coding';
+    return 'code';
   }
   
   if (lowerMessage.includes('analisar') || lowerMessage.includes('dados') || lowerMessage.includes('estatística') || lowerMessage.includes('relatório')) {
-    return 'analysis';
+    return 'academic';
   }
   
   if (lowerMessage.includes('criar') || lowerMessage.includes('escrever') || lowerMessage.includes('história') || lowerMessage.includes('criativo')) {
@@ -178,7 +179,15 @@ function detectTaskType(message: string): LLMTaskType {
   }
   
   if (lowerMessage.includes('técnico') || lowerMessage.includes('arquitetura') || lowerMessage.includes('implementar') || lowerMessage.includes('sistema')) {
-    return 'technical';
+    return 'reasoning';
+  }
+  
+  if (lowerMessage.includes('resumir') || lowerMessage.includes('resumo') || lowerMessage.includes('sintetizar')) {
+    return 'summarization';
+  }
+  
+  if (lowerMessage.includes('extrair') || lowerMessage.includes('encontrar') || lowerMessage.includes('buscar')) {
+    return 'extraction';
   }
   
   return 'general';
