@@ -102,7 +102,21 @@ export function useAlexChatSessions() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      
+      // Transform database messages to match AlexChatMessage interface
+      const transformedMessages: AlexChatMessage[] = (data || []).map(msg => ({
+        id: msg.id,
+        conversation_id: msg.session_id, // Map session_id to conversation_id
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+        created_at: msg.created_at,
+        updated_at: msg.created_at, // Use created_at as updated_at since DB doesn't have this field
+        llm_model: msg.llm_model || undefined,
+        tokens_used: msg.tokens_used || undefined,
+        metadata: {}
+      }));
+      
+      setMessages(transformedMessages);
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
@@ -131,7 +145,20 @@ export function useAlexChatSessions() {
 
       if (error) throw error;
       
-      setMessages(prev => [...prev, data]);
+      // Transform the new message to match AlexChatMessage interface
+      const transformedMessage: AlexChatMessage = {
+        id: data.id,
+        conversation_id: data.session_id,
+        role: data.role as 'user' | 'assistant',
+        content: data.content,
+        created_at: data.created_at,
+        updated_at: data.created_at,
+        llm_model: data.llm_model || undefined,
+        tokens_used: data.tokens_used || undefined,
+        metadata: {}
+      };
+      
+      setMessages(prev => [...prev, transformedMessage]);
       return true;
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
