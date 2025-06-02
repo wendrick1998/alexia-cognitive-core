@@ -6,6 +6,15 @@ import Sidebar from "@/components/layout/Sidebar";
 import Dashboard from "@/components/dashboard/Dashboard";
 import Chat from "@/components/Chat";
 import Documents from "@/components/Documents";
+import SemanticSearch from "@/components/SemanticSearch";
+import MemoryManager from "@/components/MemoryManager";
+import ProjectsManager from "@/components/ProjectsManager";
+import UserPreferences from "@/components/settings/UserPreferences";
+import AIConfiguration from "@/components/settings/AIConfiguration";
+import SystemLogs from "@/components/admin/SystemLogs";
+import SecuritySettings from "@/components/admin/SecuritySettings";
+import SubscriptionManagement from "@/components/admin/SubscriptionManagement";
+import IntegrationsManager from "@/components/admin/IntegrationsManager";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
@@ -44,6 +53,24 @@ const Index = () => {
         return <Chat />;
       case "documents":
         return <Documents />;
+      case "search":
+        return <SemanticSearch />;
+      case "memory":
+        return <MemoryManager />;
+      case "projects":
+        return <ProjectsManager />;
+      case "preferences":
+        return <UserPreferences />;
+      case "ai-config":
+        return <AIConfiguration />;
+      case "logs":
+        return <SystemLogs />;
+      case "security":
+        return <SecuritySettings />;
+      case "subscription":
+        return <SubscriptionManagement />;
+      case "integrations":
+        return <IntegrationsManager />;
       default:
         return <Dashboard />;
     }
@@ -93,7 +120,7 @@ const Index = () => {
         />
       )}
 
-      {/* Main Content - CORRIGIDO: Estrutura flex-scroll-layout */}
+      {/* Main Content */}
       <div className={`
         flex-1 min-w-0 flex-scroll-layout
         ${isMobile ? 'pt-16' : ''}
