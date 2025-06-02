@@ -65,7 +65,7 @@ describe('usePerformanceMonitoring', () => {
   it('should calculate performance score', () => {
     const { result } = renderHook(() => usePerformanceMonitoring());
     
-    const score = result.current.performanceScore;
+    const score = result.current.getPerformanceScore();
     expect(typeof score).toBe('number');
     expect(score).toBeGreaterThanOrEqual(0);
     expect(score).toBeLessThanOrEqual(100);
