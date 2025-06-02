@@ -58,7 +58,6 @@ const PremiumChatLayout: React.FC<PremiumChatLayoutProps> = ({
         <ConversationSidebar
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
-          onClose={isMobile ? () => setSidebarOpen(false) : undefined}
         />
       </div>
 
