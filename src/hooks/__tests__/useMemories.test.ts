@@ -23,18 +23,20 @@ describe('useMemories', () => {
 
     const { result } = renderHook(() => useMemories());
 
-    expect(result.current.isLoading).toBe(true);
-    expect(result.current.memories).toBeUndefined();
+    expect(result.current.loading).toBe(true);
+    expect(result.current.memories).toEqual([]);
   });
 
   it('returns memories data when loaded', async () => {
     const mockMemories = [
       {
         id: '1',
-        title: 'Test Memory',
         content: 'This is a test memory',
+        type: 'fact' as const,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         user_id: 'test-user',
+        project_id: null,
       },
     ];
 
@@ -48,7 +50,7 @@ describe('useMemories', () => {
     const { result } = renderHook(() => useMemories());
 
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.loading).toBe(false);
       expect(result.current.memories).toEqual(mockMemories);
     });
   });
@@ -66,8 +68,8 @@ describe('useMemories', () => {
     const { result } = renderHook(() => useMemories());
 
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.error).toEqual(mockError);
+      expect(result.current.loading).toBe(false);
+      expect(result.current.memories).toEqual([]);
     });
   });
 });
