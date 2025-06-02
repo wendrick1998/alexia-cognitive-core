@@ -134,11 +134,10 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         />
       )}
 
-      {/* Main Content */}
+      {/* Main Content - CORRIGIDO para permitir scroll */}
       <main className={cn(
         "flex-1 flex flex-col min-h-screen relative",
-        !isMobile && "ml-20",
-        currentSection === 'chat' ? "overflow-hidden" : "overflow-auto"
+        !isMobile && "ml-20"
       )}>
         {/* Header */}
         <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0 relative z-30">
@@ -163,14 +162,16 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
           </div>
         </header>
 
-        {/* Content Area - Aplicar overflow controlado apenas para chat */}
+        {/* Content Area - CORRIGIDO para scroll adequado */}
         <div className={cn(
           "flex-1 relative z-10",
-          currentSection === 'chat' ? "overflow-hidden" : "overflow-y-auto",
-          isMobile && currentSection !== 'chat' && "pb-20"
-        )} style={{
-          paddingBottom: isMobile && currentSection !== 'chat' ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : undefined
-        }}>
+          // Chat precisa de overflow controlado
+          currentSection === 'chat' ? "overflow-hidden" : cn(
+            "overflow-y-auto",
+            // Mobile: adicionar padding para bottom nav
+            isMobile && "mobile-content-area"
+          )
+        )}>
           <div className={cn(
             "w-full",
             currentSection === 'chat' ? "h-full overflow-hidden" : "h-auto"

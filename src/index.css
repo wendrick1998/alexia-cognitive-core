@@ -108,7 +108,7 @@
   animation: scale-in 0.2s ease-out forwards;
 }
 
-/* Chat specific scroll container - CORRIGIDO */
+/* Chat specific scroll container - OTIMIZADO para iOS */
 .chat-scroll-container {
   height: 100%;
   overflow-y: auto;
@@ -116,36 +116,56 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
+  /* iOS específico para scroll suave */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
-/* Mobile scroll optimization */
+/* Mobile scroll optimization - MELHORADO */
 @media (max-width: 768px) {
   .premium-scrollbar {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
   
-  /* Prevent iOS bounce scroll on body */
+  /* Garantir scroll funcional no mobile */
   body {
     overscroll-behavior: none;
-    position: fixed;
+    /* REMOVIDO: position: fixed que causava problemas de scroll */
     width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
   
-  /* Ensure proper touch handling */
+  /* Root container deve permitir scroll */
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* REMOVIDO: overflow: hidden que impedia scroll */
+  }
+  
+  /* Touch scroll otimizado */
   .touch-scroll {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     scroll-behavior: smooth;
   }
   
-  /* Chat mobile optimizations */
+  /* Chat mobile com padding para bottom nav */
   .chat-scroll-container {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     scroll-behavior: smooth;
-    /* Prevent zoom on iOS */
     touch-action: pan-y;
+    /* Padding para compensar bottom nav */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+  
+  /* Dashboard e outras seções com padding bottom */
+  .mobile-content-area {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -163,35 +183,33 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Prevent horizontal scroll on mobile */
+  /* CORRIGIDO: Permitir scroll horizontal e vertical */
   html, body {
-    overflow-x: hidden;
     width: 100%;
+    /* REMOVIDO: overflow-x: hidden que causava problemas */
   }
 
-  /* iOS Safari specific fixes */
+  /* iOS Safari fixes - OTIMIZADO */
   body {
     position: relative;
-    overflow: hidden;
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height */
+    /* REMOVIDO: overflow: hidden */
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   #root {
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* REMOVIDO: overflow: hidden */
   }
 }
 
 /* Component layer styles */
 @layer components {
-  /* Container queries for responsive design */
   .container {
     @apply max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
-  /* Focus states */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
   }
@@ -203,12 +221,10 @@
 
 /* Utilities layer */
 @layer utilities {
-  /* Text utilities */
   .text-gradient {
     @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
   }
 
-  /* Spacing utilities */
   .space-safe-y > * + * {
     margin-top: max(1rem, env(safe-area-inset-top));
   }
@@ -217,7 +233,6 @@
     margin-left: max(1rem, env(safe-area-inset-left));
   }
 
-  /* Layout utilities */
   .full-height {
     height: 100vh;
     height: 100dvh;
@@ -228,8 +243,12 @@
     min-width: 44px;
   }
 
-  /* Safe area utilities */
+  /* Safe area utilities - EXPANDIDO */
   .pb-safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  .pb-safe-bottom-nav {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 }

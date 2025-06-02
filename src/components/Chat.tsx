@@ -20,7 +20,7 @@ const Chat = () => {
   const isMobile = useIsMobile();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Estado da sidebar recolhível
+  // Estado da sidebar recolhível - CORRIGIDO
   const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile);
   
   const {
@@ -74,8 +74,14 @@ const Chat = () => {
     }
   };
 
+  // CORRIGIDO: Função para toggle da sidebar
   const handleToggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+    console.log('🔄 Toggle sidebar, estado atual:', sidebarCollapsed);
+    setSidebarCollapsed(prev => {
+      const newState = !prev;
+      console.log('🔄 Novo estado da sidebar:', newState);
+      return newState;
+    });
   };
 
   const handleSendMessage = async (message: string) => {
@@ -213,7 +219,7 @@ const Chat = () => {
 
   return (
     <div className="h-full relative flex overflow-hidden">
-      {/* Botão Toggle Sidebar - Melhorado visualmente */}
+      {/* Botão Toggle Sidebar - MELHORADO com estado visual correto */}
       {isMobile && (
         <Button
           onClick={handleToggleSidebar}
