@@ -14,12 +14,13 @@ const Chat = () => {
     messages,
     currentConversation,
     conversations,
-    processing,
-    createConversation,
+    loading,
+    createAndNavigateToNewConversation,
     setCurrentConversation
   } = useConversations();
 
   const [inputValue, setInputValue] = useState("");
+  const [processing, setProcessing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -35,18 +36,25 @@ const Chat = () => {
 
     const messageContent = inputValue.trim();
     setInputValue("");
+    setProcessing(true);
 
     try {
       // Process message logic here
       console.log("Sending message:", messageContent);
+      
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
+    } finally {
+      setProcessing(false);
     }
   };
 
   const handleNewChat = async () => {
     try {
-      await createConversation();
+      await createAndNavigateToNewConversation();
     } catch (error) {
       console.error("Erro ao criar nova conversa:", error);
     }
@@ -79,8 +87,8 @@ const Chat = () => {
             <div className="flex-1 px-4 py-6">
               <ChatMessages 
                 messages={messages} 
-                loading={processing}
-                currentConversation={currentConversation}
+                loading={loading}
+                processing={processing}
               />
               <div ref={messagesEndRef} />
             </div>
@@ -92,8 +100,8 @@ const Chat = () => {
       <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
         <div className="p-4">
           <ChatInput
-            message={inputValue}
-            setMessage={setInputValue}
+            value={inputValue}
+            onChange={setInputValue}
             onSend={handleSendMessage}
             disabled={processing}
             placeholder="Digite sua mensagem..."

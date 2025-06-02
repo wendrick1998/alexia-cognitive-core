@@ -31,76 +31,30 @@ const Index = () => {
   const renderContent = (section: string) => {
     console.log(`🎨 Renderizando conteúdo para seção: ${section}`);
     
-    const contentStyle = "h-full overflow-y-auto premium-scrollbar momentum-scroll";
-    
     switch (section) {
       case "dashboard":
-        return (
-          <div className={contentStyle}>
-            <Dashboard />
-          </div>
-        );
+        return <Dashboard />;
       case "chat":
-        return (
-          <div className="h-full flex flex-col">
-            <Chat />
-          </div>
-        );
+        return <Chat />;
       case "memory":
-        return (
-          <div className={contentStyle}>
-            <MemoryManager />
-          </div>
-        );
+        return <MemoryManager />;
       case "documents":
-        return (
-          <div className={contentStyle}>
-            <DocumentsManager />
-          </div>
-        );
+        return <DocumentsManager />;
       case "search":
-        return (
-          <div className={contentStyle}>
-            <SemanticSearch />
-          </div>
-        );
+        return <SemanticSearch />;
       case "actions":
-        return (
-          <div className={contentStyle}>
-            <ProjectsManager />
-          </div>
-        );
+        return <ProjectsManager />;
       case "preferences":
-        return (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-            Preferências do Usuário - Em desenvolvimento
-          </div>
-        );
+        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Preferências do Usuário - Em desenvolvimento</div>;
       case "privacy":
-        return (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-            Configurações de IA - Em desenvolvimento
-          </div>
-        );
+        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Configurações de IA - Em desenvolvimento</div>;
       case "subscription":
-        return (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-            Assinatura - Em desenvolvimento
-          </div>
-        );
+        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Assinatura - Em desenvolvimento</div>;
       case "security":
-        return (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-            Privacidade - Em desenvolvimento
-          </div>
-        );
+        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Privacidade - Em desenvolvimento</div>;
       default:
         console.log(`⚠️ Seção desconhecida: ${section}, retornando para Dashboard`);
-        return (
-          <div className={contentStyle}>
-            <Dashboard />
-          </div>
-        );
+        return <Dashboard />;
     }
   };
 
@@ -108,11 +62,9 @@ const Index = () => {
     <AuthGuard>
       <div className="min-h-screen bg-white dark:bg-gray-950">
         <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
-          <div className="h-full overflow-hidden">
-            <PageTransition>
-              {renderContent(currentSection)}
-            </PageTransition>
-          </div>
+          <PageTransition>
+            {renderContent(currentSection)}
+          </PageTransition>
         </PremiumAppLayout>
         
         <ConnectionStatus />
