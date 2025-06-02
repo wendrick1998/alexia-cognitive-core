@@ -10,10 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertTriangle, Activity, Lock, Eye, TrendingUp } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { useSecureAuth } from '@/hooks/useSecureAuth';
 
 interface SecurityEvent {
   id: string;
@@ -33,7 +30,7 @@ interface SecurityMetrics {
 }
 
 const SecurityDashboard = () => {
-  const { user } = useAuth();
+  const { user } = useSecureAuth();
   const [events, setEvents] = useState<SecurityEvent[]>([]);
   const [metrics, setMetrics] = useState<SecurityMetrics>({
     totalEvents: 0,
@@ -49,27 +46,34 @@ const SecurityDashboard = () => {
 
     const fetchSecurityData = async () => {
       try {
-        // Fetch recent security events
-        const { data: eventsData, error: eventsError } = await supabase
-          .from('security_events')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(50);
+        // Mock data for now - will be replaced with real data once security_events table is available
+        const mockEvents: SecurityEvent[] = [
+          {
+            id: '1',
+            action: 'signin_success',
+            resource: 'auth',
+            severity: 'low',
+            details: { email: user.email },
+            created_at: new Date().toISOString()
+          },
+          {
+            id: '2',
+            action: 'api_call_initiated',
+            resource: 'process-chat-message',
+            severity: 'low',
+            details: { hasBody: true },
+            created_at: new Date(Date.now() - 300000).toISOString()
+          }
+        ];
 
-        if (eventsError) {
-          console.error('Error fetching security events:', eventsError);
-          return;
-        }
+        setEvents(mockEvents);
 
-        setEvents(eventsData || []);
-
-        // Calculate metrics
-        const totalEvents = eventsData?.length || 0;
-        const criticalEvents = eventsData?.filter(e => e.severity === 'critical').length || 0;
-        const failedLogins = eventsData?.filter(e => e.action.includes('signin_failed')).length || 0;
-        const rateLimitViolations = eventsData?.filter(e => e.action.includes('rate_limit')).length || 0;
-        const lastActivity = eventsData?.[0]?.created_at || null;
+        // Calculate metrics from mock data
+        const totalEvents = mockEvents.length;
+        const criticalEvents = mockEvents.filter(e => e.severity === 'critical').length;
+        const failedLogins = mockEvents.filter(e => e.action.includes('signin_failed')).length;
+        const rateLimitViolations = mockEvents.filter(e => e.action.includes('rate_limit')).length;
+        const lastActivity = mockEvents[0]?.created_at || null;
 
         setMetrics({
           totalEvents,
@@ -199,7 +203,7 @@ const SecurityDashboard = () => {
             <CardHeader>
               <CardTitle>Eventos Recentes</CardTitle>
               <CardDescription>
-                Últimos 50 eventos de segurança registrados
+                Eventos de segurança registrados (dados simulados)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -220,7 +224,7 @@ const SecurityDashboard = () => {
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600 mt-1">
-                        {format(new Date(event.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                        {new Date(event.created_at).toLocaleString('pt-BR')}
                       </p>
                       {Object.keys(event.details).length > 0 && (
                         <pre className="text-xs bg-gray-50 p-2 rounded mt-2 overflow-x-auto">
@@ -257,7 +261,7 @@ const SecurityDashboard = () => {
                       <strong>{event.action}</strong> em {event.resource}
                       <br />
                       <span className="text-sm text-gray-600">
-                        {format(new Date(event.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                        {new Date(event.created_at).toLocaleString('pt-BR')}
                       </span>
                     </AlertDescription>
                   </Alert>
@@ -293,7 +297,7 @@ const SecurityDashboard = () => {
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600">
-                        {format(new Date(event.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                        {new Date(event.created_at).toLocaleString('pt-BR')}
                       </p>
                     </div>
                   </div>

@@ -4,8 +4,6 @@
  * @created_by Security Audit - Alex iA
  */
 
-import { supabase } from '@/integrations/supabase/client';
-
 export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export interface SecurityEvent {
@@ -30,7 +28,7 @@ class ErrorHandler {
     return ErrorHandler.instance;
   }
   
-  // Log security events to database
+  // Log security events to console (will be extended to database once migration is applied)
   async logSecurityEvent(event: SecurityEvent): Promise<void> {
     try {
       // Log to console for immediate debugging
@@ -45,7 +43,9 @@ class ErrorHandler {
         ip: event.ip || 'unknown'
       });
       
-      // Store in database for audit trail
+      // TODO: Store in database once security_events table is available
+      // This will be enabled after the migration is applied
+      /*
       const { error } = await supabase
         .from('security_events')
         .insert({
@@ -62,6 +62,7 @@ class ErrorHandler {
       if (error) {
         console.error('Failed to log security event to database:', error);
       }
+      */
     } catch (err) {
       console.error('Security logging error:', err);
     }

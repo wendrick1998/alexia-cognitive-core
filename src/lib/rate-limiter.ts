@@ -1,6 +1,6 @@
 
 /**
- * @description Client-side rate limiting and request throttling
+ * @description Client-side rate limiting utility
  * @created_by Security Audit - Alex iA
  */
 
@@ -10,71 +10,89 @@ interface RateLimitConfig {
   identifier: string;
 }
 
-interface RequestLog {
-  timestamp: number;
+interface RateLimitRecord {
   count: number;
+  resetTime: number;
 }
 
 class RateLimiter {
-  private requests: Map<string, RequestLog> = new Map();
+  private static instance: RateLimiter;
+  private storage: Map<string, RateLimitRecord> = new Map();
   
-  // Check if request should be allowed
-  isAllowed(config: RateLimitConfig): boolean {
-    const now = Date.now();
-    const key = config.identifier;
-    const existing = this.requests.get(key);
-    
-    // Clean up old entries
-    this.cleanup(now, config.windowMs);
-    
-    if (!existing) {
-      this.requests.set(key, { timestamp: now, count: 1 });
-      return true;
-    }
-    
-    // Check if window has passed
-    if (now - existing.timestamp > config.windowMs) {
-      this.requests.set(key, { timestamp: now, count: 1 });
-      return true;
-    }
-    
-    // Increment count
-    existing.count++;
-    
-    return existing.count <= config.maxRequests;
+  private constructor() {
+    // Clean up expired entries every minute
+    setInterval(() => this.cleanup(), 60000);
   }
   
-  // Get remaining requests
-  getRemaining(config: RateLimitConfig): number {
-    const key = config.identifier;
-    const existing = this.requests.get(key);
-    
-    if (!existing) return config.maxRequests;
-    
+  public static getInstance(): RateLimiter {
+    if (!RateLimiter.instance) {
+      RateLimiter.instance = new RateLimiter();
+    }
+    return RateLimiter.instance;
+  }
+  
+  public isAllowed(config: RateLimitConfig): boolean {
     const now = Date.now();
-    if (now - existing.timestamp > config.windowMs) {
+    const key = `${config.identifier}_${Math.floor(now / config.windowMs)}`;
+    
+    const record = this.storage.get(key);
+    
+    if (!record) {
+      // First request in this window
+      this.storage.set(key, {
+        count: 1,
+        resetTime: now + config.windowMs
+      });
+      return true;
+    }
+    
+    if (record.count >= config.maxRequests) {
+      console.warn(`🚫 Rate limit exceeded for ${config.identifier}:`, {
+        current: record.count,
+        max: config.maxRequests,
+        resetIn: Math.ceil((record.resetTime - now) / 1000)
+      });
+      return false;
+    }
+    
+    // Increment counter
+    record.count++;
+    return true;
+  }
+  
+  public getRemainingRequests(config: RateLimitConfig): number {
+    const now = Date.now();
+    const key = `${config.identifier}_${Math.floor(now / config.windowMs)}`;
+    const record = this.storage.get(key);
+    
+    if (!record) {
       return config.maxRequests;
     }
     
-    return Math.max(0, config.maxRequests - existing.count);
+    return Math.max(0, config.maxRequests - record.count);
   }
   
-  // Clean up old entries
-  private cleanup(now: number, windowMs: number): void {
-    for (const [key, log] of this.requests.entries()) {
-      if (now - log.timestamp > windowMs) {
-        this.requests.delete(key);
+  public getResetTime(config: RateLimitConfig): number {
+    const now = Date.now();
+    const key = `${config.identifier}_${Math.floor(now / config.windowMs)}`;
+    const record = this.storage.get(key);
+    
+    if (!record) {
+      return now + config.windowMs;
+    }
+    
+    return record.resetTime;
+  }
+  
+  private cleanup(): void {
+    const now = Date.now();
+    
+    for (const [key, record] of this.storage.entries()) {
+      if (now > record.resetTime) {
+        this.storage.delete(key);
       }
     }
   }
 }
 
-export const rateLimiter = new RateLimiter();
-
-// Predefined rate limit configs
-export const RATE_LIMITS = {
-  CHAT_MESSAGE: { maxRequests: 30, windowMs: 60000, identifier: 'chat' }, // 30/min
-  DOCUMENT_UPLOAD: { maxRequests: 5, windowMs: 300000, identifier: 'upload' }, // 5/5min
-  MEMORY_CREATE: { maxRequests: 20, windowMs: 60000, identifier: 'memory' }, // 20/min
-  SEARCH: { maxRequests: 100, windowMs: 60000, identifier: 'search' } // 100/min
-};
+export const rateLimiter = RateLimiter.getInstance();

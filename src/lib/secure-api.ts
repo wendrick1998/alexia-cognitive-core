@@ -98,8 +98,7 @@ class SecureApi {
           'Content-Type': 'application/json',
           'X-Request-ID': crypto.randomUUID(),
           ...headers
-        },
-        signal: controller.signal
+        }
       });
       
       clearTimeout(timeoutId);
