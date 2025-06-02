@@ -1536,6 +1536,90 @@ export type Database = {
           },
         ]
       }
+      memory_feedback: {
+        Row: {
+          confidence_level: string | null
+          created_at: string | null
+          feedback_text: string | null
+          id: string
+          memory_id: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_level?: string | null
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          memory_id?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence_level?: string | null
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          memory_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_feedback_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "active_neural_network"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_feedback_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_versions: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string
+          id: string
+          memory_id: string | null
+          version_number: number
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          memory_id?: string | null
+          version_number: number
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          memory_id?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_versions_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "active_neural_network"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_versions_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -2182,6 +2266,10 @@ export type Database = {
         Args: { p_user_id: string; p_threshold_hours?: number }
         Returns: string
       }
+      create_memory_version: {
+        Args: { p_memory_id: string; p_content: string; p_user_id: string }
+        Returns: string
+      }
       discover_cognitive_clusters: {
         Args: {
           p_user_id: string
@@ -2189,6 +2277,13 @@ export type Database = {
           p_similarity_threshold?: number
         }
         Returns: number
+      }
+      get_memory_feedback_summary: {
+        Args: { memory_id_param: string }
+        Returns: {
+          confidence_level: string
+          count: number
+        }[]
       }
       halfvec_avg: {
         Args: { "": number[] }
