@@ -6,7 +6,7 @@ import { useMultiLLM } from '@/hooks/useMultiLLM';
 import { useSecurity } from '@/hooks/useSecurity';
 import { supabase } from '@/integrations/supabase/client';
 import { llmLogger } from '@/services/LLMLogger';
-import type { Priority } from '@/services/MultiLLMRouter';
+import type { Priority, TaskType as MultiLLMTaskType } from '@/services/MultiLLMRouter';
 import type { TaskType } from '@/hooks/useLLMRouter';
 
 export interface ChatResponse {
@@ -75,12 +75,13 @@ export function useChatProcessor() {
 
       // Determinar prioridade e tipo da tarefa
       const taskType = detectTaskType(sanitizedMessage);
+      const multiLLMTaskType = mapToMultiLLMTaskType(taskType);
       const priority = detectPriority(sanitizedMessage);
 
       // Processar com sistema multi-LLM
       const llmResponse = await processLLMRequest({
         prompt: sanitizedMessage,
-        taskType,
+        taskType: multiLLMTaskType,
         priority,
         maxTokens: 4000,
         temperature: 0.7
@@ -120,7 +121,7 @@ export function useChatProcessor() {
       await llmLogger.logCall({
         modelName: llmResponse.model,
         provider: llmResponse.provider.toLowerCase(),
-        taskType: taskType as any, // Type conversion for compatibility
+        taskType: multiLLMTaskType as any, // Type conversion for compatibility
         question: sanitizedMessage,
         answer: llmResponse.content,
         startTime,
@@ -191,6 +192,20 @@ function detectTaskType(message: string): TaskType {
   }
   
   return 'general';
+}
+
+function mapToMultiLLMTaskType(taskType: TaskType): MultiLLMTaskType {
+  const mapping: Record<TaskType, MultiLLMTaskType> = {
+    'general': 'general',
+    'code': 'coding',
+    'creative': 'creative',
+    'academic': 'analysis',
+    'reasoning': 'technical',
+    'summarization': 'general',
+    'extraction': 'general'
+  };
+  
+  return mapping[taskType] || 'general';
 }
 
 function detectPriority(message: string): Priority {
