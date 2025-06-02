@@ -9,6 +9,83 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          llm_model: string | null
+          role: string
+          session_id: string
+          tokens_used: number | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          llm_model?: string | null
+          role: string
+          session_id: string
+          tokens_used?: number | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          llm_model?: string | null
+          role?: string
+          session_id?: string
+          tokens_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          auto_title: boolean | null
+          created_at: string | null
+          id: string
+          is_favorite: boolean | null
+          last_message_preview: string | null
+          message_count: number | null
+          pinned: boolean | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_title?: boolean | null
+          created_at?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          last_message_preview?: string | null
+          message_count?: number | null
+          pinned?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_title?: boolean | null
+          created_at?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          last_message_preview?: string | null
+          message_count?: number | null
+          pinned?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cognitive_clusters: {
         Row: {
           centroid_embedding: string | null
@@ -1358,6 +1435,10 @@ export type Database = {
           max_connections?: number
         }
         Returns: undefined
+      }
+      auto_rename_chat_session: {
+        Args: { p_session_id: string }
+        Returns: string
       }
       binary_quantize: {
         Args: { "": string } | { "": unknown }

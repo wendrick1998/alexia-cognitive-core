@@ -17,7 +17,7 @@ import {
   FileCode,
   Plug,
   LogOut,
-  Crown
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +35,7 @@ const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
       title: "PRINCIPAL",
       items: [
         { id: "dashboard", label: "Dashboard", icon: BarChart3, description: "Visão geral do sistema" },
-        { id: "chat", label: "Chat", icon: MessageCircle, description: "Conversas com IA" },
+        { id: "chat", label: "Chat com Alex IA", icon: MessageCircle, description: "Assistente Premium" },
         { id: "search", label: "Busca Semântica", icon: Search, description: "Encontre informações", badge: "Premium" },
         { id: "memory", label: "Memória", icon: Brain, description: "Gestão de conhecimento" },
         { id: "documents", label: "Documentos", icon: FileText, description: "PDFs e arquivos" },
@@ -71,16 +71,16 @@ const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
   };
 
   return (
-    <div className="h-full bg-black flex flex-col">
+    <div className="h-full bg-gradient-to-b from-black to-gray-900 flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-            <Crown className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">AlexIA</h1>
-            <p className="text-sm text-white/60">Sistema Cognitivo</p>
+            <h1 className="text-xl font-bold text-white">Alex IA</h1>
+            <p className="text-sm text-white/60">Sistema Cognitivo Premium</p>
           </div>
         </div>
       </div>
@@ -104,15 +104,15 @@ const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
                     variant="ghost"
                     className={cn(
                       "w-full justify-start h-auto p-3 rounded-xl transition-all duration-200",
-                      "hover:bg-white/5 hover:translate-x-1",
-                      isActive && "bg-white/10 text-white border border-white/20"
+                      "hover:bg-gradient-to-r hover:from-white/5 hover:to-white/10 hover:translate-x-1",
+                      isActive && "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30 shadow-lg"
                     )}
                   >
                     <div className="flex items-center gap-3 w-full">
                       <div className={cn(
                         "p-2 rounded-lg transition-colors",
                         isActive 
-                          ? "bg-blue-500 text-white" 
+                          ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg" 
                           : "bg-white/5 text-white/60"
                       )}>
                         <Icon className="w-4 h-4" />
@@ -139,8 +139,8 @@ const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
 
       {/* User Section */}
       <div className="p-4 border-t border-white/10">
-        <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl mb-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+        <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-white/5 to-white/10 rounded-xl mb-3 border border-white/10">
+          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
             <User className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -154,7 +154,7 @@ const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
         <Button
           onClick={handleSignOut}
           variant="ghost"
-          className="w-full justify-start text-white/60 hover:text-white hover:bg-red-500/10"
+          className="w-full justify-start text-white/60 hover:text-white hover:bg-red-500/10 hover:border-red-500/30"
         >
           <LogOut className="w-4 h-4 mr-2" />
           Sair
