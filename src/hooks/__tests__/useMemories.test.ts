@@ -15,6 +15,20 @@ jest.mock('@/integrations/supabase/client', () => ({
   }
 }));
 
+// Mock the auth hook
+jest.mock('@/hooks/useAuth', () => ({
+  useAuth: jest.fn(() => ({
+    user: { id: 'test-user-id' }
+  }))
+}));
+
+// Mock the toast hook
+jest.mock('@/hooks/use-toast', () => ({
+  useToast: jest.fn(() => ({
+    toast: jest.fn()
+  }))
+}));
+
 // Create a test wrapper with QueryClient
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -25,11 +39,9 @@ const createWrapper = () => {
     },
   });
   
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
+  return function TestWrapper({ children }: { children: React.ReactNode }) {
+    return React.createElement(QueryClientProvider, { client: queryClient }, children);
+  };
 };
 
 describe('useMemories', () => {
