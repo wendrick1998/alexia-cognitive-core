@@ -1,98 +1,91 @@
 
 /**
- * @description Client-side rate limiting utility
+ * @description Client-side rate limiter for security and performance
  * @created_by Security Audit - Alex iA
  */
 
-interface RateLimitConfig {
+interface RateLimitOptions {
   maxRequests: number;
   windowMs: number;
   identifier: string;
 }
 
-interface RateLimitRecord {
+interface RateLimitEntry {
   count: number;
   resetTime: number;
 }
 
 class RateLimiter {
-  private static instance: RateLimiter;
-  private storage: Map<string, RateLimitRecord> = new Map();
-  
-  private constructor() {
-    // Clean up expired entries every minute
-    setInterval(() => this.cleanup(), 60000);
+  private limits = new Map<string, RateLimitEntry>();
+  private cleanupInterval: NodeJS.Timeout;
+
+  constructor() {
+    // Clean up expired entries every 5 minutes
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, 5 * 60 * 1000);
   }
-  
-  public static getInstance(): RateLimiter {
-    if (!RateLimiter.instance) {
-      RateLimiter.instance = new RateLimiter();
-    }
-    return RateLimiter.instance;
-  }
-  
-  public isAllowed(config: RateLimitConfig): boolean {
+
+  isAllowed(options: RateLimitOptions): boolean {
+    const { maxRequests, windowMs, identifier } = options;
     const now = Date.now();
-    const key = `${config.identifier}_${Math.floor(now / config.windowMs)}`;
-    
-    const record = this.storage.get(key);
-    
-    if (!record) {
-      // First request in this window
-      this.storage.set(key, {
+    const resetTime = now + windowMs;
+
+    const existing = this.limits.get(identifier);
+
+    if (!existing || existing.resetTime <= now) {
+      // First request or window expired
+      this.limits.set(identifier, {
         count: 1,
-        resetTime: now + config.windowMs
+        resetTime
       });
       return true;
     }
-    
-    if (record.count >= config.maxRequests) {
-      console.warn(`🚫 Rate limit exceeded for ${config.identifier}:`, {
-        current: record.count,
-        max: config.maxRequests,
-        resetIn: Math.ceil((record.resetTime - now) / 1000)
-      });
+
+    if (existing.count >= maxRequests) {
       return false;
     }
-    
-    // Increment counter
-    record.count++;
+
+    // Increment count
+    existing.count++;
     return true;
   }
-  
-  public getRemainingRequests(config: RateLimitConfig): number {
-    const now = Date.now();
-    const key = `${config.identifier}_${Math.floor(now / config.windowMs)}`;
-    const record = this.storage.get(key);
-    
-    if (!record) {
-      return config.maxRequests;
+
+  getRemainingRequests(identifier: string, maxRequests: number): number {
+    const existing = this.limits.get(identifier);
+    if (!existing || existing.resetTime <= Date.now()) {
+      return maxRequests;
     }
-    
-    return Math.max(0, config.maxRequests - record.count);
+    return Math.max(0, maxRequests - existing.count);
   }
-  
-  public getResetTime(config: RateLimitConfig): number {
-    const now = Date.now();
-    const key = `${config.identifier}_${Math.floor(now / config.windowMs)}`;
-    const record = this.storage.get(key);
-    
-    if (!record) {
-      return now + config.windowMs;
+
+  getResetTime(identifier: string): number | null {
+    const existing = this.limits.get(identifier);
+    if (!existing || existing.resetTime <= Date.now()) {
+      return null;
     }
-    
-    return record.resetTime;
+    return existing.resetTime;
   }
-  
+
+  reset(identifier: string): void {
+    this.limits.delete(identifier);
+  }
+
   private cleanup(): void {
     const now = Date.now();
-    
-    for (const [key, record] of this.storage.entries()) {
-      if (now > record.resetTime) {
-        this.storage.delete(key);
+    for (const [key, entry] of this.limits.entries()) {
+      if (entry.resetTime <= now) {
+        this.limits.delete(key);
       }
     }
   }
+
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+    this.limits.clear();
+  }
 }
 
-export const rateLimiter = RateLimiter.getInstance();
+export const rateLimiter = new RateLimiter();

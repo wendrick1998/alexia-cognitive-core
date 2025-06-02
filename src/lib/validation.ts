@@ -1,116 +1,94 @@
 
 /**
- * @description Validation utilities with Zod for secure input handling
+ * @description Secure validation utilities with comprehensive error handling
  * @created_by Security Audit - Alex iA
  */
 
 import { z } from 'zod';
+import { errorHandler } from './error-handler';
 
-// Chat message validation
-export const chatMessageSchema = z.object({
-  message: z.string()
-    .min(1, 'Mensagem não pode estar vazia')
-    .max(10000, 'Mensagem muito longa')
-    .refine(val => !containsMaliciousContent(val), 'Conteúdo suspeito detectado'),
-  conversationId: z.string().uuid().optional(),
-  userId: z.string().uuid()
-});
+export type ValidationResult<T> = 
+  | { success: true; data: T }
+  | { success: false; error: string };
 
-// Document upload validation
-export const documentUploadSchema = z.object({
-  file: z.object({
-    name: z.string().max(255),
-    size: z.number().max(50 * 1024 * 1024), // 50MB max
-    type: z.string().refine(type => 
-      ['application/pdf', 'text/plain', 'application/msword'].includes(type),
-      'Tipo de arquivo não permitido'
-    )
-  }),
-  userId: z.string().uuid()
-});
+export function validateSafely<T>(
+  schema: z.ZodSchema<T>,
+  data: unknown,
+  context: string
+): ValidationResult<T> {
+  try {
+    const result = schema.safeParse(data);
+    
+    if (result.success) {
+      return { success: true, data: result.data };
+    } else {
+      const errorMessage = result.error.errors
+        .map(err => `${err.path.join('.')}: ${err.message}`)
+        .join(', ');
+      
+      // Log validation failures for security monitoring
+      errorHandler.logSecurityEvent({
+        action: 'validation_failed',
+        resource: context,
+        severity: 'low',
+        details: {
+          context,
+          errors: result.error.errors,
+          dataType: typeof data
+        }
+      });
 
-// Memory creation validation
-export const memorySchema = z.object({
-  content: z.string()
-    .min(1, 'Conteúdo não pode estar vazio')
-    .max(5000, 'Conteúdo muito longo'),
-  type: z.enum(['note', 'fact', 'preference', 'decision']),
-  userId: z.string().uuid()
-});
+      return { success: false, error: errorMessage };
+    }
+  } catch (error) {
+    const errorMessage = `Validation error in ${context}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    
+    // Log unexpected validation errors
+    errorHandler.logSecurityEvent({
+      action: 'validation_exception',
+      resource: context,
+      severity: 'medium',
+      details: {
+        context,
+        error: errorMessage,
+        dataType: typeof data
+      }
+    });
 
-// User input sanitization
-export const sanitizeInput = (input: string): string => {
-  return input
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove scripts
-    .replace(/javascript:/gi, '') // Remove javascript: protocols
-    .replace(/on\w+=/gi, '') // Remove event handlers
-    .trim();
-};
-
-// Malicious content detection
-const containsMaliciousContent = (content: string): boolean => {
-  const maliciousPatterns = [
-    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-    /javascript:/gi,
-    /on\w+=/gi,
-    /union\s+select/gi,
-    /exec\(/gi,
-    /eval\(/gi,
-    /document\.cookie/gi,
-    /localStorage\./gi,
-    /sessionStorage\./gi
-  ];
-  
-  return maliciousPatterns.some(pattern => pattern.test(content));
-};
-
-// Rate limiting validation
-export const rateLimitSchema = z.object({
-  action: z.string(),
-  userId: z.string().uuid(),
-  timestamp: z.number()
-});
-
-// Validation error handler
-export class ValidationError extends Error {
-  constructor(
-    message: string,
-    public field?: string,
-    public code?: string
-  ) {
-    super(message);
-    this.name = 'ValidationError';
+    return { success: false, error: errorMessage };
   }
 }
 
-// Safe validation wrapper
-export const validateSafely = <T>(
-  schema: z.ZodSchema<T>,
-  data: unknown,
-  context?: string
-): { success: true; data: T } | { success: false; error: string } => {
-  try {
-    const result = schema.parse(data);
-    return { success: true, data: result };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
-      console.warn(`Validation failed in ${context || 'unknown'}:`, {
-        field: firstError.path.join('.'),
-        message: firstError.message,
-        input: data
-      });
-      
-      return {
-        success: false,
-        error: `Dados inválidos: ${firstError.message}`
-      };
-    }
-    
-    console.error(`Unexpected validation error in ${context}:`, error);
-    return {
-      success: false,
-      error: 'Erro de validação interno'
-    };
-  }
+// Common validation schemas
+export const commonSchemas = {
+  email: z.string().email('Email inválido').max(255),
+  password: z.string()
+    .min(8, 'Senha deve ter pelo menos 8 caracteres')
+    .max(128, 'Senha muito longa'),
+  uuid: z.string().uuid('UUID inválido'),
+  url: z.string().url('URL inválida').max(2048),
+  nonEmptyString: z.string().min(1, 'Campo obrigatório').max(1000),
+  positiveInteger: z.number().int().positive('Deve ser um número positivo'),
+  safeHtml: z.string().refine(
+    (val) => !/<script|javascript:|on\w+=/i.test(val),
+    'Conteúdo não permitido detectado'
+  )
 };
+
+// Sanitization utilities
+export function sanitizeInput(input: string): string {
+  return input
+    .replace(/[<>]/g, '') // Remove basic HTML chars
+    .replace(/javascript:/gi, '') // Remove JS protocols
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .trim();
+}
+
+export function validateAndSanitize(
+  schema: z.ZodSchema<string>,
+  input: string,
+  context: string
+): ValidationResult<string> {
+  const sanitized = sanitizeInput(input);
+  return validateSafely(schema, sanitized, context);
+}
