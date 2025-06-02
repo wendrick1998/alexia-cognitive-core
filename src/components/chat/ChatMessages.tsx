@@ -37,10 +37,10 @@ const ChatMessages = ({ messages, processing, loading = false, renderMessageExtr
   return (
     <div 
       ref={containerRef}
-      className="h-full overflow-y-auto overflow-x-hidden premium-scrollbar"
+      className="h-full overflow-y-auto overflow-x-hidden chat-scroll-container premium-scrollbar"
       style={{
-        WebkitOverflowScrolling: 'touch', // iOS smooth scrolling
-        overscrollBehavior: 'contain' // Prevent pull-to-refresh
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain'
       }}
     >
       <div className="p-4 space-y-4 min-h-full">

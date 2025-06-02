@@ -74,6 +74,10 @@ const Chat = () => {
     }
   };
 
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   const handleSendMessage = async (message: string) => {
     if (!currentConversation) {
       console.log('⚠️ Criando nova conversa automaticamente...');
@@ -160,7 +164,7 @@ const Chat = () => {
         });
         break;
       case 'toggle-sidebar':
-        setSidebarCollapsed(!sidebarCollapsed);
+        handleToggleSidebar();
         break;
       default:
         console.log('Ação não reconhecida:', action);
@@ -208,15 +212,17 @@ const Chat = () => {
   };
 
   return (
-    <div className="h-full relative flex">
-      {/* Botão Toggle Sidebar - Flutuante no mobile */}
+    <div className="h-full relative flex overflow-hidden">
+      {/* Botão Toggle Sidebar - Melhorado visualmente */}
       {isMobile && (
         <Button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onClick={handleToggleSidebar}
           variant="outline"
           size="icon"
           className={cn(
-            "fixed top-20 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50 shadow-lg transition-all duration-300",
+            "fixed top-20 z-50 transition-all duration-300 shadow-lg",
+            "bg-blue-600 hover:bg-blue-700 text-white border-blue-600",
+            "hover:shadow-xl transform hover:scale-105",
             sidebarCollapsed ? "left-4" : "left-80"
           )}
         >
@@ -224,8 +230,8 @@ const Chat = () => {
         </Button>
       )}
 
-      {/* Layout principal do chat */}
-      <div className="flex-1 h-full">
+      {/* Layout principal do chat com overflow controlado */}
+      <div className="flex-1 h-full overflow-hidden">
         <PremiumChatLayout
           conversations={conversations}
           currentConversation={currentConversation}
@@ -239,6 +245,7 @@ const Chat = () => {
           renderMessageExtras={renderMessageWithSource}
           className="h-full"
           sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={handleToggleSidebar}
         />
       </div>
 

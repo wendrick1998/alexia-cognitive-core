@@ -104,6 +104,16 @@
   animation: scale-in 0.2s ease-out forwards;
 }
 
+/* Chat specific scroll container - CORRIGIDO */
+.chat-scroll-container {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
 /* Mobile scroll optimization */
 @media (max-width: 768px) {
   .premium-scrollbar {
@@ -123,6 +133,15 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     scroll-behavior: smooth;
+  }
+  
+  /* Chat mobile optimizations */
+  .chat-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+    /* Prevent zoom on iOS */
+    touch-action: pan-y;
   }
 }
 
@@ -203,14 +222,5 @@
   .min-touch-target {
     min-height: 44px;
     min-width: 44px;
-  }
-  
-  /* Chat specific utilities */
-  .chat-scroll-container {
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
   }
 }

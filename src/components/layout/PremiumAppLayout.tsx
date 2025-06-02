@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
@@ -135,8 +136,9 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 flex flex-col min-h-screen overflow-hidden relative",
-        !isMobile && "ml-20"
+        "flex-1 flex flex-col min-h-screen relative",
+        !isMobile && "ml-20",
+        currentSection === 'chat' ? "overflow-hidden" : "overflow-auto"
       )}>
         {/* Header */}
         <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0 relative z-30">
@@ -161,14 +163,18 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
           </div>
         </header>
 
-        {/* Content Area com padding para barra inferior */}
+        {/* Content Area - Aplicar overflow controlado apenas para chat */}
         <div className={cn(
-          "flex-1 overflow-y-auto relative z-10",
-          isMobile && "pb-20" // Espaçamento para barra inferior
+          "flex-1 relative z-10",
+          currentSection === 'chat' ? "overflow-hidden" : "overflow-y-auto",
+          isMobile && currentSection !== 'chat' && "pb-20"
         )} style={{
-          paddingBottom: isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : undefined
+          paddingBottom: isMobile && currentSection !== 'chat' ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : undefined
         }}>
-          <div className="h-full w-full">
+          <div className={cn(
+            "w-full",
+            currentSection === 'chat' ? "h-full overflow-hidden" : "h-auto"
+          )}>
             {children}
           </div>
         </div>

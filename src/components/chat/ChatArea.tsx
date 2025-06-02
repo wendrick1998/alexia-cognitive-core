@@ -44,7 +44,7 @@ const ChatArea = ({
         />
       </div>
 
-      {/* Content Area - Área scrollável */}
+      {/* Content Area - Área scrollável com overflow controlado */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <ChatContent
           currentConversation={currentConversation}
