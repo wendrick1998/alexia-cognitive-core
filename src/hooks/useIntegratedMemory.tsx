@@ -76,7 +76,7 @@ export function useIntegratedMemory() {
         context_used: cognitiveContexts.length > 0,
         contexts_found: cognitiveContexts.length,
         confidence_score: avgConfidence,
-        validation_status,
+        validation_status: validationStatus,
         cognitive_contexts: cognitiveContexts,
         document_contexts: [], // Será preenchido pelo chat processor
         memory_activated: true
