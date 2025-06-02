@@ -1,91 +1,91 @@
 
-import { Suspense, lazy, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/sonner";
-import { AccessibilityProvider } from "@/components/accessibility/AccessibilityProvider";
-import { AuthProvider } from "@/hooks/useAuth";
-import { useEnvironmentValidation } from "@/hooks/useEnvironmentValidation";
-import SplashScreen from "@/components/branding/SplashScreen";
-import UpdatePrompt from "@/components/pwa/UpdatePrompt";
-import PWAInstallBanner from "@/components/pwa/PWAInstallBanner";
-import { FullPageLoader } from "@/components/ui/page-loader";
-import { RoutePrefetcher } from "@/components/ui/route-prefetcher";
-import { ConnectionRetry } from "@/components/ui/connection-retry";
-import "./App.css";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from 'sonner';
+import AuthGuard from '@/components/auth/AuthGuard';
+import PremiumAppLayout from '@/components/layout/PremiumAppLayout';
+import Chat from '@/components/Chat';
+import Dashboard from '@/components/dashboard/Dashboard';
+import CortexDashboard from '@/pages/CortexDashboard';
+import UnifiedDashboardPage from '@/pages/UnifiedDashboardPage';
+import PerformanceDashboard from '@/components/PerformanceDashboard';
+import TaskFrameworkDashboard from '@/components/autonomous/TaskFrameworkDashboard';
+import './App.css';
 
-// Lazy load principais componentes
-const Index = lazy(() => import("./pages/Index"));
-const AuthPage = lazy(() => import("./components/auth/AuthPage"));
-const NotFound = lazy(() => import("./pages/404"));
-
-// Páginas específicas
-const SettingsPage = lazy(() => import("./pages/SettingsPage"));
-const IntegrationsManagerPage = lazy(() => import("./pages/IntegrationsManagerPage"));
-const SecurityPage = lazy(() => import("./pages/SecurityPage"));
-const CortexDashboard = lazy(() => import("./pages/CortexDashboard"));
-const ValidationDashboard = lazy(() => import("./pages/ValidationDashboard"));
-
-// Novas páginas da Fase 5
-const UnifiedDashboardPage = lazy(() => import("./pages/UnifiedDashboardPage"));
-const InteractiveGuide = lazy(() => import("./components/documentation/InteractiveGuide"));
-
-function AppContent() {
-  const [showSplash, setShowSplash] = useState(true);
-  const envStatus = useEnvironmentValidation();
-
-  const handleSplashComplete = () => {
-    console.log('🎬 Splash screen completed');
-    setShowSplash(false);
-  };
-
-  // Show connection retry only for actual connection failures
-  if (!envStatus.isValid && !envStatus.supabaseConnected && !showSplash) {
-    return <ConnectionRetry />;
-  }
-
-  return (
-    <>
-      {showSplash ? (
-        <SplashScreen onComplete={handleSplashComplete} />
-      ) : (
-        <>
-          <Suspense fallback={<FullPageLoader text="Carregando aplicação..." />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/login" element={<Navigate to="/auth" replace />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/integrations-manager" element={<IntegrationsManagerPage />} />
-              <Route path="/security" element={<SecurityPage />} />
-              <Route path="/cortex-dashboard" element={<CortexDashboard />} />
-              <Route path="/validation" element={<ValidationDashboard />} />
-              
-              {/* Novas rotas da Fase 5 */}
-              <Route path="/unified-dashboard" element={<UnifiedDashboardPage />} />
-              <Route path="/guide" element={<InteractiveGuide />} />
-              
-              <Route path="/404" element={<NotFound />} />
-              <Route path="*" element={<Navigate to="/404" replace />} />
-            </Routes>
-          </Suspense>
-          
-          <RoutePrefetcher />
-          <Toaster />
-          <UpdatePrompt />
-          <PWAInstallBanner />
-        </>
-      )}
-    </>
-  );
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
-    <AuthProvider>
-      <AccessibilityProvider>
-        <AppContent />
-      </AccessibilityProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={
+              <AuthGuard>
+                <PremiumAppLayout>
+                  <Chat />
+                </PremiumAppLayout>
+              </AuthGuard>
+            } />
+            
+            <Route path="/dashboard" element={
+              <AuthGuard>
+                <PremiumAppLayout>
+                  <Dashboard />
+                </PremiumAppLayout>
+              </AuthGuard>
+            } />
+
+            <Route path="/unified-dashboard" element={
+              <AuthGuard>
+                <UnifiedDashboardPage />
+              </AuthGuard>
+            } />
+
+            <Route path="/performance-dashboard" element={
+              <AuthGuard>
+                <PremiumAppLayout>
+                  <PerformanceDashboard />
+                </PremiumAppLayout>
+              </AuthGuard>
+            } />
+
+            <Route path="/autonomous-dashboard" element={
+              <AuthGuard>
+                <PremiumAppLayout>
+                  <TaskFrameworkDashboard />
+                </PremiumAppLayout>
+              </AuthGuard>
+            } />
+            
+            <Route path="/cortex" element={<CortexDashboard />} />
+            
+            {/* Fallback route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          
+          <Toaster />
+          <SonnerToaster 
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: 'rgba(15, 23, 42, 0.95)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: 'white',
+              },
+            }}
+          />
+        </div>
+      </Router>
+    </QueryClientProvider>
   );
 }
 
