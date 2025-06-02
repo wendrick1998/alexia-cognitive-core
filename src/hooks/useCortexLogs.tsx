@@ -12,8 +12,8 @@ export interface CortexLog {
   selected_model: string;
   reasoning?: string;
   response_stored_in?: string;
-  insights_generated: any[];
-  activated_nodes: any[];
+  insights_generated: any;
+  activated_nodes: any;
   created_at: string;
   execution_time_ms: number;
   fallback_used: boolean;
@@ -39,7 +39,15 @@ export function useCortexLogs() {
         .limit(100);
 
       if (error) throw error;
-      setLogs(data || []);
+      
+      // Transform data to match interface
+      const transformedData = data?.map(item => ({
+        ...item,
+        insights_generated: item.insights_generated || [],
+        activated_nodes: item.activated_nodes || []
+      })) || [];
+      
+      setLogs(transformedData);
     } catch (error) {
       console.error('Erro ao carregar logs do córtex:', error);
       toast({

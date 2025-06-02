@@ -53,12 +53,22 @@ export function useCognitiveNodes() {
 
   const activateNode = useCallback(async (nodeId: string) => {
     try {
+      // Get current access count first
+      const { data: currentNode, error: fetchError } = await supabase
+        .from('cognitive_nodes')
+        .select('access_count')
+        .eq('id', nodeId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update with incremented access count
       const { error } = await supabase
         .from('cognitive_nodes')
         .update({
           activation_strength: 1.0,
           last_accessed_at: new Date().toISOString(),
-          access_count: supabase.raw('access_count + 1')
+          access_count: (currentNode.access_count || 0) + 1
         })
         .eq('id', nodeId);
 
