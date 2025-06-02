@@ -1,14 +1,15 @@
 
-describe('LLM Service Integration', () => {
-  // Mock fetch for API calls
-  const mockFetch = jest.fn();
-  global.fetch = mockFetch;
+// Mock global fetch
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
+describe('LLM Service Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFetch.mockReset();
   });
 
-  it('processes chat message successfully', async () => {
+  it('should handle successful API response', async () => {
     const mockResponse = {
       response: 'Hello! How can I help you today?',
       model: 'gpt-4',
@@ -17,10 +18,10 @@ describe('LLM Service Integration', () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
+      status: 200,
       json: async () => mockResponse,
     });
 
-    // Since we don't have direct access to the LLM service, we'll test the API contract
     const response = await fetch('/api/process-chat-message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -30,8 +31,7 @@ describe('LLM Service Integration', () => {
       }),
     });
 
-    const data = await response.json();
-
+    expect(response.ok).toBe(true);
     expect(mockFetch).toHaveBeenCalledWith('/api/process-chat-message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -41,28 +41,27 @@ describe('LLM Service Integration', () => {
       }),
     });
 
+    const data = await response.json();
     expect(data).toEqual(mockResponse);
   });
 
-  it('handles API errors gracefully', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network error'));
+  it('should handle network errors gracefully', async () => {
+    const networkError = new Error('Network error');
+    mockFetch.mockRejectedValueOnce(networkError);
 
-    try {
-      await fetch('/api/process-chat-message', {
+    await expect(
+      fetch('/api/process-chat-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: 'Hello',
           conversation_id: '123',
         }),
-      });
-    } catch (error) {
-      expect(error).toBeInstanceOf(Error);
-      expect((error as Error).message).toBe('Network error');
-    }
+      })
+    ).rejects.toThrow('Network error');
   });
 
-  it('validates required parameters', () => {
+  it('should validate chat request parameters', () => {
     const validateChatRequest = (data: any) => {
       if (!data.message || typeof data.message !== 'string') {
         throw new Error('Message is required and must be a string');
@@ -76,5 +75,25 @@ describe('LLM Service Integration', () => {
     expect(() => validateChatRequest({ message: 'Hello' })).not.toThrow();
     expect(() => validateChatRequest({})).toThrow('Message is required');
     expect(() => validateChatRequest({ message: 123 })).toThrow('must be a string');
+    expect(() => validateChatRequest({ 
+      message: 'Hello', 
+      conversation_id: 123 
+    })).toThrow('Conversation ID must be a string');
+  });
+
+  it('should handle API timeout scenarios', async () => {
+    const timeoutError = new Error('Request timeout');
+    mockFetch.mockRejectedValueOnce(timeoutError);
+
+    await expect(
+      fetch('/api/process-chat-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: 'Hello',
+          conversation_id: '123',
+        }),
+      })
+    ).rejects.toThrow('Request timeout');
   });
 });

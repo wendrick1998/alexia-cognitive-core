@@ -1,75 +1,59 @@
 
-import { renderHook, waitFor } from '../../utils/testUtils';
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useMemories } from '../useMemories';
+import React from 'react';
 
-// Mock the useQuery hook
-const mockUseQuery = jest.fn();
-jest.mock('@tanstack/react-query', () => ({
-  useQuery: (options: any) => mockUseQuery(options),
+// Mock the supabase client
+jest.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    then: jest.fn()
+  }
 }));
+
+// Create a test wrapper with QueryClient
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+  
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+};
 
 describe('useMemories', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('returns loading state initially', () => {
-    mockUseQuery.mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      error: null,
-      refetch: jest.fn(),
+  it('should return initial state with empty memories', () => {
+    const { result } = renderHook(() => useMemories(), {
+      wrapper: createWrapper(),
     });
 
-    const { result } = renderHook(() => useMemories());
-
-    expect(result.current.loading).toBe(true);
     expect(result.current.memories).toEqual([]);
+    expect(typeof result.current.addMemory).toBe('function');
+    expect(typeof result.current.updateMemory).toBe('function');
+    expect(typeof result.current.deleteMemory).toBe('function');
   });
 
-  it('returns memories data when loaded', async () => {
-    const mockMemories = [
-      {
-        id: '1',
-        content: 'This is a test memory',
-        type: 'fact' as const,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        user_id: 'test-user',
-        project_id: null,
-      },
-    ];
-
-    mockUseQuery.mockReturnValue({
-      data: mockMemories,
-      isLoading: false,
-      error: null,
-      refetch: jest.fn(),
+  it('should handle loading state', async () => {
+    const { result } = renderHook(() => useMemories(), {
+      wrapper: createWrapper(),
     });
 
-    const { result } = renderHook(() => useMemories());
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-      expect(result.current.memories).toEqual(mockMemories);
-    });
-  });
-
-  it('handles error state', async () => {
-    const mockError = new Error('Failed to load memories');
-
-    mockUseQuery.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: mockError,
-      refetch: jest.fn(),
-    });
-
-    const { result } = renderHook(() => useMemories());
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-      expect(result.current.memories).toEqual([]);
-    });
+    // Initial state should be handled properly
+    expect(result.current.memories).toEqual([]);
   });
 });

@@ -1,110 +1,97 @@
 
-import React from 'react';
-import { render, RenderOptions, renderHook } from '@testing-library/react';
-import { screen, fireEvent, waitFor } from '@testing-library/dom';
-import userEvent from '@testing-library/user-event';
+import React, { ReactElement } from 'react';
+import { render, RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from 'next-themes';
 
-// Re-export everything from @testing-library/react and dom
-export * from '@testing-library/react';
-export { screen, fireEvent, waitFor, userEvent };
-
-// Mock do useAuth para testes
-const mockAuthContext = {
-  user: {
-    id: 'test-user',
-    email: 'test@example.com'
-  },
-  isAuthenticated: true,
-  loading: false,
-  signIn: jest.fn(),
-  signOut: jest.fn(),
-  signUp: jest.fn()
-};
-
-// Mock do Auth Provider
-const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Simula o contexto de autenticação
-  return <>{children}</>;
-};
-
-// Create a custom render function that includes all providers
+// Create a custom render function that includes providers
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         retry: false,
-        staleTime: 0,
         gcTime: 0,
-      },
-      mutations: {
-        retry: false,
       },
     },
   });
 
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <MockAuthProvider>
-            {children}
-          </MockAuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <BrowserRouter>
+          {children}
+        </BrowserRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 };
 
 const customRender = (
-  ui: React.ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
+  ui: ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>,
 ) => render(ui, { wrapper: AllTheProviders, ...options });
 
-// Helper para renderizar com user event
-export const renderWithUserEvent = (ui: React.ReactElement) => {
-  const user = userEvent.setup();
-  return {
-    user,
-    ...customRender(ui)
-  };
-};
-
-// Helper para criar um QueryClient de teste personalizado
-export const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        staleTime: 0,
-        gcTime: 0,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  });
-
-// Helper para limpar todos os mocks
-export const clearAllMocks = () => {
-  jest.clearAllMocks();
-};
-
-// Helper para aguardar carregamento assíncrono
-export const waitForLoadingToFinish = async () => {
-  await waitFor(() => {
-    expect(screen.queryByText(/carregando/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-  });
-};
-
-// Override the default render with our custom render
+export * from '@testing-library/react';
 export { customRender as render };
 
-// Export mock auth context for use in tests
-export { mockAuthContext };
+// Mock utilities for tests
+export const mockUser = {
+  id: 'test-user-id',
+  email: 'test@example.com',
+  created_at: new Date().toISOString(),
+};
 
-// Explicitly re-export the commonly used testing utilities
-export { renderHook };
+export const mockConversation = {
+  id: 'test-conversation-id',
+  title: 'Test Conversation',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  user_id: 'test-user-id',
+};
+
+export const mockMessage = {
+  id: 'test-message-id',
+  content: 'Test message content',
+  role: 'user' as const,
+  conversation_id: 'test-conversation-id',
+  created_at: new Date().toISOString(),
+  user_id: 'test-user-id',
+};
+
+export const mockMemory = {
+  id: 'test-memory-id',
+  content: 'Test memory content',
+  type: 'fact' as const,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  user_id: 'test-user-id',
+};
+
+// Helper function to wait for async operations
+export const waitFor = async (callback: () => void | Promise<void>, timeout = 1000) => {
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeout) {
+    try {
+      await callback();
+      return;
+    } catch (error) {
+      // Continue waiting
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+  }
+  
+  throw new Error(`waitFor timeout after ${timeout}ms`);
+};
+
+// Mock hook utilities
+export const createMockHook = <T>(defaultValue: T) => {
+  let currentValue = defaultValue;
+  
+  return {
+    getValue: () => currentValue,
+    setValue: (value: T) => { currentValue = value; },
+    mock: jest.fn(() => currentValue)
+  };
+};
