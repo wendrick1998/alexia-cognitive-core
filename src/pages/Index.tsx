@@ -6,9 +6,9 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import { ConnectionStatus } from "@/components/ui/connection-status";
 import { PageTransition } from "@/components/ui/transitions";
 import { PageLoader } from "@/components/ui/page-loader";
+import Chat from "@/components/Chat";
 import { 
   Dashboard, 
-  Chat, 
   SemanticSearch, 
   MemoryManager, 
   DocumentsManager, 
@@ -51,11 +51,7 @@ const Index = () => {
           </Suspense>
         );
       case "chat":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Chat..." />}>
-            <Chat />
-          </Suspense>
-        );
+        return <Chat />;
       case "memory":
         return (
           <Suspense fallback={<PageLoader text="Carregando Memórias..." />}>
