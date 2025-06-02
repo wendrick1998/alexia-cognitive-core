@@ -43,13 +43,21 @@ export function useChatSessions() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('chat_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
+        .rpc('get_user_chat_sessions', { p_user_id: user.id });
 
-      if (error) throw error;
-      setSessions(data || []);
+      if (error) {
+        // Fallback para query direta se a função RPC não existir
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('chat_sessions' as any)
+          .select('*')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false });
+
+        if (fallbackError) throw fallbackError;
+        setSessions((fallbackData as ChatSession[]) || []);
+      } else {
+        setSessions((data as ChatSession[]) || []);
+      }
     } catch (error) {
       console.error('Erro ao carregar sessões:', error);
       toast({
@@ -67,13 +75,13 @@ export function useChatSessions() {
     try {
       setMessagesLoading(true);
       const { data, error } = await supabase
-        .from('chat_messages')
+        .from('chat_messages' as any)
         .select('*')
         .eq('session_id', sessionId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      setMessages((data as ChatMessage[]) || []);
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
@@ -92,7 +100,7 @@ export function useChatSessions() {
 
     try {
       const { data, error } = await supabase
-        .from('chat_sessions')
+        .from('chat_sessions' as any)
         .insert({
           user_id: user.id,
           title: 'Novo Chat',
@@ -177,7 +185,7 @@ export function useChatSessions() {
   const renameSession = useCallback(async (sessionId: string, newTitle: string) => {
     try {
       const { error } = await supabase
-        .from('chat_sessions')
+        .from('chat_sessions' as any)
         .update({ 
           title: newTitle, 
           auto_title: false, // Desabilitar auto-renomeação
@@ -213,7 +221,7 @@ export function useChatSessions() {
   const deleteSession = useCallback(async (sessionId: string) => {
     try {
       const { error } = await supabase
-        .from('chat_sessions')
+        .from('chat_sessions' as any)
         .delete()
         .eq('id', sessionId);
 
@@ -247,7 +255,7 @@ export function useChatSessions() {
 
     try {
       const { error } = await supabase
-        .from('chat_sessions')
+        .from('chat_sessions' as any)
         .update({ 
           is_favorite: !session.is_favorite,
           updated_at: new Date().toISOString() 
