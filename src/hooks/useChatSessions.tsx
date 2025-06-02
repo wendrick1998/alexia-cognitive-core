@@ -27,10 +27,6 @@ export interface ChatMessage {
   llm_model?: string;
 }
 
-// Supabase configuration constants
-const SUPABASE_URL = "https://wmxscmwtaqyduotuectx.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndteHNjbXd0YXF5ZHVvdHVlY3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTAwNjksImV4cCI6MjA2Mzg2NjA2OX0.QydAwz1AUU0GYB8I3aR6uXvzd4c52HWBpNiCnbhC-OU";
-
 export function useChatSessions() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
@@ -47,10 +43,11 @@ export function useChatSessions() {
     try {
       setLoading(true);
       
-      // Use Edge Function to get sessions since the table doesn't exist in Supabase types yet
-      const { data, error } = await supabase.functions.invoke('get-user-chat-sessions', {
-        body: { user_id: user.id }
-      });
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
 
       if (error) {
         console.error('Erro ao carregar sessões:', error);
@@ -76,19 +73,18 @@ export function useChatSessions() {
     try {
       setMessagesLoading(true);
       
-      // Query the chat_messages table directly with proper typing
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_messages?session_id=eq.${sessionId}&order=created_at.asc`, {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
 
-      if (!response.ok) throw new Error('Failed to load messages');
-      
-      const data = await response.json();
-      setMessages(data || []);
+      if (error) {
+        console.error('Erro ao carregar mensagens:', error);
+        setMessages([]);
+      } else {
+        setMessages(data || []);
+      }
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
@@ -107,27 +103,19 @@ export function useChatSessions() {
     if (!user) return null;
 
     try {
-      // Use direct HTTP call to create session
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_sessions`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .insert({
           user_id: user.id,
           title: 'Novo Chat',
           auto_title: true,
         })
-      });
+        .select()
+        .single();
 
-      if (!response.ok) throw new Error('Failed to create session');
+      if (error) throw error;
 
-      const data = await response.json();
-      const newSession = data[0] as ChatSession;
-      
+      const newSession = data as ChatSession;
       setSessions(prev => [newSession, ...prev]);
       
       return newSession;
@@ -177,8 +165,6 @@ export function useChatSessions() {
 
       // Remover mensagem temporária e recarregar mensagens atualizadas
       await loadMessages(currentSession.id);
-
-      // Atualizar lista de sessões para refletir mudanças
       await loadSessions();
 
       return true;
@@ -200,21 +186,16 @@ export function useChatSessions() {
   // Renomear sessão
   const renameSession = useCallback(async (sessionId: string, newTitle: string) => {
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
+      const { error } = await supabase
+        .from('chat_sessions')
+        .update({ 
           title: newTitle, 
           auto_title: false,
           updated_at: new Date().toISOString() 
         })
-      });
+        .eq('id', sessionId);
 
-      if (!response.ok) throw new Error('Failed to rename session');
+      if (error) throw error;
 
       setSessions(prev => prev.map(s => 
         s.id === sessionId ? { ...s, title: newTitle, auto_title: false } : s
@@ -241,16 +222,12 @@ export function useChatSessions() {
   // Excluir sessão
   const deleteSession = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const { error } = await supabase
+        .from('chat_sessions')
+        .delete()
+        .eq('id', sessionId);
 
-      if (!response.ok) throw new Error('Failed to delete session');
+      if (error) throw error;
 
       setSessions(prev => prev.filter(s => s.id !== sessionId));
       
@@ -279,20 +256,15 @@ export function useChatSessions() {
     if (!session) return;
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
+      const { error } = await supabase
+        .from('chat_sessions')
+        .update({ 
           is_favorite: !session.is_favorite,
           updated_at: new Date().toISOString() 
         })
-      });
+        .eq('id', sessionId);
 
-      if (!response.ok) throw new Error('Failed to toggle favorite');
+      if (error) throw error;
 
       setSessions(prev => prev.map(s => 
         s.id === sessionId ? { ...s, is_favorite: !s.is_favorite } : s

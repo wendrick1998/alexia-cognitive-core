@@ -20,13 +20,13 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
     const routeLabels: Record<string, string> = {
       'settings': 'Configurações',
       'integrations-manager': 'Gerenciar Integrações',
-      'integrations-status': 'Status das Integrações',
       'security': 'Segurança & Privacidade',
       'chat': 'Chat',
       'memory': 'Memória',
       'documents': 'Documentos',
       'search': 'Busca Semântica',
-      'actions': 'Projetos'
+      'actions': 'Projetos',
+      'auth': 'Autenticação'
     };
 
     pathSegments.forEach((segment, index) => {
@@ -34,7 +34,7 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
       const href = '/' + pathSegments.slice(0, index + 1).join('/');
       
       breadcrumbs.push({
-        label: routeLabels[segment] || segment,
+        label: routeLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1),
         href: isLast ? undefined : href,
         current: isLast
       });
