@@ -261,6 +261,302 @@ export class LLMLogger {
   }
   
   /**
+   * Obtém métricas agregadas por modelo
+   */
+  async getMetricsByModel(
+    startDate?: Date,
+    endDate?: Date,
+    filters?: {
+      provider?: string;
+      taskType?: string;
+      userId?: string;
+    }
+  ): Promise<LLMMetrics[]> {
+    try {
+      // Construir query base
+      let query = supabase
+        .from('llm_call_logs')
+        .select('*');
+      
+      // Aplicar filtros de data
+      if (startDate) {
+        query = query.gte('start_time', startDate.toISOString());
+      }
+      
+      if (endDate) {
+        query = query.lte('end_time', endDate.toISOString());
+      }
+      
+      // Aplicar filtros adicionais
+      if (filters) {
+        if (filters.provider) {
+          query = query.eq('provider', filters.provider);
+        }
+        
+        if (filters.taskType) {
+          query = query.eq('task_type', filters.taskType);
+        }
+        
+        if (filters.userId) {
+          query = query.eq('user_id', filters.userId);
+        }
+      }
+      
+      // Executar query
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        return [];
+      }
+      
+      // Agrupar logs por modelo
+      const logsByModel: Record<string, LLMCallLog[]> = {};
+      
+      data.forEach(log => {
+        if (!logsByModel[log.model_name]) {
+          logsByModel[log.model_name] = [];
+        }
+        
+        logsByModel[log.model_name].push({
+          ...log,
+          startTime: new Date(log.start_time),
+          endTime: new Date(log.end_time)
+        } as LLMCallLog);
+      });
+      
+      // Calcular métricas para cada modelo
+      const metrics: LLMMetrics[] = [];
+      
+      Object.entries(logsByModel).forEach(([modelName, logs]) => {
+        // Calcular taxa de sucesso
+        const successfulCalls = logs.filter(log => log.status === 'success').length;
+        const successRate = logs.length > 0 ? successfulCalls / logs.length : 0;
+        
+        // Calcular tempo médio de resposta
+        const totalResponseTime = logs.reduce((sum, log) => sum + log.responseTime, 0);
+        const avgResponseTime = logs.length > 0 ? totalResponseTime / logs.length : 0;
+        
+        // Calcular P95 do tempo de resposta
+        const sortedResponseTimes = logs.map(log => log.responseTime).sort((a, b) => a - b);
+        const p95Index = Math.floor(sortedResponseTimes.length * 0.95);
+        const p95ResponseTime = sortedResponseTimes[p95Index] || avgResponseTime;
+        
+        // Calcular tokens totais e custo
+        const totalTokensUsed = logs.reduce((sum, log) => sum + log.totalTokens, 0);
+        const totalCost = logs.reduce((sum, log) => sum + log.estimatedCost, 0);
+        
+        // Calcular taxa de fallback
+        const fallbackCalls = logs.filter(log => log.usedFallback).length;
+        const fallbackRate = logs.length > 0 ? fallbackCalls / logs.length : 0;
+        
+        // Calcular taxa de cache hit
+        const cacheHits = logs.filter(log => log.cacheHit).length;
+        const cacheHitRate = logs.length > 0 ? cacheHits / logs.length : 0;
+        
+        metrics.push({
+          modelName,
+          provider: logs[0].provider,
+          totalCalls: logs.length,
+          successRate,
+          avgResponseTime,
+          p95ResponseTime,
+          totalTokensUsed,
+          totalCost,
+          fallbackRate,
+          cacheHitRate
+        });
+      });
+      
+      return metrics;
+    } catch (error) {
+      console.error('Error getting metrics by model:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Obtém métricas de fallback detalhadas
+   */
+  async getFallbackMetrics(): Promise<{
+    totalFallbacks: number;
+    fallbacksByReason: Record<string, number>;
+    fallbacksByModel: Record<string, number>;
+    avgResponseTimeWithFallback: number;
+    avgResponseTimeWithoutFallback: number;
+  }> {
+    try {
+      // Buscar todos os logs com fallback
+      const { data: fallbackLogs, error: fallbackError } = await supabase
+        .from('llm_call_logs')
+        .select('*')
+        .eq('used_fallback', true);
+      
+      if (fallbackError) throw fallbackError;
+      
+      // Buscar logs sem fallback para comparação
+      const { data: nonFallbackLogs, error: nonFallbackError } = await supabase
+        .from('llm_call_logs')
+        .select('*')
+        .eq('used_fallback', false)
+        .limit(1000); // Limitar para performance
+      
+      if (nonFallbackError) throw nonFallbackError;
+      
+      if (!fallbackLogs) {
+        return {
+          totalFallbacks: 0,
+          fallbacksByReason: {},
+          fallbacksByModel: {},
+          avgResponseTimeWithFallback: 0,
+          avgResponseTimeWithoutFallback: 0
+        };
+      }
+      
+      // Calcular métricas de fallback
+      const fallbacksByReason: Record<string, number> = {};
+      const fallbacksByModel: Record<string, number> = {};
+      
+      fallbackLogs.forEach(log => {
+        // Agrupar por razão
+        const reason = log.fallback_reason || 'unknown';
+        fallbacksByReason[reason] = (fallbacksByReason[reason] || 0) + 1;
+        
+        // Agrupar por modelo de fallback
+        const model = log.fallback_model || 'unknown';
+        fallbacksByModel[model] = (fallbacksByModel[model] || 0) + 1;
+      });
+      
+      // Calcular tempos médios de resposta
+      const totalResponseTimeWithFallback = fallbackLogs.reduce(
+        (sum, log) => sum + log.response_time, 0
+      );
+      
+      const totalResponseTimeWithoutFallback = nonFallbackLogs?.reduce(
+        (sum, log) => sum + log.response_time, 0
+      ) || 0;
+      
+      const avgResponseTimeWithFallback = fallbackLogs.length > 0 ? 
+        totalResponseTimeWithFallback / fallbackLogs.length : 0;
+      
+      const avgResponseTimeWithoutFallback = nonFallbackLogs && nonFallbackLogs.length > 0 ? 
+        totalResponseTimeWithoutFallback / nonFallbackLogs.length : 0;
+      
+      return {
+        totalFallbacks: fallbackLogs.length,
+        fallbacksByReason,
+        fallbacksByModel,
+        avgResponseTimeWithFallback,
+        avgResponseTimeWithoutFallback
+      };
+    } catch (error) {
+      console.error('Error getting fallback metrics:', error);
+      return {
+        totalFallbacks: 0,
+        fallbacksByReason: {},
+        fallbacksByModel: {},
+        avgResponseTimeWithFallback: 0,
+        avgResponseTimeWithoutFallback: 0
+      };
+    }
+  }
+  
+  /**
+   * Obtém métricas de custo por período
+   */
+  async getCostMetrics(
+    groupBy: 'day' | 'week' | 'month' = 'day',
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<{
+    totalCost: number;
+    costByPeriod: Record<string, number>;
+    costByModel: Record<string, number>;
+    costByTask: Record<string, number>;
+  }> {
+    try {
+      // Construir query base
+      let query = supabase
+        .from('llm_call_logs')
+        .select('*');
+      
+      // Aplicar filtros de data
+      if (startDate) {
+        query = query.gte('start_time', startDate.toISOString());
+      }
+      
+      if (endDate) {
+        query = query.lte('end_time', endDate.toISOString());
+      }
+      
+      // Executar query
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        return {
+          totalCost: 0,
+          costByPeriod: {},
+          costByModel: {},
+          costByTask: {}
+        };
+      }
+      
+      // Calcular custo total
+      const totalCost = data.reduce((sum, log) => sum + log.estimated_cost, 0);
+      
+      // Agrupar por período
+      const costByPeriod: Record<string, number> = {};
+      const costByModel: Record<string, number> = {};
+      const costByTask: Record<string, number> = {};
+      
+      data.forEach(log => {
+        // Agrupar por período
+        const date = new Date(log.start_time);
+        let periodKey: string;
+        
+        if (groupBy === 'day') {
+          periodKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        } else if (groupBy === 'week') {
+          // Calcular início da semana (domingo)
+          const dayOfWeek = date.getUTCDay();
+          const diff = date.getUTCDate() - dayOfWeek;
+          const startOfWeek = new Date(date);
+          startOfWeek.setUTCDate(diff);
+          periodKey = startOfWeek.toISOString().split('T')[0]; // YYYY-MM-DD (domingo)
+        } else { // month
+          periodKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+        }
+        
+        costByPeriod[periodKey] = (costByPeriod[periodKey] || 0) + log.estimated_cost;
+        
+        // Agrupar por modelo
+        costByModel[log.model_name] = (costByModel[log.model_name] || 0) + log.estimated_cost;
+        
+        // Agrupar por tipo de tarefa
+        costByTask[log.task_type] = (costByTask[log.task_type] || 0) + log.estimated_cost;
+      });
+      
+      return {
+        totalCost,
+        costByPeriod,
+        costByModel,
+        costByTask
+      };
+    } catch (error) {
+      console.error('Error getting cost metrics:', error);
+      return {
+        totalCost: 0,
+        costByPeriod: {},
+        costByModel: {},
+        costByTask: {}
+      };
+    }
+  }
+  
+  /**
    * Limpa recursos ao destruir a instância
    */
   destroy(): void {
