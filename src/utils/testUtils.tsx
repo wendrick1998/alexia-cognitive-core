@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import { render, RenderOptions, screen, fireEvent, waitFor, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from 'next-themes';
@@ -36,3 +36,6 @@ const customRender = (
 
 // Override the default render with our custom render
 export { customRender as render };
+
+// Explicitly re-export the commonly used testing utilities
+export { screen, fireEvent, waitFor, renderHook };
