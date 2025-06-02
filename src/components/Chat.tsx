@@ -1,8 +1,3 @@
-/**
- * @modified_by Manus AI
- * @date 2 de junho de 2025
- * @description Chat aprimorado com sidebar recolhível e navegação inferior fixa
- */
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -213,124 +208,52 @@ const Chat = () => {
   };
 
   return (
-    <>
-      {/* Container principal com padding para barra inferior */}
-      <div className="h-full relative flex" style={{ paddingBottom: isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : '0px' }}>
-        
-        {/* Botão Toggle Sidebar - Flutuante no mobile */}
-        {isMobile && (
-          <Button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            variant="outline"
-            size="icon"
-            className={cn(
-              "fixed top-20 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50 shadow-lg transition-all duration-300",
-              sidebarCollapsed ? "left-4" : "left-80"
-            )}
-          >
-            {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </Button>
-        )}
-
-        {/* Layout responsivo com sidebar recolhível */}
-        <div className={cn(
-          "flex w-full h-full transition-all duration-300 ease-in-out",
-          sidebarCollapsed && !isMobile && "ml-16" // Espaço mínimo no desktop
-        )}>
-          
-          {/* Sidebar Desktop Toggle */}
-          {!isMobile && (
-            <div className={cn(
-              "fixed left-0 top-0 h-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 z-40",
-              sidebarCollapsed ? "w-16" : "w-80"
-            )}>
-              {sidebarCollapsed ? (
-                // Sidebar colapsada - apenas ícone
-                <div className="p-4 h-full flex flex-col items-center">
-                  <Button
-                    onClick={() => setSidebarCollapsed(false)}
-                    variant="ghost"
-                    size="icon"
-                    className="mb-4 hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
-                  >
-                    <MessageSquare className="w-5 h-5" />
-                  </Button>
-                  <Button
-                    onClick={handleNewConversation}
-                    variant="outline"
-                    size="icon"
-                    className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : (
-                // Sidebar expandida - lista completa
-                <div className="h-full">
-                  <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      <h2 className="font-semibold text-gray-900 dark:text-gray-100">Conversas</h2>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleNewConversation}
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        onClick={() => setSidebarCollapsed(true)}
-                        variant="ghost"
-                        size="icon"
-                        className="w-8 h-8 hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+    <div className="h-full relative flex">
+      {/* Botão Toggle Sidebar - Flutuante no mobile */}
+      {isMobile && (
+        <Button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          variant="outline"
+          size="icon"
+          className={cn(
+            "fixed top-20 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50 shadow-lg transition-all duration-300",
+            sidebarCollapsed ? "left-4" : "left-80"
           )}
+        >
+          {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </Button>
+      )}
 
-          {/* Área principal do chat */}
-          <div className={cn(
-            "flex-1 h-full",
-            !isMobile && !sidebarCollapsed && "ml-80",
-            !isMobile && sidebarCollapsed && "ml-16"
-          )}>
-            <PremiumChatLayout
-              conversations={conversations}
-              currentConversation={currentConversation}
-              messages={messages}
-              processing={processing}
-              onConversationSelect={handleConversationSelect}
-              onNewConversation={handleNewConversation}
-              onSendMessage={handleSendMessage}
-              isCreatingNew={conversationState.isCreatingNew}
-              isNavigating={conversationState.isNavigating}
-              renderMessageExtras={renderMessageWithSource}
-              className="h-full"
-              sidebarCollapsed={sidebarCollapsed}
-            />
-          </div>
-        </div>
-
-        <div ref={messagesEndRef} />
-
-        {/* Floating Action Button - Mobile */}
-        {isMobile && (
-          <FloatingActionButton 
-            onAction={handleFloatingAction}
-            currentSection="chat"
-            hasActiveChat={!!currentConversation}
-            hasDocument={false}
-            className="bottom-20"
-          />
-        )}
+      {/* Layout principal do chat */}
+      <div className="flex-1 h-full">
+        <PremiumChatLayout
+          conversations={conversations}
+          currentConversation={currentConversation}
+          messages={messages}
+          processing={processing}
+          onConversationSelect={handleConversationSelect}
+          onNewConversation={handleNewConversation}
+          onSendMessage={handleSendMessage}
+          isCreatingNew={conversationState.isCreatingNew}
+          isNavigating={conversationState.isNavigating}
+          renderMessageExtras={renderMessageWithSource}
+          className="h-full"
+          sidebarCollapsed={sidebarCollapsed}
+        />
       </div>
+
+      <div ref={messagesEndRef} />
+
+      {/* Floating Action Button - Mobile */}
+      {isMobile && (
+        <FloatingActionButton 
+          onAction={handleFloatingAction}
+          currentSection="chat"
+          hasActiveChat={!!currentConversation}
+          hasDocument={false}
+          className="bottom-20"
+        />
+      )}
 
       {/* Focus Mode Overlay */}
       <FocusMode
@@ -339,7 +262,7 @@ const Chat = () => {
         onSendMessage={handleSendMessage}
         initialText=""
       />
-    </>
+    </div>
   );
 };
 
