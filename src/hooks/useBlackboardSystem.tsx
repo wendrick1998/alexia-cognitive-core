@@ -1,291 +1,456 @@
 
-import { useState, useRef, useCallback, useEffect } from 'react';
-import * as Comlink from 'comlink';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
-interface BlackboardEntry {
+export interface BlackboardEntry {
   id: string;
-  type: 'hypothesis' | 'fact' | 'goal' | 'constraint' | 'solution';
+  agentType: 'analytical' | 'creative' | 'technical' | 'integration' | 'memory' | 'search';
   content: any;
+  priority: number;
   confidence: number;
-  source: string;
-  timestamp: number;
+  timestamp: Date;
   dependencies: string[];
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  metadata: Record<string, any>;
 }
 
-interface KnowledgeSource {
+export interface KnowledgeSource {
   id: string;
-  name: string;
-  worker?: Comlink.Remote<any>;
-  capabilities: string[];
-  isActive: boolean;
-  currentTask?: string;
+  type: 'cognitive_node' | 'document' | 'memory' | 'conversation' | 'external';
+  data: any;
+  relevance: number;
+  lastAccessed: Date;
 }
 
-interface BlackboardState {
+export interface ProcessingResult {
+  success: boolean;
+  result: any;
+  agentContributions: Array<{
+    agent: string;
+    contribution: any;
+    confidence: number;
+    processingTime: number;
+  }>;
+  synthesizedInsights: string[];
+  qualityScore: number;
+  totalProcessingTime: number;
+}
+
+export interface BlackboardState {
   entries: BlackboardEntry[];
-  activeKS: string[];
-  currentFocus: string | null;
+  knowledgeSources: KnowledgeSource[];
+  activeAgents: string[];
   processingQueue: string[];
+  globalContext: Record<string, any>;
 }
 
 export function useBlackboardSystem() {
-  const [blackboard, setBlackboard] = useState<BlackboardState>({
+  const { user } = useAuth();
+  const [blackboardState, setBlackboardState] = useState<BlackboardState>({
     entries: [],
-    activeKS: [],
-    currentFocus: null,
-    processingQueue: []
+    knowledgeSources: [],
+    activeAgents: [],
+    processingQueue: [],
+    globalContext: {}
+  });
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const agentCapabilities = useRef({
+    analytical: {
+      specializations: ['problem-solving', 'data-analysis', 'logical-reasoning'],
+      processingWeight: 0.8,
+      confidenceThreshold: 0.7
+    },
+    creative: {
+      specializations: ['ideation', 'design-thinking', 'innovation'],
+      processingWeight: 0.7,
+      confidenceThreshold: 0.6
+    },
+    technical: {
+      specializations: ['coding', 'architecture', 'optimization'],
+      processingWeight: 0.9,
+      confidenceThreshold: 0.8
+    },
+    integration: {
+      specializations: ['synthesis', 'pattern-recognition', 'connection-finding'],
+      processingWeight: 0.8,
+      confidenceThreshold: 0.75
+    },
+    memory: {
+      specializations: ['knowledge-retrieval', 'context-building', 'experience-synthesis'],
+      processingWeight: 0.6,
+      confidenceThreshold: 0.65
+    },
+    search: {
+      specializations: ['information-gathering', 'source-validation', 'relevance-scoring'],
+      processingWeight: 0.7,
+      confidenceThreshold: 0.7
+    }
   });
 
-  const knowledgeSources = useRef<Map<string, KnowledgeSource>>(new Map());
-  const isInitialized = useRef(false);
+  const cooperationPatterns = useRef<Map<string, string[]>>(new Map([
+    ['analytical', ['memory', 'search', 'integration']],
+    ['creative', ['analytical', 'integration', 'technical']],
+    ['technical', ['analytical', 'search', 'integration']],
+    ['integration', ['analytical', 'creative', 'memory']],
+    ['memory', ['analytical', 'integration', 'search']],
+    ['search', ['analytical', 'memory', 'integration']]
+  ]));
 
-  // Initialize Web Workers
-  const initializeKnowledgeSources = useCallback(async () => {
-    if (isInitialized.current) return;
+  // Initialize blackboard system
+  const initializeBlackboard = useCallback(async () => {
+    if (!user || isInitialized) return;
 
     try {
-      console.log('🚀 Initializing Blackboard System with Web Workers...');
+      console.log('🏗️ Initializing Blackboard System...');
+      
+      // Load existing knowledge sources
+      const knowledgeSources = await loadKnowledgeSources();
+      
+      setBlackboardState(prev => ({
+        ...prev,
+        knowledgeSources,
+        globalContext: {
+          userId: user.id,
+          sessionStartTime: new Date(),
+          systemVersion: '1.0.0'
+        }
+      }));
 
-      // Initialize Analytical Agent
-      const analyticalWorker = new Worker(
-        new URL('../workers/AnalyticalAgent.worker.ts', import.meta.url),
-        { type: 'module' }
-      );
-      const analyticalAgent = Comlink.wrap(analyticalWorker);
-
-      knowledgeSources.current.set('analytical', {
-        id: 'analytical',
-        name: 'Analytical Agent',
-        worker: analyticalAgent,
-        capabilities: ['logical-reasoning', 'pattern-analysis', 'causal-inference'],
-        isActive: true
-      });
-
-      // Initialize Creative Agent
-      const creativeWorker = new Worker(
-        new URL('../workers/CreativeAgent.worker.ts', import.meta.url),
-        { type: 'module' }
-      );
-      const creativeAgent = Comlink.wrap(creativeWorker);
-
-      knowledgeSources.current.set('creative', {
-        id: 'creative',
-        name: 'Creative Agent',
-        worker: creativeAgent,
-        capabilities: ['lateral-thinking', 'innovation', 'design-thinking'],
-        isActive: true
-      });
-
-      // Initialize Critical Agent
-      const criticalWorker = new Worker(
-        new URL('../workers/CriticalAgent.worker.ts', import.meta.url),
-        { type: 'module' }
-      );
-      const criticalAgent = Comlink.wrap(criticalWorker);
-
-      knowledgeSources.current.set('critical', {
-        id: 'critical',
-        name: 'Critical Agent',
-        worker: criticalAgent,
-        capabilities: ['validation', 'critique', 'improvement'],
-        isActive: true
-      });
-
-      // Initialize Integrator Agent
-      const integratorWorker = new Worker(
-        new URL('../workers/IntegratorAgent.worker.ts', import.meta.url),
-        { type: 'module' }
-      );
-      const integratorAgent = Comlink.wrap(integratorWorker);
-
-      knowledgeSources.current.set('integrator', {
-        id: 'integrator',
-        name: 'Integrator Agent',
-        worker: integratorAgent,
-        capabilities: ['synthesis', 'integration', 'coherence'],
-        isActive: true
-      });
-
-      isInitialized.current = true;
-      console.log('✅ Blackboard System initialized with 4 Knowledge Sources');
-
+      setIsInitialized(true);
+      console.log('✅ Blackboard System initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize Blackboard System:', error);
+      console.error('❌ Error initializing blackboard:', error);
     }
-  }, []);
+  }, [user, isInitialized]);
+
+  // Load knowledge sources
+  const loadKnowledgeSources = useCallback(async (): Promise<KnowledgeSource[]> => {
+    if (!user) return [];
+
+    try {
+      const sources: KnowledgeSource[] = [];
+
+      // Load cognitive nodes
+      const { data: nodes, error: nodesError } = await supabase
+        .from('cognitive_nodes')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('relevance_score', { ascending: false })
+        .limit(50);
+
+      if (nodesError) throw nodesError;
+
+      sources.push(...(nodes || []).map(node => ({
+        id: node.id,
+        type: 'cognitive_node' as const,
+        data: node,
+        relevance: node.relevance_score || 0.5,
+        lastAccessed: new Date(node.last_accessed_at || node.updated_at)
+      })));
+
+      // Load recent conversations
+      const { data: conversations, error: convsError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+      if (convsError) throw convsError;
+
+      sources.push(...(conversations || []).map(conv => ({
+        id: conv.id,
+        type: 'conversation' as const,
+        data: conv,
+        relevance: 0.6,
+        lastAccessed: new Date(conv.updated_at)
+      })));
+
+      console.log(`📚 Loaded ${sources.length} knowledge sources`);
+      return sources;
+    } catch (error) {
+      console.error('❌ Error loading knowledge sources:', error);
+      return [];
+    }
+  }, [user]);
 
   // Add entry to blackboard
-  const addToBlackboard = useCallback((entry: Omit<BlackboardEntry, 'id' | 'timestamp'>) => {
-    const newEntry: BlackboardEntry = {
-      ...entry,
-      id: crypto.randomUUID(),
-      timestamp: Date.now()
+  const addBlackboardEntry = useCallback((
+    agentType: BlackboardEntry['agentType'],
+    content: any,
+    priority: number = 1,
+    confidence: number = 0.7,
+    dependencies: string[] = []
+  ): string => {
+    const entryId = crypto.randomUUID();
+    
+    const entry: BlackboardEntry = {
+      id: entryId,
+      agentType,
+      content,
+      priority,
+      confidence,
+      timestamp: new Date(),
+      dependencies,
+      status: 'pending',
+      metadata: {}
     };
 
-    setBlackboard(prev => ({
+    setBlackboardState(prev => ({
       ...prev,
-      entries: [...prev.entries, newEntry]
+      entries: [...prev.entries, entry],
+      processingQueue: [...prev.processingQueue, entryId]
     }));
 
-    return newEntry.id;
+    console.log(`📝 Added blackboard entry: ${agentType} (${entryId})`);
+    return entryId;
   }, []);
 
-  // Process task with appropriate Knowledge Sources
-  const processWithBlackboard = useCallback(async (
-    content: string,
-    context: any = {},
-    requiredCapabilities: string[] = []
-  ) => {
-    if (!isInitialized.current) {
-      await initializeKnowledgeSources();
+  // Process entry with specific agent
+  const processEntryWithAgent = useCallback(async (
+    entryId: string,
+    agentType: BlackboardEntry['agentType']
+  ): Promise<any> => {
+    try {
+      console.log(`🤖 Processing entry ${entryId} with ${agentType} agent`);
+      
+      const entry = blackboardState.entries.find(e => e.id === entryId);
+      if (!entry) throw new Error('Entry not found');
+
+      // Update entry status
+      setBlackboardState(prev => ({
+        ...prev,
+        entries: prev.entries.map(e => 
+          e.id === entryId ? { ...e, status: 'processing' } : e
+        ),
+        activeAgents: [...prev.activeAgents.filter(a => a !== agentType), agentType]
+      }));
+
+      // Simulate agent processing (in real implementation, this would call LLM)
+      const processingResult = await simulateAgentProcessing(entry, agentType);
+
+      // Update entry with result
+      setBlackboardState(prev => ({
+        ...prev,
+        entries: prev.entries.map(e => 
+          e.id === entryId ? { 
+            ...e, 
+            status: 'completed',
+            metadata: { ...e.metadata, result: processingResult }
+          } : e
+        ),
+        activeAgents: prev.activeAgents.filter(a => a !== agentType),
+        processingQueue: prev.processingQueue.filter(id => id !== entryId)
+      }));
+
+      console.log(`✅ Entry ${entryId} processed by ${agentType}`);
+      return processingResult;
+    } catch (error) {
+      console.error(`❌ Error processing entry ${entryId}:`, error);
+      
+      setBlackboardState(prev => ({
+        ...prev,
+        entries: prev.entries.map(e => 
+          e.id === entryId ? { ...e, status: 'failed' } : e
+        ),
+        activeAgents: prev.activeAgents.filter(a => a !== agentType)
+      }));
+      
+      throw error;
     }
+  }, [blackboardState.entries]);
 
-    const taskId = crypto.randomUUID();
+  // Simulate agent processing (placeholder)
+  const simulateAgentProcessing = useCallback(async (
+    entry: BlackboardEntry,
+    agentType: string
+  ): Promise<any> => {
+    const capabilities = agentCapabilities.current[agentType as keyof typeof agentCapabilities.current];
     
-    console.log(`🎯 Blackboard processing task: ${taskId}`);
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
     
-    // Add initial hypothesis to blackboard
-    addToBlackboard({
-      type: 'hypothesis',
-      content: { originalRequest: content, context },
-      confidence: 0.5,
-      source: 'user',
-      dependencies: []
-    });
-
-    // Determine which Knowledge Sources to activate
-    const relevantKS = Array.from(knowledgeSources.current.values()).filter(ks => {
-      if (requiredCapabilities.length === 0) return true;
-      return requiredCapabilities.some(cap => ks.capabilities.includes(cap));
-    });
-
-    console.log(`📊 Activating ${relevantKS.length} Knowledge Sources:`, relevantKS.map(ks => ks.name));
-
-    // Create task for each Knowledge Source
-    const task = {
-      id: taskId,
-      content,
-      context,
-      priority: 2,
-      complexity: Math.min(content.length / 200, 1.0)
-    };
-
-    // Execute tasks in parallel
-    const results = await Promise.allSettled(
-      relevantKS.slice(0, 3).map(async (ks) => { // Limit to first 3 to avoid overload
-        if (!ks.worker) return null;
-        
-        try {
-          console.log(`🔄 ${ks.name} starting processing...`);
-          const result = await ks.worker.processTask(task);
-          
-          // Add result to blackboard
-          addToBlackboard({
-            type: 'fact',
-            content: result,
-            confidence: result.confidence || 0.7,
-            source: ks.id,
-            dependencies: [taskId]
-          });
-          
-          return { ksId: ks.id, result };
-        } catch (error) {
-          console.error(`❌ Error in ${ks.name}:`, error);
-          return null;
-        }
-      })
-    );
-
-    // Collect successful results
-    const successfulResults = results
-      .filter((result): result is PromiseFulfilledResult<any> => 
-        result.status === 'fulfilled' && result.value !== null)
-      .map(result => result.value);
-
-    console.log(`✅ Collected ${successfulResults.length} results from Knowledge Sources`);
-
-    // Integrate results using Integrator Agent
-    if (successfulResults.length > 1) {
-      const integratorKS = knowledgeSources.current.get('integrator');
-      if (integratorKS?.worker) {
-        try {
-          const integrationTask = {
-            ...task,
-            agentResults: successfulResults.map(r => r.result)
-          };
-          
-          const integratedResult = await integratorKS.worker.processTask(integrationTask);
-          
-          // Add final solution to blackboard
-          addToBlackboard({
-            type: 'solution',
-            content: integratedResult,
-            confidence: integratedResult.confidence || 0.8,
-            source: 'integrator',
-            dependencies: successfulResults.map(r => r.ksId)
-          });
-
-          return {
-            success: true,
-            result: integratedResult,
-            partialResults: successfulResults,
-            taskId
-          };
-        } catch (error) {
-          console.error('❌ Integration failed:', error);
-        }
-      }
-    }
-
-    // Return best single result if integration failed
-    const bestResult = successfulResults.reduce((best, current) => {
-      const bestScore = best?.result?.confidence || 0;
-      const currentScore = current?.result?.confidence || 0;
-      return currentScore > bestScore ? current : best;
-    }, null);
-
     return {
-      success: bestResult !== null,
-      result: bestResult?.result || { result: 'Processamento falhou', confidence: 0 },
-      partialResults: successfulResults,
-      taskId
+      agentType,
+      processedContent: `Processed by ${agentType}: ${JSON.stringify(entry.content).substring(0, 100)}...`,
+      confidence: capabilities.confidenceThreshold + Math.random() * 0.2,
+      insights: [`Insight from ${agentType}`, `Analysis by ${agentType}`],
+      processingTime: Math.random() * 1000 + 500
     };
-  }, [addToBlackboard, initializeKnowledgeSources]);
+  }, []);
+
+  // Cooperative processing with multiple agents
+  const processWithBlackboard = useCallback(async (
+    input: string,
+    context: Record<string, any> = {}
+  ): Promise<ProcessingResult> => {
+    const startTime = Date.now();
+    setIsProcessing(true);
+
+    try {
+      console.log('🏗️ Starting blackboard cooperative processing...');
+      
+      // Determine which agents should participate
+      const participatingAgents = determineParticipatingAgents(input, context);
+      
+      // Create initial entries for each agent
+      const entryIds = participatingAgents.map(agentType => 
+        addBlackboardEntry(agentType, { input, context }, 1, 0.7)
+      );
+
+      // Process entries cooperatively
+      const agentContributions = await Promise.all(
+        entryIds.map(async (entryId, index) => {
+          const agentType = participatingAgents[index];
+          const result = await processEntryWithAgent(entryId, agentType);
+          
+          return {
+            agent: agentType,
+            contribution: result,
+            confidence: result.confidence,
+            processingTime: result.processingTime
+          };
+        })
+      );
+
+      // Synthesize results
+      const synthesizedResult = await synthesizeContributions(agentContributions, input);
+      
+      const totalProcessingTime = Date.now() - startTime;
+      
+      const result: ProcessingResult = {
+        success: true,
+        result: synthesizedResult,
+        agentContributions,
+        synthesizedInsights: synthesizedResult.insights || [],
+        qualityScore: calculateQualityScore(agentContributions),
+        totalProcessingTime
+      };
+
+      console.log(`✅ Blackboard processing completed in ${totalProcessingTime}ms`);
+      return result;
+
+    } catch (error) {
+      console.error('❌ Error in blackboard processing:', error);
+      return {
+        success: false,
+        result: { error: error.message },
+        agentContributions: [],
+        synthesizedInsights: [],
+        qualityScore: 0,
+        totalProcessingTime: Date.now() - startTime
+      };
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [addBlackboardEntry, processEntryWithAgent]);
+
+  // Determine participating agents based on input
+  const determineParticipatingAgents = useCallback((
+    input: string,
+    context: Record<string, any>
+  ): Array<BlackboardEntry['agentType']> => {
+    const agents: Array<BlackboardEntry['agentType']> = ['integration']; // Always include integration
+    
+    const inputLower = input.toLowerCase();
+    
+    if (inputLower.includes('analis') || inputLower.includes('problema') || inputLower.includes('dados')) {
+      agents.push('analytical');
+    }
+    
+    if (inputLower.includes('criat') || inputLower.includes('design') || inputLower.includes('ideia')) {
+      agents.push('creative');
+    }
+    
+    if (inputLower.includes('código') || inputLower.includes('técnic') || inputLower.includes('implementa')) {
+      agents.push('technical');
+    }
+    
+    if (inputLower.includes('lembr') || inputLower.includes('memória') || inputLower.includes('anterior')) {
+      agents.push('memory');
+    }
+    
+    if (inputLower.includes('pesquis') || inputLower.includes('busca') || inputLower.includes('informação')) {
+      agents.push('search');
+    }
+    
+    return [...new Set(agents)]; // Remove duplicates
+  }, []);
+
+  // Synthesize contributions from multiple agents
+  const synthesizeContributions = useCallback(async (
+    contributions: any[],
+    originalInput: string
+  ): Promise<any> => {
+    console.log('🔄 Synthesizing agent contributions...');
+    
+    // Simple synthesis - combine insights and find common themes
+    const allInsights = contributions.flatMap(c => c.contribution.insights || []);
+    const avgConfidence = contributions.reduce((sum, c) => sum + c.confidence, 0) / contributions.length;
+    
+    const synthesized = {
+      originalInput,
+      combinedResponse: contributions.map(c => c.contribution.processedContent).join('\n\n'),
+      insights: [...new Set(allInsights)],
+      confidence: avgConfidence,
+      participatingAgents: contributions.map(c => c.agent),
+      synthesisQuality: avgConfidence > 0.7 ? 'high' : avgConfidence > 0.5 ? 'medium' : 'low'
+    };
+    
+    return synthesized;
+  }, []);
+
+  // Calculate overall quality score
+  const calculateQualityScore = useCallback((contributions: any[]): number => {
+    if (contributions.length === 0) return 0;
+    
+    const avgConfidence = contributions.reduce((sum, c) => sum + c.confidence, 0) / contributions.length;
+    const diversityBonus = contributions.length >= 3 ? 0.1 : 0;
+    const consistencyBonus = contributions.every(c => c.confidence > 0.6) ? 0.1 : 0;
+    
+    return Math.min(1.0, avgConfidence + diversityBonus + consistencyBonus);
+  }, []);
 
   // Get blackboard status
   const getBlackboardStatus = useCallback(() => {
-    const ksArray = Array.from(knowledgeSources.current.values());
-    
     return {
-      totalEntries: blackboard.entries.length,
-      activeKnowledgeSources: ksArray.filter(ks => ks.isActive).length,
-      recentEntries: blackboard.entries.slice(-5),
-      knowledgeSources: ksArray.map(ks => ({
-        id: ks.id,
-        name: ks.name,
-        capabilities: ks.capabilities,
-        isActive: ks.isActive
-      }))
+      isInitialized,
+      isProcessing,
+      totalEntries: blackboardState.entries.length,
+      pendingEntries: blackboardState.entries.filter(e => e.status === 'pending').length,
+      processingEntries: blackboardState.entries.filter(e => e.status === 'processing').length,
+      completedEntries: blackboardState.entries.filter(e => e.status === 'completed').length,
+      activeAgents: blackboardState.activeAgents,
+      knowledgeSourcesCount: blackboardState.knowledgeSources.length,
+      queueLength: blackboardState.processingQueue.length
     };
-  }, [blackboard]);
+  }, [isInitialized, isProcessing, blackboardState]);
 
-  // Cleanup on unmount
+  // Initialize on mount
   useEffect(() => {
-    return () => {
-      knowledgeSources.current.forEach(ks => {
-        if (ks.worker && 'terminate' in ks.worker) {
-          (ks.worker as any).terminate?.();
-        }
-      });
-    };
-  }, []);
+    if (user && !isInitialized) {
+      initializeBlackboard();
+    }
+  }, [user, isInitialized, initializeBlackboard]);
 
   return {
-    blackboard,
+    // Core functions
     processWithBlackboard,
-    addToBlackboard,
+    addBlackboardEntry,
+    
+    // State management
+    blackboardState,
     getBlackboardStatus,
-    initializeKnowledgeSources,
-    isInitialized: isInitialized.current
+    
+    // Status
+    isInitialized,
+    isProcessing,
+    
+    // Utilities
+    loadKnowledgeSources,
+    initializeBlackboard
   };
 }

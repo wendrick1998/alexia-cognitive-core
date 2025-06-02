@@ -1,250 +1,287 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNeuralSystem } from '@/hooks/useNeuralSystem';
-import { Brain, Clock, Zap, TrendingUp, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { Brain, Clock, Zap, TrendingUp, Archive, AlertCircle } from 'lucide-react';
 
 const MemoryConsolidationPanel: React.FC = () => {
-  const { 
-    memoryConsolidations, 
-    primingContexts, 
-    predictiveCache,
-    consolidateMemories,
-    isProcessing 
+  const {
+    memoryConsolidations,
+    isProcessing,
+    consolidateMemory
   } = useNeuralSystem();
 
-  const [timeWindow, setTimeWindow] = useState([24]);
-  const [minClusterSize, setMinClusterSize] = useState([3]);
-  const [autoConsolidate, setAutoConsolidate] = useState(true);
+  const [consolidationType, setConsolidationType] = useState<'automatic' | 'manual'>('automatic');
 
-  // Auto-consolidation every 30 minutes
-  useEffect(() => {
-    if (!autoConsolidate) return;
+  const handleConsolidation = useCallback(async () => {
+    const result = await consolidateMemory(consolidationType);
+    if (result) {
+      console.log('✅ Memory consolidation completed:', result);
+    }
+  }, [consolidateMemory, consolidationType]);
 
-    const interval = setInterval(() => {
-      consolidateMemories(timeWindow[0], minClusterSize[0]);
-    }, 30 * 60 * 1000);
+  const getQualityColor = useCallback((quality: number) => {
+    if (quality >= 0.8) return 'text-green-600';
+    if (quality >= 0.6) return 'text-yellow-600';
+    return 'text-red-600';
+  }, []);
 
-    return () => clearInterval(interval);
-  }, [autoConsolidate, timeWindow, minClusterSize, consolidateMemories]);
+  const getQualityBadge = useCallback((quality: number) => {
+    if (quality >= 0.8) return 'default';
+    if (quality >= 0.6) return 'secondary';
+    return 'destructive';
+  }, []);
 
-  const handleManualConsolidation = () => {
-    consolidateMemories(timeWindow[0], minClusterSize[0]);
-  };
+  const renderConsolidationStats = useCallback(() => {
+    if (memoryConsolidations.length === 0) return null;
 
-  const formatPatternType = (type: string) => {
-    const types = {
-      'temporal': 'Temporal',
-      'semantic': 'Semântico', 
-      'contextual': 'Contextual',
-      'behavioral': 'Comportamental'
-    };
-    return types[type as keyof typeof types] || type;
-  };
+    const totalNodes = memoryConsolidations.reduce((sum, c) => sum + c.nodes_processed, 0);
+    const avgQuality = memoryConsolidations.reduce((sum, c) => sum + c.consolidation_quality, 0) / memoryConsolidations.length;
+    const lastConsolidation = memoryConsolidations[0];
 
-  const getPatternColor = (type: string) => {
-    const colors = {
-      'temporal': 'bg-blue-100 text-blue-800',
-      'semantic': 'bg-green-100 text-green-800',
-      'contextual': 'bg-purple-100 text-purple-800',
-      'behavioral': 'bg-orange-100 text-orange-800'
-    };
-    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">{memoryConsolidations.length}</div>
+            <div className="text-sm text-gray-600">Total Sessions</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">{totalNodes}</div>
+            <div className="text-sm text-gray-600">Nodes Processed</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className={`text-2xl font-bold ${getQualityColor(avgQuality)}`}>
+              {(avgQuality * 100).toFixed(0)}%
+            </div>
+            <div className="text-sm text-gray-600">Avg Quality</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-purple-600">
+              {lastConsolidation ? new Date(lastConsolidation.completed_at).toLocaleDateString() : 'N/A'}
+            </div>
+            <div className="text-sm text-gray-600">Last Session</div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }, [memoryConsolidations, getQualityColor]);
+
+  const renderConsolidationHistory = useCallback(() => {
+    return (
+      <div className="space-y-3">
+        {memoryConsolidations.slice(0, 10).map((consolidation) => (
+          <Card key={consolidation.id} className="border border-gray-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-blue-600" />
+                  <span className="font-medium capitalize">
+                    {consolidation.session_type} Consolidation
+                  </span>
+                </div>
+                <Badge variant={getQualityBadge(consolidation.consolidation_quality)}>
+                  {(consolidation.consolidation_quality * 100).toFixed(0)}% Quality
+                </Badge>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Nodes Processed:</span>
+                  <span className="font-mono">{consolidation.nodes_processed}</span>
+                </div>
+                
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Quality Score:</span>
+                  <div className="flex items-center gap-2">
+                    <Progress 
+                      value={consolidation.consolidation_quality * 100} 
+                      className="w-16 h-2" 
+                    />
+                    <span className="font-mono">
+                      {(consolidation.consolidation_quality * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Completed:</span>
+                  <span className="font-mono">
+                    {new Date(consolidation.completed_at).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }, [memoryConsolidations, getQualityBadge]);
+
+  const renderConsolidationTrends = useCallback(() => {
+    if (memoryConsolidations.length < 2) return null;
+
+    // Calculate trends
+    const recentConsolidations = memoryConsolidations.slice(0, 5);
+    const avgRecentQuality = recentConsolidations.reduce((sum, c) => sum + c.consolidation_quality, 0) / recentConsolidations.length;
+    const avgRecentNodes = recentConsolidations.reduce((sum, c) => sum + c.nodes_processed, 0) / recentConsolidations.length;
+
+    const qualityTrend = recentConsolidations.length >= 2 ? 
+      recentConsolidations[0].consolidation_quality - recentConsolidations[1].consolidation_quality : 0;
+
+    return (
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Consolidation Trends
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className={`text-lg font-bold ${getQualityColor(avgRecentQuality)}`}>
+                {(avgRecentQuality * 100).toFixed(1)}%
+              </div>
+              <div className="text-sm text-gray-600">Recent Avg Quality</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-600">
+                {avgRecentNodes.toFixed(0)}
+              </div>
+              <div className="text-sm text-gray-600">Avg Nodes/Session</div>
+            </div>
+            
+            <div className="text-center">
+              <div className={`text-lg font-bold flex items-center justify-center gap-1 ${
+                qualityTrend > 0 ? 'text-green-600' : qualityTrend < 0 ? 'text-red-600' : 'text-gray-600'
+              }`}>
+                {qualityTrend > 0 ? '↗' : qualityTrend < 0 ? '↘' : '→'}
+                {Math.abs(qualityTrend * 100).toFixed(1)}%
+              </div>
+              <div className="text-sm text-gray-600">Quality Trend</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }, [memoryConsolidations, getQualityColor]);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Brain className="w-6 h-6 text-purple-600" />
-          <h2 className="text-xl font-semibold">Memory Consolidation & Priming</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={autoConsolidate ? "default" : "secondary"}>
-            Auto: {autoConsolidate ? "ON" : "OFF"}
-          </Badge>
-          <Button
-            onClick={() => setAutoConsolidate(!autoConsolidate)}
-            variant="outline"
-            size="sm"
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Configuration */}
+      {/* Control Panel */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Configuração de Consolidação</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Archive className="w-5 h-5" />
+            Memory Consolidation Control
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Janela Temporal (horas): {timeWindow[0]}</Label>
-            <Slider
-              value={timeWindow}
-              onValueChange={setTimeWindow}
-              max={168}
-              min={1}
-              step={1}
-              className="w-full"
-            />
+        <CardContent>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Type:</label>
+              <select
+                value={consolidationType}
+                onChange={(e) => setConsolidationType(e.target.value as 'automatic' | 'manual')}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+                disabled={isProcessing}
+              >
+                <option value="automatic">Automatic</option>
+                <option value="manual">Manual</option>
+              </select>
+            </div>
+            
+            <Button
+              onClick={handleConsolidation}
+              disabled={isProcessing}
+              className="flex items-center gap-2"
+            >
+              {isProcessing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Brain className="w-4 h-4" />
+                  Start Consolidation
+                </>
+              )}
+            </Button>
           </div>
           
-          <div className="space-y-2">
-            <Label>Tamanho Mínimo do Cluster: {minClusterSize[0]}</Label>
-            <Slider
-              value={minClusterSize}
-              onValueChange={setMinClusterSize}
-              max={10}
-              min={2}
-              step={1}
-              className="w-full"
-            />
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium mb-1">About Memory Consolidation</p>
+                <p>
+                  Memory consolidation transfers important information from working memory to long-term storage, 
+                  strengthening neural connections and improving recall. Higher quality scores indicate better 
+                  pattern recognition and knowledge integration.
+                </p>
+              </div>
+            </div>
           </div>
-
-          <Button 
-            onClick={handleManualConsolidation}
-            disabled={isProcessing}
-            className="w-full"
-          >
-            {isProcessing ? 'Consolidando...' : 'Consolidar Memórias'}
-          </Button>
         </CardContent>
       </Card>
 
-      {/* Memory Consolidations */}
+      {/* Statistics */}
+      {renderConsolidationStats()}
+
+      {/* Trends */}
+      {renderConsolidationTrends()}
+
+      {/* History */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            Consolidações de Memória ({memoryConsolidations.length})
+            Consolidation History
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {memoryConsolidations.length === 0 ? (
+          {memoryConsolidations.length > 0 ? (
+            renderConsolidationHistory()
+          ) : (
             <div className="text-center text-gray-500 py-8">
-              <Brain className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhuma consolidação de memória encontrada</p>
-              <p className="text-sm">Execute uma consolidação para ver os padrões</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {memoryConsolidations.map((consolidation) => (
-                <div 
-                  key={consolidation.id}
-                  className="p-3 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge className={getPatternColor(consolidation.pattern_type)}>
-                      {formatPatternType(consolidation.pattern_type)}
-                    </Badge>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <TrendingUp className="w-4 h-4" />
-                      Score: {consolidation.consolidation_score.toFixed(2)}
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {consolidation.consolidated_nodes.length} nós consolidados
-                  </p>
-                  <div className="text-xs text-gray-500">
-                    {new Date(consolidation.created_at).toLocaleString('pt-BR')}
-                  </div>
-                </div>
-              ))}
+              <Archive className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No consolidation history available</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Start a consolidation session to see results here
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Priming Contexts */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5" />
-            Contextos de Priming ({primingContexts.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {primingContexts.length === 0 ? (
-            <div className="text-center text-gray-500 py-6">
-              <Zap className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhum contexto de priming ativo</p>
+      {/* Real-time Processing Indicator */}
+      {isProcessing && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <div>
+                <p className="font-medium text-blue-800">Memory Consolidation in Progress</p>
+                <p className="text-sm text-blue-600">
+                  Processing cognitive nodes and strengthening neural pathways...
+                </p>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {primingContexts.map((context) => (
-                <div 
-                  key={context.context_id}
-                  className="p-3 border rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
-                      {context.primed_nodes.length} nós primados
-                    </Badge>
-                    <div className="text-sm text-gray-600">
-                      Força: {(context.priming_strength * 100).toFixed(0)}%
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Padrões: {context.trigger_patterns.slice(0, 3).join(', ')}
-                    {context.trigger_patterns.length > 3 && '...'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Predictive Cache */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Cache Preditivo ({predictiveCache.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {predictiveCache.length === 0 ? (
-            <div className="text-center text-gray-500 py-6">
-              <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Cache preditivo vazio</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {predictiveCache
-                .sort((a, b) => b.hit_count - a.hit_count)
-                .slice(0, 10)
-                .map((cache, index) => (
-                <div 
-                  key={cache.query_pattern}
-                  className="p-3 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="outline">
-                      {cache.query_pattern.replace(/_/g, ' ')}
-                    </Badge>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>Hits: {cache.hit_count}</span>
-                      <span>Conf: {(cache.confidence_score * 100).toFixed(0)}%</span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {cache.predicted_nodes.length} nós preditos | 
-                    Último uso: {new Date(cache.last_used).toLocaleString('pt-BR')}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

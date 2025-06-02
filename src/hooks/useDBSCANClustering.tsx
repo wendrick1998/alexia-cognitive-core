@@ -1,286 +1,452 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 
-export interface ClusterNode {
+export interface ClusterPoint {
   id: string;
+  coordinates: number[];
   content: string;
   title?: string;
-  node_type: string;
-  cluster_id: number;
-  is_core_point: boolean;
-  density: number;
-  neighbors: string[];
+  metadata: any;
+  cluster?: number;
+  isCore?: boolean;
+  isNoise?: boolean;
 }
 
 export interface Cluster {
   id: number;
-  core_points: number;
-  border_points: number;
-  total_points: number;
-  centroid: string;
+  points: ClusterPoint[];
+  centroid: number[];
+  density: number;
+  cohesion: number;
+  separation: number;
+  silhouetteScore: number;
   topics: string[];
-  density_score: number;
-  coherence_score: number;
 }
 
 export interface ClusteringMetrics {
-  total_clusters: number;
-  noise_points: number;
-  silhouette_score: number;
-  execution_time: number;
-  parameters: {
-    eps: number;
-    min_points: number;
-  };
+  totalPoints: number;
+  totalClusters: number;
+  noisePoints: number;
+  avgClusterSize: number;
+  silhouetteScore: number;
+  dunnIndex: number;
+  processingTime: number;
+}
+
+export interface DBSCANParams {
+  epsilon: number;
+  minPoints: number;
+  distanceMetric: 'euclidean' | 'cosine' | 'manhattan';
+  dimensionality: number;
 }
 
 export function useDBSCANClustering() {
   const { user } = useAuth();
   const [clusters, setClusters] = useState<Cluster[]>([]);
-  const [clusterNodes, setClusterNodes] = useState<ClusterNode[]>([]);
-  const [metrics, setMetrics] = useState<ClusteringMetrics | null>(null);
+  const [metrics, setMetrics] = useState<ClusteringMetrics>({
+    totalPoints: 0,
+    totalClusters: 0,
+    noisePoints: 0,
+    avgClusterSize: 0,
+    silhouetteScore: 0,
+    dunnIndex: 0,
+    processingTime: 0
+  });
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Run DBSCAN clustering on cognitive nodes
+  const pointsCache = useRef<Map<string, ClusterPoint>>(new Map());
+  const distanceCache = useRef<Map<string, number>>(new Map());
+
+  // Distance calculation functions
+  const calculateDistance = useCallback((
+    point1: number[],
+    point2: number[],
+    metric: 'euclidean' | 'cosine' | 'manhattan' = 'euclidean'
+  ): number => {
+    const cacheKey = `${point1.join(',')}_${point2.join(',')}_${metric}`;
+    
+    if (distanceCache.current.has(cacheKey)) {
+      return distanceCache.current.get(cacheKey)!;
+    }
+
+    let distance = 0;
+
+    switch (metric) {
+      case 'euclidean':
+        distance = Math.sqrt(
+          point1.reduce((sum, val, i) => sum + Math.pow(val - point2[i], 2), 0)
+        );
+        break;
+      
+      case 'cosine':
+        const dotProduct = point1.reduce((sum, val, i) => sum + val * point2[i], 0);
+        const magnitude1 = Math.sqrt(point1.reduce((sum, val) => sum + val * val, 0));
+        const magnitude2 = Math.sqrt(point2.reduce((sum, val) => sum + val * val, 0));
+        distance = 1 - (dotProduct / (magnitude1 * magnitude2));
+        break;
+      
+      case 'manhattan':
+        distance = point1.reduce((sum, val, i) => sum + Math.abs(val - point2[i]), 0);
+        break;
+    }
+
+    distanceCache.current.set(cacheKey, distance);
+    return distance;
+  }, []);
+
+  // Find neighbors within epsilon distance
+  const findNeighbors = useCallback((
+    point: ClusterPoint,
+    points: ClusterPoint[],
+    epsilon: number,
+    metric: 'euclidean' | 'cosine' | 'manhattan'
+  ): ClusterPoint[] => {
+    return points.filter(otherPoint => {
+      if (point.id === otherPoint.id) return false;
+      return calculateDistance(point.coordinates, otherPoint.coordinates, metric) <= epsilon;
+    });
+  }, [calculateDistance]);
+
+  // DBSCAN clustering algorithm
   const runDBSCANClustering = useCallback(async (
-    eps: number = 0.3,
-    minPoints: number = 3,
-    useEmbeddings: boolean = true
-  ): Promise<void> => {
-    if (!user) return;
-
+    points: ClusterPoint[],
+    params: Partial<DBSCANParams> = {}
+  ): Promise<Cluster[]> => {
+    const startTime = performance.now();
     setIsProcessing(true);
-    const startTime = Date.now();
 
     try {
-      console.log('🔬 Running DBSCAN clustering:', { eps, minPoints, useEmbeddings });
+      const {
+        epsilon = 0.5,
+        minPoints = 5,
+        distanceMetric = 'euclidean'
+      } = params;
 
-      // Execute clustering via edge function
-      const { data, error } = await supabase.functions.invoke('cognitive-search', {
-        body: {
-          command: 'dbscan_clustering',
-          userId: user.id,
-          parameters: {
-            eps,
-            min_points: minPoints, // Fixed: using min_points instead of minPoints
-            useEmbeddings,
-            distanceMetric: 'cosine'
+      console.log('🔬 Running DBSCAN clustering...', { epsilon, minPoints, distanceMetric });
+
+      // Clear cache for new clustering
+      distanceCache.current.clear();
+
+      // Initialize all points as unvisited
+      const processedPoints = points.map(p => ({ ...p, cluster: undefined, isCore: false, isNoise: false }));
+      const visited = new Set<string>();
+      let currentClusterId = 0;
+      const clustersMap = new Map<number, ClusterPoint[]>();
+
+      // Main DBSCAN algorithm
+      for (const point of processedPoints) {
+        if (visited.has(point.id)) continue;
+        
+        visited.add(point.id);
+        const neighbors = findNeighbors(point, processedPoints, epsilon, distanceMetric);
+
+        if (neighbors.length < minPoints) {
+          // Mark as noise
+          point.isNoise = true;
+        } else {
+          // Start new cluster
+          point.isCore = true;
+          point.cluster = currentClusterId;
+          
+          if (!clustersMap.has(currentClusterId)) {
+            clustersMap.set(currentClusterId, []);
           }
-        }
-      });
+          clustersMap.get(currentClusterId)!.push(point);
 
-      if (error) throw error;
+          // Expand cluster
+          const queue = [...neighbors];
+          
+          while (queue.length > 0) {
+            const neighbor = queue.shift()!;
+            
+            if (!visited.has(neighbor.id)) {
+              visited.add(neighbor.id);
+              const neighborNeighbors = findNeighbors(neighbor, processedPoints, epsilon, distanceMetric);
+              
+              if (neighborNeighbors.length >= minPoints) {
+                neighbor.isCore = true;
+                queue.push(...neighborNeighbors);
+              }
+            }
 
-      const executionTime = Date.now() - startTime;
-      
-      // Update state with clustering results
-      setClusters(data.clusters || []);
-      setClusterNodes(data.clusterNodes || []);
-      
-      setMetrics({
-        total_clusters: data.totalClusters || 0,
-        noise_points: data.noisePoints || 0,
-        silhouette_score: data.silhouetteScore || 0,
-        execution_time: executionTime,
-        parameters: { eps, min_points: minPoints } // Fixed: using min_points
-      });
-
-      console.log(`✅ DBSCAN completed: ${data.totalClusters} clusters in ${executionTime}ms`);
-
-    } catch (error) {
-      console.error('❌ DBSCAN clustering error:', error);
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [user]);
-
-  // Get cluster details
-  const getClusterDetails = useCallback(async (clusterId: number): Promise<ClusterNode[]> => {
-    if (!user) return [];
-
-    try {
-      const clusterNodesFiltered = clusterNodes.filter(node => node.cluster_id === clusterId);
-      
-      // Get additional details from database
-      const nodeIds = clusterNodesFiltered.map(node => node.id);
-      
-      const { data, error } = await supabase
-        .from('cognitive_nodes')
-        .select('*')
-        .eq('user_id', user.id)
-        .in('id', nodeIds);
-
-      if (error) throw error;
-
-      // Enhance cluster nodes with full data
-      const enhancedNodes: ClusterNode[] = clusterNodesFiltered.map(clusterNode => {
-        const fullNode = data?.find(node => node.id === clusterNode.id);
-        return {
-          ...clusterNode,
-          content: fullNode?.content || clusterNode.content,
-          title: fullNode?.title || clusterNode.title,
-          node_type: fullNode?.node_type || clusterNode.node_type
-        };
-      });
-
-      return enhancedNodes;
-
-    } catch (error) {
-      console.error('❌ Error getting cluster details:', error);
-      return [];
-    }
-  }, [user, clusterNodes]);
-
-  // Find similar clusters
-  const findSimilarClusters = useCallback(async (
-    clusterId: number,
-    threshold: number = 0.7
-  ): Promise<number[]> => {
-    if (!user) return [];
-
-    try {
-      console.log('🔍 Finding similar clusters for:', clusterId);
-
-      const { data, error } = await supabase.functions.invoke('cognitive-search', {
-        body: {
-          command: 'find_similar_clusters',
-          userId: user.id,
-          clusterId,
-          threshold
-        }
-      });
-
-      if (error) throw error;
-
-      return data.similarClusters || [];
-
-    } catch (error) {
-      console.error('❌ Error finding similar clusters:', error);
-      return [];
-    }
-  }, [user]);
-
-  // Adaptive clustering that adjusts parameters automatically
-  const adaptiveClustering = useCallback(async (): Promise<void> => {
-    if (!user) return;
-
-    setIsProcessing(true);
-    const startTime = Date.now();
-
-    try {
-      console.log('🤖 Running adaptive DBSCAN clustering...');
-
-      // Try different parameter combinations
-      const parameterSets = [
-        { eps: 0.2, minPoints: 2 },
-        { eps: 0.3, minPoints: 3 },
-        { eps: 0.4, minPoints: 4 },
-        { eps: 0.5, minPoints: 5 }
-      ];
-
-      let bestResult = null;
-      let bestScore = -1;
-
-      for (const params of parameterSets) {
-        const { data, error } = await supabase.functions.invoke('cognitive-search', {
-          body: {
-            command: 'dbscan_clustering',
-            userId: user.id,
-            parameters: {
-              ...params,
-              useEmbeddings: true,
-              distanceMetric: 'cosine'
+            if (neighbor.cluster === undefined) {
+              neighbor.cluster = currentClusterId;
+              neighbor.isNoise = false;
+              clustersMap.get(currentClusterId)!.push(neighbor);
             }
           }
-        });
 
-        if (!error && data.silhouetteScore > bestScore) {
-          bestScore = data.silhouetteScore;
-          bestResult = { data, params };
+          currentClusterId++;
         }
       }
 
-      if (bestResult) {
-        const executionTime = Date.now() - startTime;
-        
-        setClusters(bestResult.data.clusters || []);
-        setClusterNodes(bestResult.data.clusterNodes || []);
-        
-        setMetrics({
-          total_clusters: bestResult.data.totalClusters || 0,
-          noise_points: bestResult.data.noisePoints || 0,
-          silhouette_score: bestResult.data.silhouetteScore || 0,
-          execution_time: executionTime,
-          parameters: bestResult.params
-        });
+      // Build cluster objects with metrics
+      const clusters: Cluster[] = [];
+      
+      for (const [clusterId, clusterPoints] of clustersMap) {
+        const centroid = calculateCentroid(clusterPoints);
+        const density = calculateClusterDensity(clusterPoints, epsilon, distanceMetric);
+        const cohesion = calculateCohesion(clusterPoints, centroid, distanceMetric);
+        const topics = extractClusterTopics(clusterPoints);
 
-        console.log(`✅ Adaptive clustering completed: ${bestResult.data.totalClusters} clusters with score ${bestScore}`);
+        clusters.push({
+          id: clusterId,
+          points: clusterPoints,
+          centroid,
+          density,
+          cohesion,
+          separation: 0, // Will be calculated later
+          silhouetteScore: 0, // Will be calculated later
+          topics
+        });
       }
 
+      // Calculate separation and silhouette scores
+      clusters.forEach(cluster => {
+        cluster.separation = calculateSeparation(cluster, clusters, distanceMetric);
+        cluster.silhouetteScore = calculateSilhouetteScore(cluster, clusters, distanceMetric);
+      });
+
+      // Calculate overall metrics
+      const noisePoints = processedPoints.filter(p => p.isNoise).length;
+      const avgClusterSize = clusters.length > 0 ? clusters.reduce((sum, c) => sum + c.points.length, 0) / clusters.length : 0;
+      const overallSilhouetteScore = clusters.length > 0 ? clusters.reduce((sum, c) => sum + c.silhouetteScore, 0) / clusters.length : 0;
+      const dunnIndex = calculateDunnIndex(clusters, distanceMetric);
+      const processingTime = performance.now() - startTime;
+
+      setMetrics({
+        totalPoints: points.length,
+        totalClusters: clusters.length,
+        noisePoints,
+        avgClusterSize,
+        silhouetteScore: overallSilhouetteScore,
+        dunnIndex,
+        processingTime
+      });
+
+      setClusters(clusters);
+      
+      console.log(`✅ DBSCAN completed: ${clusters.length} clusters, ${noisePoints} noise points in ${processingTime.toFixed(2)}ms`);
+      return clusters;
+
     } catch (error) {
-      console.error('❌ Adaptive clustering error:', error);
+      console.error('❌ Error in DBSCAN clustering:', error);
+      return [];
     } finally {
       setIsProcessing(false);
     }
-  }, [user]);
+  }, [findNeighbors, calculateDistance]);
 
-  // Get cluster topics using LDA-like analysis
-  const extractClusterTopics = useCallback(async (
-    clusterId: number,
-    numTopics: number = 3
-  ): Promise<string[]> => {
+  // Calculate cluster centroid
+  const calculateCentroid = useCallback((points: ClusterPoint[]): number[] => {
+    if (points.length === 0) return [];
+    
+    const dimensions = points[0].coordinates.length;
+    const centroid = new Array(dimensions).fill(0);
+    
+    points.forEach(point => {
+      point.coordinates.forEach((coord, i) => {
+        centroid[i] += coord;
+      });
+    });
+    
+    return centroid.map(sum => sum / points.length);
+  }, []);
+
+  // Calculate cluster density
+  const calculateClusterDensity = useCallback((
+    points: ClusterPoint[],
+    epsilon: number,
+    metric: 'euclidean' | 'cosine' | 'manhattan'
+  ): number => {
+    if (points.length <= 1) return 0;
+    
+    let totalConnections = 0;
+    
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        const distance = calculateDistance(points[i].coordinates, points[j].coordinates, metric);
+        if (distance <= epsilon) {
+          totalConnections++;
+        }
+      }
+    }
+    
+    const maxPossibleConnections = (points.length * (points.length - 1)) / 2;
+    return maxPossibleConnections > 0 ? totalConnections / maxPossibleConnections : 0;
+  }, [calculateDistance]);
+
+  // Calculate cluster cohesion
+  const calculateCohesion = useCallback((
+    points: ClusterPoint[],
+    centroid: number[],
+    metric: 'euclidean' | 'cosine' | 'manhattan'
+  ): number => {
+    if (points.length === 0) return 0;
+    
+    const totalDistance = points.reduce((sum, point) => {
+      return sum + calculateDistance(point.coordinates, centroid, metric);
+    }, 0);
+    
+    return points.length > 0 ? totalDistance / points.length : 0;
+  }, [calculateDistance]);
+
+  // Calculate separation between clusters
+  const calculateSeparation = useCallback((
+    cluster: Cluster,
+    allClusters: Cluster[],
+    metric: 'euclidean' | 'cosine' | 'manhattan'
+  ): number => {
+    const otherClusters = allClusters.filter(c => c.id !== cluster.id);
+    if (otherClusters.length === 0) return 0;
+    
+    let minDistance = Infinity;
+    
+    otherClusters.forEach(otherCluster => {
+      const distance = calculateDistance(cluster.centroid, otherCluster.centroid, metric);
+      minDistance = Math.min(minDistance, distance);
+    });
+    
+    return minDistance === Infinity ? 0 : minDistance;
+  }, [calculateDistance]);
+
+  // Calculate silhouette score
+  const calculateSilhouetteScore = useCallback((
+    cluster: Cluster,
+    allClusters: Cluster[],
+    metric: 'euclidean' | 'cosine' | 'manhattan'
+  ): number => {
+    if (cluster.points.length <= 1) return 0;
+    
+    let totalScore = 0;
+    
+    cluster.points.forEach(point => {
+      // Calculate average distance to points in same cluster (cohesion)
+      const intraClusterDistances = cluster.points
+        .filter(p => p.id !== point.id)
+        .map(p => calculateDistance(point.coordinates, p.coordinates, metric));
+      
+      const avgIntraDistance = intraClusterDistances.length > 0 
+        ? intraClusterDistances.reduce((sum, d) => sum + d, 0) / intraClusterDistances.length 
+        : 0;
+      
+      // Calculate minimum average distance to points in other clusters
+      let minAvgInterDistance = Infinity;
+      
+      allClusters.forEach(otherCluster => {
+        if (otherCluster.id !== cluster.id) {
+          const interDistances = otherCluster.points
+            .map(p => calculateDistance(point.coordinates, p.coordinates, metric));
+          
+          const avgInterDistance = interDistances.length > 0
+            ? interDistances.reduce((sum, d) => sum + d, 0) / interDistances.length
+            : 0;
+          
+          minAvgInterDistance = Math.min(minAvgInterDistance, avgInterDistance);
+        }
+      });
+      
+      // Calculate silhouette score for this point
+      const silhouette = minAvgInterDistance === Infinity ? 0 :
+        (minAvgInterDistance - avgIntraDistance) / Math.max(avgIntraDistance, minAvgInterDistance);
+      
+      totalScore += silhouette;
+    });
+    
+    return cluster.points.length > 0 ? totalScore / cluster.points.length : 0;
+  }, [calculateDistance]);
+
+  // Calculate Dunn Index
+  const calculateDunnIndex = useCallback((
+    clusters: Cluster[],
+    metric: 'euclidean' | 'cosine' | 'manhattan'
+  ): number => {
+    if (clusters.length <= 1) return 0;
+    
+    // Find minimum inter-cluster distance
+    let minInterDistance = Infinity;
+    for (let i = 0; i < clusters.length; i++) {
+      for (let j = i + 1; j < clusters.length; j++) {
+        const distance = calculateDistance(clusters[i].centroid, clusters[j].centroid, metric);
+        minInterDistance = Math.min(minInterDistance, distance);
+      }
+    }
+    
+    // Find maximum intra-cluster distance
+    let maxIntraDistance = 0;
+    clusters.forEach(cluster => {
+      cluster.points.forEach(point => {
+        const distance = calculateDistance(point.coordinates, cluster.centroid, metric);
+        maxIntraDistance = Math.max(maxIntraDistance, distance);
+      });
+    });
+    
+    return maxIntraDistance > 0 ? minInterDistance / maxIntraDistance : 0;
+  }, [calculateDistance]);
+
+  // Extract topics from cluster
+  const extractClusterTopics = useCallback((points: ClusterPoint[]): string[] => {
+    const allWords = points.flatMap(point => {
+      const text = (point.content + ' ' + (point.title || '')).toLowerCase();
+      return text.split(/\s+/).filter(word => word.length > 3);
+    });
+    
+    const wordCounts = new Map<string, number>();
+    allWords.forEach(word => {
+      wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
+    });
+    
+    return Array.from(wordCounts.entries())
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([word]) => word);
+  }, []);
+
+  // Convert cognitive nodes to cluster points
+  const convertNodesToPoints = useCallback(async (): Promise<ClusterPoint[]> => {
     if (!user) return [];
 
     try {
-      const clusterNodesFiltered = clusterNodes.filter(node => node.cluster_id === clusterId);
-      
-      if (clusterNodesFiltered.length === 0) return [];
+      const { data, error } = await supabase
+        .from('cognitive_nodes')
+        .select('id, content, title, embedding_general, metadata')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .not('embedding_general', 'is', null);
 
-      // Extract most frequent meaningful terms
-      const allText = clusterNodesFiltered
-        .map(node => `${node.title || ''} ${node.content}`)
-        .join(' ')
-        .toLowerCase();
+      if (error) throw error;
 
-      // Simple term frequency analysis
-      const words = allText
-        .replace(/[^\w\s]/g, ' ')
-        .split(/\s+/)
-        .filter(word => word.length > 3);
-
-      const wordFreq = new Map<string, number>();
-      words.forEach(word => {
-        wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
-      });
-
-      // Get top terms
-      const topTerms = Array.from(wordFreq.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, numTopics)
-        .map(([word]) => word);
-
-      return topTerms;
-
+      return (data || []).map(node => ({
+        id: node.id,
+        coordinates: node.embedding_general || [],
+        content: node.content || '',
+        title: node.title,
+        metadata: node.metadata || {}
+      }));
     } catch (error) {
-      console.error('❌ Error extracting cluster topics:', error);
+      console.error('❌ Error converting nodes to points:', error);
       return [];
     }
-  }, [clusterNodes]);
+  }, [user]);
 
   return {
-    // Clustering functions
+    // Core clustering function
     runDBSCANClustering,
-    adaptiveClustering,
-    getClusterDetails,
-    findSimilarClusters,
-    extractClusterTopics,
+    
+    // Utility functions
+    calculateDistance,
+    convertNodesToPoints,
     
     // State
     clusters,
-    clusterNodes,
     metrics,
-    isProcessing
+    isProcessing,
+    
+    // Cache management
+    clearCache: () => {
+      distanceCache.current.clear();
+      pointsCache.current.clear();
+    }
   };
 }

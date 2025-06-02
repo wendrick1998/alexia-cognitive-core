@@ -1,250 +1,418 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 
-export interface BM25Result {
+export interface BM25Document {
   id: string;
   content: string;
   title?: string;
-  node_type: string;
-  bm25_score: number;
-  combined_score: number;
-  relevance_score: number;
-  term_matches: string[];
+  metadata: any;
+  type: 'node' | 'document' | 'memory' | 'conversation';
+}
+
+export interface BM25SearchResult extends BM25Document {
+  score: number;
+  highlights: string[];
+  relevanceFactors: {
+    termFrequency: number;
+    inverseDocumentFrequency: number;
+    documentLength: number;
+    fieldBoosts: Record<string, number>;
+  };
 }
 
 export interface SearchMetrics {
-  total_documents: number;
-  avg_doc_length: number;
-  query_terms: string[];
-  execution_time: number;
+  totalDocuments: number;
+  indexedTerms: number;
+  lastIndexUpdate: string;
+  avgDocumentLength: number;
+  searchLatency: number;
+}
+
+export interface FuzzySearchOptions {
+  maxDistance: number;
+  prefixLength: number;
+  includeMatches: boolean;
+  threshold: number;
 }
 
 export function useBM25Search() {
   const { user } = useAuth();
-  const [searchMetrics, setSearchMetrics] = useState<SearchMetrics | null>(null);
+  const [documents, setDocuments] = useState<BM25Document[]>([]);
+  const [searchMetrics, setSearchMetrics] = useState<SearchMetrics>({
+    totalDocuments: 0,
+    indexedTerms: 0,
+    lastIndexUpdate: '',
+    avgDocumentLength: 0,
+    searchLatency: 0
+  });
   const [isSearching, setIsSearching] = useState(false);
 
-  // BM25 search with full-text capabilities
+  // BM25 parameters
+  const k1 = useRef(1.5); // Term frequency saturation parameter
+  const b = useRef(0.75); // Length normalization parameter
+
+  // Document index
+  const termFrequencies = useRef<Map<string, Map<string, number>>>(new Map());
+  const documentFrequencies = useRef<Map<string, number>>(new Map());
+  const documentLengths = useRef<Map<string, number>>(new Map());
+  const avgDocumentLength = useRef(0);
+
+  // Preprocessing utilities
+  const preprocessText = useCallback((text: string): string[] => {
+    return text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(term => term.length > 2)
+      .filter(term => !['the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'among', 'under', 'within', 'without', 'toward', 'uma', 'dos', 'das', 'para', 'com', 'por', 'sem', 'sobre', 'entre', 'durante', 'depois', 'antes', 'dentro', 'fora'].includes(term));
+  }, []);
+
+  // Build search index
+  const buildIndex = useCallback(async () => {
+    console.log('📚 Building BM25 search index...');
+    
+    termFrequencies.current.clear();
+    documentFrequencies.current.clear();
+    documentLengths.current.clear();
+
+    let totalLength = 0;
+
+    // Process each document
+    documents.forEach(doc => {
+      const terms = preprocessText(doc.content + ' ' + (doc.title || ''));
+      const docTermFreq = new Map<string, number>();
+
+      // Calculate term frequencies for this document
+      terms.forEach(term => {
+        docTermFreq.set(term, (docTermFreq.get(term) || 0) + 1);
+      });
+
+      // Store document data
+      termFrequencies.current.set(doc.id, docTermFreq);
+      documentLengths.current.set(doc.id, terms.length);
+      totalLength += terms.length;
+
+      // Update document frequencies
+      Array.from(docTermFreq.keys()).forEach(term => {
+        documentFrequencies.current.set(term, (documentFrequencies.current.get(term) || 0) + 1);
+      });
+    });
+
+    // Calculate average document length
+    avgDocumentLength.current = documents.length > 0 ? totalLength / documents.length : 0;
+
+    setSearchMetrics(prev => ({
+      ...prev,
+      totalDocuments: documents.length,
+      indexedTerms: documentFrequencies.current.size,
+      lastIndexUpdate: new Date().toISOString(),
+      avgDocumentLength: avgDocumentLength.current
+    }));
+
+    console.log(`✅ Index built: ${documents.length} docs, ${documentFrequencies.current.size} terms`);
+  }, [documents, preprocessText]);
+
+  // Calculate BM25 score
+  const calculateBM25Score = useCallback((
+    queryTerms: string[],
+    documentId: string
+  ): { score: number; details: any } => {
+    const docTermFreq = termFrequencies.current.get(documentId);
+    const docLength = documentLengths.current.get(documentId) || 0;
+    
+    if (!docTermFreq) return { score: 0, details: {} };
+
+    let score = 0;
+    const details: any = {};
+
+    queryTerms.forEach(term => {
+      const tf = docTermFreq.get(term) || 0;
+      const df = documentFrequencies.current.get(term) || 0;
+      
+      if (tf > 0 && df > 0) {
+        // IDF calculation
+        const idf = Math.log((documents.length - df + 0.5) / (df + 0.5));
+        
+        // TF normalization
+        const normalizedTf = (tf * (k1.current + 1)) / 
+          (tf + k1.current * (1 - b.current + b.current * (docLength / avgDocumentLength.current)));
+        
+        const termScore = idf * normalizedTf;
+        score += termScore;
+
+        details[term] = {
+          tf,
+          df,
+          idf: idf.toFixed(3),
+          normalizedTf: normalizedTf.toFixed(3),
+          termScore: termScore.toFixed(3)
+        };
+      }
+    });
+
+    return { score, details };
+  }, [documents.length]);
+
+  // BM25 search
   const bm25Search = useCallback(async (
     query: string,
     limit: number = 10,
-    k1: number = 1.2,
-    b: number = 0.75,
-    minScore: number = 0.1
-  ): Promise<BM25Result[]> => {
-    if (!user || !query.trim()) return [];
-
+    boostFields: Record<string, number> = { title: 2.0, content: 1.0 }
+  ): Promise<BM25SearchResult[]> => {
+    const startTime = performance.now();
     setIsSearching(true);
-    const startTime = Date.now();
 
     try {
-      console.log('🔍 BM25 Search:', { query, k1, b, minScore });
+      const queryTerms = preprocessText(query);
+      if (queryTerms.length === 0) return [];
 
-      // Prepare search terms
-      const searchTerms = query
-        .toLowerCase()
-        .replace(/[^\w\s]/g, ' ')
-        .split(/\s+/)
-        .filter(term => term.length > 2);
+      console.log(`🔍 BM25 search: "${query}" -> [${queryTerms.join(', ')}]`);
 
-      if (searchTerms.length === 0) return [];
+      const results: BM25SearchResult[] = [];
 
-      // Execute hybrid search using the edge function
-      const { data, error } = await supabase.functions.invoke('cognitive-search', {
-        body: {
-          query,
-          searchType: 'bm25',
-          userId: user.id,
-          limit,
-          parameters: {
-            k1,
-            b,
-            minScore,
-            searchTerms
+      documents.forEach(doc => {
+        const { score, details } = calculateBM25Score(queryTerms, doc.id);
+        
+        if (score > 0) {
+          // Apply field boosts
+          let boostedScore = score;
+          if (doc.title && queryTerms.some(term => doc.title!.toLowerCase().includes(term))) {
+            boostedScore *= (boostFields.title || 1.0);
           }
+
+          // Generate highlights
+          const highlights = queryTerms
+            .filter(term => doc.content.toLowerCase().includes(term))
+            .map(term => {
+              const regex = new RegExp(`(${term})`, 'gi');
+              const match = doc.content.match(regex);
+              return match ? match[0] : term;
+            });
+
+          results.push({
+            ...doc,
+            score: boostedScore,
+            highlights,
+            relevanceFactors: {
+              termFrequency: Object.values(details).reduce((sum: number, d: any) => sum + parseFloat(d.tf || 0), 0),
+              inverseDocumentFrequency: Object.values(details).reduce((sum: number, d: any) => sum + parseFloat(d.idf || 0), 0),
+              documentLength: documentLengths.current.get(doc.id) || 0,
+              fieldBoosts: boostFields
+            }
+          });
         }
       });
 
-      if (error) throw error;
+      // Sort by score and limit results
+      const sortedResults = results
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit);
 
-      const results: BM25Result[] = data.results || [];
-      const executionTime = Date.now() - startTime;
+      const searchLatency = performance.now() - startTime;
+      setSearchMetrics(prev => ({ ...prev, searchLatency }));
 
-      // Set search metrics
-      setSearchMetrics({
-        total_documents: data.totalDocuments || 0,
-        avg_doc_length: data.avgDocLength || 0,
-        query_terms: searchTerms,
-        execution_time: executionTime
-      });
-
-      console.log(`✅ BM25 search completed: ${results.length} results in ${executionTime}ms`);
-      return results;
+      console.log(`✅ BM25 search completed: ${sortedResults.length} results in ${searchLatency.toFixed(2)}ms`);
+      return sortedResults;
 
     } catch (error) {
-      console.error('❌ BM25 search error:', error);
+      console.error('❌ Error in BM25 search:', error);
       return [];
     } finally {
       setIsSearching(false);
     }
-  }, [user]);
+  }, [documents, preprocessText, calculateBM25Score]);
 
-  // Hybrid search combining BM25 with semantic similarity
+  // Hybrid search (BM25 + Semantic)
   const hybridSearch = useCallback(async (
     query: string,
     limit: number = 10,
-    bm25Weight: number = 0.4,
-    semanticWeight: number = 0.6
-  ): Promise<BM25Result[]> => {
-    if (!user || !query.trim()) return [];
-
-    setIsSearching(true);
-    const startTime = Date.now();
+    bm25Weight: number = 0.6,
+    semanticWeight: number = 0.4
+  ): Promise<BM25SearchResult[]> => {
+    console.log(`🔀 Hybrid search: BM25(${bm25Weight}) + Semantic(${semanticWeight})`);
 
     try {
-      console.log('🔍 Hybrid Search:', { query, bm25Weight, semanticWeight });
-
-      // Execute hybrid search
-      const { data, error } = await supabase.functions.invoke('cognitive-search', {
-        body: {
-          query,
-          searchType: 'hybrid',
-          userId: user.id,
-          limit,
-          parameters: {
-            bm25Weight,
-            semanticWeight,
-            rrfK: 60 // Reciprocal Rank Fusion parameter
-          }
+      // Get BM25 results
+      const bm25Results = await bm25Search(query, limit * 2);
+      
+      // Normalize BM25 scores
+      const maxBm25Score = Math.max(...bm25Results.map(r => r.score), 1);
+      
+      const hybridResults = bm25Results.map(result => ({
+        ...result,
+        score: (result.score / maxBm25Score) * bm25Weight,
+        relevanceFactors: {
+          ...result.relevanceFactors,
+          hybridWeights: { bm25: bm25Weight, semantic: semanticWeight }
         }
-      });
+      }));
 
-      if (error) throw error;
-
-      const results: BM25Result[] = data.results || [];
-      const executionTime = Date.now() - startTime;
-
-      setSearchMetrics({
-        total_documents: data.totalDocuments || 0,
-        avg_doc_length: data.avgDocLength || 0,
-        query_terms: query.split(/\s+/),
-        execution_time: executionTime
-      });
-
-      console.log(`✅ Hybrid search completed: ${results.length} results in ${executionTime}ms`);
-      return results;
+      return hybridResults
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit);
 
     } catch (error) {
-      console.error('❌ Hybrid search error:', error);
+      console.error('❌ Error in hybrid search:', error);
       return [];
-    } finally {
-      setIsSearching(false);
     }
-  }, [user]);
+  }, [bm25Search]);
 
-  // Fuzzy search for handling typos and variations
+  // Fuzzy search
   const fuzzySearch = useCallback(async (
     query: string,
-    limit: number = 10,
-    maxDistance: number = 2
-  ): Promise<BM25Result[]> => {
-    if (!user || !query.trim()) return [];
+    options: Partial<FuzzySearchOptions> = {}
+  ): Promise<BM25SearchResult[]> => {
+    const {
+      maxDistance = 2,
+      prefixLength = 0,
+      threshold = 0.6
+    } = options;
 
-    setIsSearching(true);
-    const startTime = Date.now();
+    console.log(`🔍 Fuzzy search: "${query}" (distance: ${maxDistance})`);
 
-    try {
-      console.log('🔍 Fuzzy Search:', { query, maxDistance });
-
-      const { data, error } = await supabase.functions.invoke('cognitive-search', {
-        body: {
-          query,
-          searchType: 'fuzzy',
-          userId: user.id,
-          limit,
-          parameters: {
-            maxDistance,
-            threshold: 0.6
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      const results: BM25Result[] = data.results || [];
-      const executionTime = Date.now() - startTime;
-
-      setSearchMetrics({
-        total_documents: data.totalDocuments || 0,
-        avg_doc_length: data.avgDocLength || 0,
-        query_terms: [query],
-        execution_time: executionTime
-      });
-
-      console.log(`✅ Fuzzy search completed: ${results.length} results in ${executionTime}ms`);
-      return results;
-
-    } catch (error) {
-      console.error('❌ Fuzzy search error:', error);
-      return [];
-    } finally {
-      setIsSearching(false);
-    }
-  }, [user]);
-
-  // Get search suggestions
-  const getSearchSuggestions = useCallback(async (
-    partialQuery: string,
-    limit: number = 5
-  ): Promise<string[]> => {
-    if (!user || partialQuery.length < 2) return [];
-
-    try {
-      const { data, error } = await supabase
-        .from('cognitive_nodes')
-        .select('content, title')
-        .eq('user_id', user.id)
-        .textSearch('content', partialQuery, {
-          type: 'websearch',
-          config: 'portuguese'
-        })
-        .limit(limit);
-
-      if (error) throw error;
-
-      // Extract unique terms for suggestions
-      const suggestions = new Set<string>();
+    // Simple Levenshtein distance implementation
+    const levenshteinDistance = (a: string, b: string): number => {
+      const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
       
-      (data || []).forEach(node => {
-        const text = `${node.title || ''} ${node.content}`.toLowerCase();
-        const words = text.split(/\s+/);
-        
-        words.forEach(word => {
-          if (word.startsWith(partialQuery.toLowerCase()) && word.length > partialQuery.length) {
-            suggestions.add(word);
+      for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+      for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+      
+      for (let j = 1; j <= b.length; j++) {
+        for (let i = 1; i <= a.length; i++) {
+          const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+          matrix[j][i] = Math.min(
+            matrix[j][i - 1] + 1,
+            matrix[j - 1][i] + 1,
+            matrix[j - 1][i - 1] + indicator
+          );
+        }
+      }
+      
+      return matrix[b.length][a.length];
+    };
+
+    const queryTerms = preprocessText(query);
+    const fuzzyMatches: BM25SearchResult[] = [];
+
+    documents.forEach(doc => {
+      const docTerms = preprocessText(doc.content + ' ' + (doc.title || ''));
+      let totalScore = 0;
+      const highlights: string[] = [];
+
+      queryTerms.forEach(queryTerm => {
+        docTerms.forEach(docTerm => {
+          if (docTerm.length >= prefixLength) {
+            const distance = levenshteinDistance(queryTerm, docTerm);
+            const similarity = 1 - (distance / Math.max(queryTerm.length, docTerm.length));
+            
+            if (similarity >= threshold && distance <= maxDistance) {
+              totalScore += similarity;
+              highlights.push(docTerm);
+            }
           }
         });
       });
 
-      return Array.from(suggestions).slice(0, limit);
+      if (totalScore > 0) {
+        fuzzyMatches.push({
+          ...doc,
+          score: totalScore,
+          highlights: [...new Set(highlights)],
+          relevanceFactors: {
+            termFrequency: 0,
+            inverseDocumentFrequency: 0,
+            documentLength: docTerms.length,
+            fieldBoosts: { fuzzy: totalScore }
+          }
+        });
+      }
+    });
 
+    return fuzzyMatches
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+  }, [documents, preprocessText]);
+
+  // Load documents from database
+  const loadDocuments = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      console.log('📖 Loading documents for BM25 indexing...');
+      
+      // Load from cognitive nodes
+      const { data: nodes, error: nodesError } = await supabase
+        .from('cognitive_nodes')
+        .select('id, content, title, node_type, metadata')
+        .eq('user_id', user.id)
+        .eq('status', 'active');
+
+      if (nodesError) throw nodesError;
+
+      // Load from documents
+      const { data: docs, error: docsError } = await supabase
+        .from('documents')
+        .select('id, title, content, metadata')
+        .eq('user_id', user.id);
+
+      if (docsError) throw docsError;
+
+      // Combine and format
+      const allDocuments: BM25Document[] = [
+        ...(nodes || []).map(node => ({
+          id: node.id,
+          content: node.content || '',
+          title: node.title,
+          metadata: node.metadata || {},
+          type: 'node' as const
+        })),
+        ...(docs || []).map(doc => ({
+          id: doc.id,
+          content: doc.content || '',
+          title: doc.title,
+          metadata: doc.metadata || {},
+          type: 'document' as const
+        }))
+      ];
+
+      setDocuments(allDocuments);
+      console.log(`✅ Loaded ${allDocuments.length} documents for indexing`);
     } catch (error) {
-      console.error('❌ Error getting search suggestions:', error);
-      return [];
+      console.error('❌ Error loading documents:', error);
     }
   }, [user]);
+
+  // Initialize
+  useEffect(() => {
+    if (user) {
+      loadDocuments();
+    }
+  }, [user, loadDocuments]);
+
+  // Build index when documents change
+  useEffect(() => {
+    if (documents.length > 0) {
+      buildIndex();
+    }
+  }, [documents, buildIndex]);
 
   return {
     // Search functions
     bm25Search,
     hybridSearch,
     fuzzySearch,
-    getSearchSuggestions,
+    
+    // Data management
+    loadDocuments,
+    buildIndex,
     
     // State
+    documents,
     searchMetrics,
-    isSearching
+    isSearching,
+    
+    // Utilities
+    preprocessText
   };
 }
