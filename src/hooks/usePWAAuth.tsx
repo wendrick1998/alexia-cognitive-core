@@ -17,6 +17,12 @@ interface PWAAuthState {
   isAuthenticated: boolean;
 }
 
+interface SecureStorage {
+  setItem: (key: string, value: string) => void;
+  getItem: (key: string) => string | null;
+  removeItem: (key: string) => void;
+}
+
 export function usePWAAuth() {
   const [state, setState] = useState<PWAAuthState>({
     user: null,
@@ -36,7 +42,7 @@ export function usePWAAuth() {
   }, []);
 
   // Armazenamento seguro para Safari/PWA
-  const secureStorage = useCallback({
+  const secureStorage = useCallback((): SecureStorage => ({
     setItem: (key: string, value: string) => {
       try {
         if (isSafariOrPWA()) {
@@ -64,7 +70,7 @@ export function usePWAAuth() {
         console.warn('Storage removal failed:', error);
       }
     }
-  }, [isSafariOrPWA]);
+  }), [isSafariOrPWA]);
 
   // Login simplificado para PWA
   const signIn = useCallback(async (email: string, password: string) => {
@@ -94,7 +100,8 @@ export function usePWAAuth() {
         console.log('✅ Login PWA bem-sucedido:', data.user.email);
         
         // Armazenar sessão de forma segura
-        secureStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
+        const storage = secureStorage();
+        storage.setItem('supabase.auth.token', JSON.stringify(data.session));
         
         setState({
           user: data.user,
@@ -127,7 +134,8 @@ export function usePWAAuth() {
       setState(prev => ({ ...prev, loading: true }));
       
       await supabase.auth.signOut();
-      secureStorage.removeItem('supabase.auth.token');
+      const storage = secureStorage();
+      storage.removeItem('supabase.auth.token');
       
       setState({
         user: null,
@@ -189,6 +197,33 @@ export function usePWAAuth() {
   // Limpar erro
   const clearError = useCallback(() => {
     setState(prev => ({ ...prev, error: null }));
+  }, []);
+
+  // Função para refresh da sessão (compatibilidade com AuthGuard)
+  const refreshSession = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, loading: true }));
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error('❌ Erro ao renovar sessão:', error);
+        setState(prev => ({ ...prev, loading: false, error: 'Erro ao renovar sessão' }));
+        return;
+      }
+
+      if (data.session && data.user) {
+        setState({
+          user: data.user,
+          session: data.session,
+          loading: false,
+          error: null,
+          isAuthenticated: true
+        });
+      }
+    } catch (err) {
+      console.error('❌ Erro inesperado ao renovar sessão:', err);
+      setState(prev => ({ ...prev, loading: false }));
+    }
   }, []);
 
   // Inicialização da autenticação
@@ -291,6 +326,7 @@ export function usePWAAuth() {
     signIn,
     signOut,
     signUp,
-    clearError
+    clearError,
+    refreshSession
   };
 }

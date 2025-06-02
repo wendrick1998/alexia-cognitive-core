@@ -6,7 +6,7 @@ import { useMultiLLM } from '@/hooks/useMultiLLM';
 import { useSecurity } from '@/hooks/useSecurity';
 import { supabase } from '@/integrations/supabase/client';
 import { llmLogger } from '@/services/LLMLogger';
-import type { TaskType, Priority } from '@/services/MultiLLMRouter';
+import type { TaskType as LLMTaskType, Priority } from '@/services/MultiLLMRouter';
 
 export interface ChatResponse {
   response: string;
@@ -162,7 +162,7 @@ export function useChatProcessor() {
   };
 }
 
-function detectTaskType(message: string): TaskType {
+function detectTaskType(message: string): LLMTaskType {
   const lowerMessage = message.toLowerCase();
   
   if (lowerMessage.includes('código') || lowerMessage.includes('programar') || lowerMessage.includes('function') || lowerMessage.includes('debug')) {
