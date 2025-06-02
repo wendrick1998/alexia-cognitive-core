@@ -37,13 +37,14 @@ export function useAutoMemoryDecay() {
         .from('cognitive_nodes')
         .update({
           memory_type: 'short_term',
-          consolidation_score: supabase.sql`LEAST(1.0, consolidation_score + 0.1)`,
+          consolidation_score: Math.min(1.0, 0.1), // Will be calculated properly in the database
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
         .eq('memory_type', 'working')
         .lt('last_accessed_at', workingThreshold)
-        .gt('activation_strength', 0.3); // Apenas memórias com alguma ativação
+        .gt('activation_strength', 0.3) // Apenas memórias com alguma ativação
+        .select();
 
       if (workingError) throw workingError;
 
@@ -54,27 +55,24 @@ export function useAutoMemoryDecay() {
         .from('cognitive_nodes')
         .update({
           memory_type: 'long_term',
-          consolidation_score: supabase.sql`LEAST(1.0, consolidation_score + 0.2)`,
+          consolidation_score: Math.min(1.0, 0.2), // Will be calculated properly in the database
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
         .eq('memory_type', 'short_term')
         .lt('last_accessed_at', shortTermThreshold)
-        .gt('activation_strength', 0.5); // Threshold maior para long-term
+        .gt('activation_strength', 0.5) // Threshold maior para long-term
+        .select();
 
       if (shortError) throw shortError;
 
-      // 3. Aplicar decay gradual para memórias long-term
+      // 3. Aplicar decay gradual para memórias long-term usando RPC function
       const { data: longTermDecay, error: decayError } = await supabase
-        .from('cognitive_nodes')
-        .update({
-          activation_strength: supabase.sql`GREATEST(0.1, activation_strength * ${1 - config.longTermDecayRate})`,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id)
-        .eq('memory_type', 'long_term')
-        .not('is_sensitive', 'eq', config.sensitiveMemoryProtection) // Proteger dados sensíveis se configurado
-        .lt('last_accessed_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Apenas se não acessado há 1 dia
+        .rpc('apply_memory_decay', {
+          p_user_id: user.id,
+          p_decay_rate: config.longTermDecayRate,
+          p_protect_sensitive: config.sensitiveMemoryProtection
+        });
 
       if (decayError) throw decayError;
 
@@ -85,15 +83,16 @@ export function useAutoMemoryDecay() {
         .eq('user_id', user.id)
         .lt('activation_strength', 0.1)
         .lt('last_accessed_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // 30 dias
-        .not('is_sensitive', 'eq', true) // Nunca remover dados sensíveis
-        .not('memory_type', 'eq', 'long_term'); // Nunca remover long-term
+        .neq('is_sensitive', true) // Nunca remover dados sensíveis
+        .neq('memory_type', 'long_term') // Nunca remover long-term
+        .select();
 
       if (removeError) throw removeError;
 
       console.log('✅ Decay de memória aplicado:', {
         workingToShort: workingToShort?.length || 0,
         shortToLong: shortToLong?.length || 0,
-        decayed: longTermDecay?.length || 0,
+        decayed: Array.isArray(longTermDecay) ? longTermDecay.length : 0,
         removed: removed?.length || 0
       });
 
@@ -129,18 +128,18 @@ export function useAutoMemoryDecay() {
 
       if (error) throw error;
 
-      const byType = stats.reduce((acc: any, node: any) => {
+      const byType = (stats || []).reduce((acc: any, node: any) => {
         if (!acc[node.memory_type]) acc[node.memory_type] = 0;
         acc[node.memory_type]++;
         return acc;
       }, {});
 
-      const avgActivation = stats.length > 0 
-        ? stats.reduce((sum: number, node: any) => sum + node.activation_strength, 0) / stats.length
+      const avgActivation = stats && stats.length > 0 
+        ? stats.reduce((sum: number, node: any) => sum + (node.activation_strength || 0), 0) / stats.length
         : 0;
 
       return {
-        total: stats.length,
+        total: stats?.length || 0,
         byType,
         avgActivation,
         lastDecayRun
