@@ -52,12 +52,31 @@ export function useMemoryValidation() {
 
       if (error) throw error;
 
+      // Safely extract and cast the data
+      const result = data as any;
+      
+      if (!result) {
+        throw new Error('No data returned from validation');
+      }
+
+      // Create properly typed MemoryValidation object
+      const validationResult: MemoryValidation = {
+        memory_id: result.memory_id,
+        status: result.status === 'error' ? 'error' : 'validated',
+        version_count: Number(result.version_count) || 0,
+        inconsistency_count: Number(result.inconsistency_count) || 0,
+        global_confidence: Number(result.global_confidence) || 0,
+        is_sensitive: Boolean(result.is_sensitive),
+        validation_status: result.validation_status || 'needs_review',
+        recommendations: Array.isArray(result.recommendations) ? result.recommendations : []
+      };
+
       toast({
         title: "Validação Concluída",
-        description: `Memória validada com status: ${data.validation_status}`,
+        description: `Memória validada com status: ${validationResult.validation_status}`,
       });
 
-      return data as MemoryValidation;
+      return validationResult;
     } catch (error) {
       console.error('Erro ao validar consistência:', error);
       toast({
@@ -128,7 +147,7 @@ export function useMemoryValidation() {
         description: `Status de sensibilidade atualizado com sucesso`,
       });
 
-      return data;
+      return Boolean(data);
     } catch (error) {
       console.error('Erro ao marcar sensibilidade:', error);
       toast({
