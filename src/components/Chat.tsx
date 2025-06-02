@@ -1,53 +1,45 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
-import { useConversations } from '@/hooks/useConversations';
-import { useChatProcessor } from '@/hooks/useChatProcessor';
-import { useFocusMode } from '@/hooks/useFocusMode';
-import PremiumChatLayout from './chat/PremiumChatLayout';
-import FocusMode from './focus/FocusMode';
-import FloatingActionButton from './chat/FloatingActionButton';
+import { useChatSessions } from '@/hooks/useChatSessions';
 import { useIsMobile } from '@/hooks/use-mobile';
-import ResponseSource from './ResponseSource';
-import FeedbackSystem from './FeedbackSystem';
+import ChatSessionsList from './chat/ChatSessionsList';
+import NewChatInterface from './chat/NewChatInterface';
+import { Button } from '@/components/ui/button';
+import { Menu, X } from 'lucide-react';
 
 const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+
   const {
-    conversations,
-    currentConversation,
+    sessions,
+    currentSession,
     messages,
-    createAndNavigateToNewConversation,
-    navigateToConversation,
-    conversationState,
-    setMessages,
-    updateConversationTimestamp
-  } = useConversations();
-
-  const { processing, processMessage } = useChatProcessor();
-  const { isActive: isFocusModeActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
-
-  const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
-    }
-  };
+    loading,
+    messagesLoading,
+    createSession,
+    selectSession,
+    sendMessage,
+    renameSession,
+    deleteSession,
+    toggleFavorite,
+  } = useChatSessions();
 
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => scrollToBottom(), 100);
-    }
-  }, [messages.length]);
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
-  const handleNewConversation = async () => {
-    console.log('🔥 Criando nova conversa...');
-    const newConversation = await createAndNavigateToNewConversation();
-    if (newConversation) {
+  const handleNewSession = async () => {
+    const newSession = await createSession();
+    if (newSession) {
+      await selectSession(newSession);
+      if (isMobile) {
+        setSidebarOpen(false);
+      }
       toast({
         title: "Nova conversa criada",
         description: "Conversa pronta para uso!",
@@ -55,207 +47,94 @@ const Chat = () => {
     }
   };
 
-  const handleConversationSelect = async (conversation: any) => {
-    console.log(`🧭 Selecionando conversa: ${conversation.id}`);
-    await navigateToConversation(conversation);
+  const handleSessionSelect = async (session: any) => {
+    await selectSession(session);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
   };
 
-  const handleSendMessage = async (message: string) => {
-    if (!currentConversation) {
-      console.log('⚠️ Criando nova conversa automaticamente...');
-      const newConversation = await createAndNavigateToNewConversation();
-      if (!newConversation) {
+  const handleSendMessage = async (content: string): Promise<boolean> => {
+    if (!currentSession) {
+      // Se não há sessão atual, criar uma nova automaticamente
+      const newSession = await createSession();
+      if (!newSession) {
         toast({
           title: "Erro",
           description: "Não foi possível criar uma nova conversa",
           variant: "destructive",
         });
-        return;
+        return false;
       }
+      await selectSession(newSession);
     }
 
-    const conversationId = currentConversation?.id;
-    if (!conversationId) return;
-
-    const userMessage = {
-      id: `temp-${Date.now()}`,
-      conversation_id: conversationId,
-      role: 'user' as const,
-      content: message,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    scrollToBottom();
-
-    try {
-      const response = await processMessage(message, conversationId);
-      
-      if (response) {
-        const fromCache = response.metadata?.fromCache || false;
-        const usedFallback = response.metadata?.usedFallback || false;
-        const originalModel = response.metadata?.originalModel || '';
-        const responseTime = response.metadata?.responseTime || 0;
-        
-        const aiMessage = {
-          id: `temp-ai-${Date.now()}`,
-          conversation_id: conversationId,
-          role: 'assistant' as const,
-          content: response.response,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          metadata: {
-            fromCache,
-            usedFallback,
-            originalModel,
-            currentModel: response.model || '',
-            responseTime
-          }
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        await updateConversationTimestamp(conversationId);
-        scrollToBottom();
-
-        toast({
-          title: "Mensagem enviada",
-          description: response.context_used ? "IA respondeu com contexto" : "IA respondeu",
-        });
-      }
-    } catch (error) {
-      console.error('❌ Erro ao enviar mensagem:', error);
-      toast({
-        title: "Erro",
-        description: "Falha ao enviar mensagem",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleFloatingAction = (action: string) => {
-    switch (action) {
-      case 'new-chat':
-        handleNewConversation();
-        break;
-      case 'focus-mode':
-        activateFocusMode();
-        toast({
-          title: "Focus Mode Ativado",
-          description: "Modo de escrita minimalista ativado",
-        });
-        break;
-      default:
-        console.log('Ação não reconhecida:', action);
-    }
-  };
-
-  useEffect(() => {
-    const handleKeyboardShortcuts = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey) {
-        switch (e.key) {
-          case 'n':
-            e.preventDefault();
-            handleNewConversation();
-            break;
-          case 'f':
-            e.preventDefault();
-            activateFocusMode();
-            break;
-        }
-      }
-      
-      if (e.key === 'Escape' && isFocusModeActive) {
-        deactivateFocusMode();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyboardShortcuts);
-    return () => window.removeEventListener('keydown', handleKeyboardShortcuts);
-  }, [isFocusModeActive, deactivateFocusMode, activateFocusMode]);
-
-  console.log('🗨️ Chat renderizado:', {
-    conversations: conversations.length,
-    currentConversation: currentConversation?.id,
-    messages: messages.length,
-    processing,
-    isCreating: conversationState.isCreatingNew
-  });
-
-  const renderMessageWithSourceAndFeedback = (message: any) => {
-    if (message.role !== 'assistant') {
-      return null;
-    }
-    
-    // Find the previous message (user question) by array index
-    const messageIndex = messages.findIndex(m => m.id === message.id);
-    const previousMessage = messageIndex > 0 ? messages[messageIndex - 1] : null;
-    const userQuestion = previousMessage?.role === 'user' ? previousMessage.content : '';
-    
-    return (
-      <div className="space-y-2">
-        {message.metadata && (
-          <ResponseSource 
-            fromCache={message.metadata.fromCache}
-            usedFallback={message.metadata.usedFallback}
-            originalModel={message.metadata.originalModel}
-            currentModel={message.metadata.currentModel}
-            responseTime={message.metadata.responseTime}
-          />
-        )}
-        
-        <FeedbackSystem
-          messageId={message.id}
-          question={userQuestion}
-          answer={message.content}
-          modelName={message.metadata?.currentModel || 'gpt-4o-mini'}
-          provider="openai"
-          responseTime={message.metadata?.responseTime}
-          tokensUsed={Math.ceil(message.content.length / 4)}
-          usedFallback={message.metadata?.usedFallback}
-          sessionId={currentConversation?.session_id || ''}
-        />
-      </div>
-    );
+    return await sendMessage(content);
   };
 
   return (
-    <>
-      <div className="h-full w-full relative">
-        <PremiumChatLayout
-          conversations={conversations}
-          currentConversation={currentConversation}
-          messages={messages}
-          processing={processing}
-          onConversationSelect={handleConversationSelect}
-          onNewConversation={handleNewConversation}
-          onSendMessage={handleSendMessage}
-          isCreatingNew={conversationState.isCreatingNew}
-          isNavigating={conversationState.isNavigating}
-          renderMessageExtras={renderMessageWithSourceAndFeedback}
-          className="h-full"
+    <div className="h-full w-full flex bg-black overflow-hidden">
+      {/* Mobile Header */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-white hover:bg-white/10"
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+            <h1 className="text-lg font-semibold text-white">
+              {currentSession?.title || 'Yá - Assistente IA'}
+            </h1>
+            <div className="w-10" />
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        ${isMobile ? 'fixed inset-y-0 left-0 z-40' : 'relative'}
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        transition-transform duration-300 ease-in-out
+        w-80 border-r border-white/10
+        ${isMobile ? 'pt-16' : ''}
+      `}>
+        <ChatSessionsList
+          sessions={sessions}
+          currentSession={currentSession}
+          onSessionSelect={handleSessionSelect}
+          onNewSession={handleNewSession}
+          onRenameSession={renameSession}
+          onDeleteSession={deleteSession}
+          onToggleFavorite={toggleFavorite}
+          loading={loading}
         />
-
-        <div ref={messagesEndRef} />
-
-        {isMobile && (
-          <FloatingActionButton 
-            onAction={handleFloatingAction}
-            currentSection="chat"
-            hasActiveChat={!!currentConversation}
-            hasDocument={false}
-            className="touch-target"
-          />
-        )}
       </div>
 
-      <FocusMode
-        isActive={isFocusModeActive}
-        onExit={deactivateFocusMode}
-        onSendMessage={handleSendMessage}
-        initialText=""
-      />
-    </>
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Chat Area */}
+      <div className={`
+        flex-1 min-w-0
+        ${isMobile ? 'pt-16' : ''}
+      `}>
+        <NewChatInterface
+          messages={messages}
+          onSendMessage={handleSendMessage}
+          loading={messagesLoading}
+          className="h-full"
+        />
+      </div>
+    </div>
   );
 };
 
