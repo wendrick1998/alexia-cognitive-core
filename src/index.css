@@ -108,7 +108,17 @@
   animation: scale-in 0.2s ease-out forwards;
 }
 
-/* Chat specific scroll container - CORRIGIDO para iOS */
+/* SCROLL OPTIMIZATIONS - Core fixes */
+.scroll-container {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+/* Chat specific scroll container */
 .chat-scroll-container {
   height: 100%;
   overflow-y: auto;
@@ -116,11 +126,10 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
+  position: relative;
 }
 
-/* NOVO: Container principal de dashboard com scroll funcional */
+/* Dashboard scroll container */
 .dashboard-scroll-container {
   height: 100%;
   overflow-y: auto;
@@ -128,17 +137,16 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
-  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
 
-/* Mobile scroll optimization - CORRIGIDO */
+/* Mobile optimizations */
 @media (max-width: 768px) {
   .premium-scrollbar {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
   
-  /* Garantir scroll funcional no mobile */
+  /* Prevent iOS scroll issues */
   body {
     overscroll-behavior: none;
     width: 100%;
@@ -146,41 +154,34 @@
     min-height: 100dvh;
   }
   
-  /* Root container deve permitir scroll */
   #root {
     min-height: 100vh;
     min-height: 100dvh;
   }
   
-  /* Touch scroll otimizado */
-  .touch-scroll {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    scroll-behavior: smooth;
-  }
-  
-  /* Chat mobile com padding para bottom nav - CORRIGIDO */
-  .chat-scroll-container {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    scroll-behavior: smooth;
-    touch-action: pan-y;
-    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
-  }
-  
-  /* Dashboard e outras seções com padding bottom - CORRIGIDO */
-  .mobile-content-area {
-    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  /* Chat mobile with proper padding for bottom nav */
+  .chat-messages-mobile {
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Dashboard mobile with proper padding */
+  .dashboard-content-mobile {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
-  /* Container principal para evitar sobreposição */
-  .main-content-wrapper {
+  /* General content area for mobile */
+  .mobile-content-safe {
     padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
-    height: calc(100vh - 140px);
+    height: calc(100vh - 80px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 }
 
@@ -198,12 +199,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* CORRIGIDO: Permitir scroll horizontal e vertical */
+  /* Allow proper scrolling */
   html, body {
     width: 100%;
+    overflow-x: hidden;
   }
 
-  /* iOS Safari fixes - OTIMIZADO */
+  /* iOS Safari fixes */
   body {
     position: relative;
     min-height: 100vh;
@@ -255,7 +257,7 @@
     min-width: 44px;
   }
 
-  /* Safe area utilities - EXPANDIDO */
+  /* Safe area utilities */
   .pb-safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -264,12 +266,25 @@
     padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* NOVO: Utilitário para auto-scroll */
+  /* Auto-scroll utilities */
   .auto-scroll-bottom {
     scroll-behavior: smooth;
   }
   
   .auto-scroll-bottom:last-child {
     scroll-snap-align: end;
+  }
+
+  /* Z-index layers */
+  .z-bottom-nav {
+    z-index: 40;
+  }
+
+  .z-chat-input {
+    z-index: 30;
+  }
+
+  .z-sidebar {
+    z-index: 50;
   }
 }

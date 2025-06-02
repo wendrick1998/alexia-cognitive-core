@@ -1,5 +1,5 @@
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { Message } from '@/hooks/useConversations';
 import MessageBubble from './MessageBubble';
 import { Loader2 } from 'lucide-react';
@@ -14,28 +14,51 @@ interface ChatMessagesProps {
 const ChatMessages = ({ messages, processing, loading = false, renderMessageExtras }: ChatMessagesProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+  const scrollToBottom = useCallback((behavior: 'auto' | 'smooth' = 'smooth') => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
-  };
 
-  // Auto-scroll quando mensagens mudam ou processamento
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (messagesEndRef.current) {
+        try {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior, 
+            block: 'end',
+            inline: 'nearest'
+          });
+        } catch (error) {
+          console.warn('Scroll error:', error);
+        }
+      }
+    }, 100);
+  }, []);
+
+  // Auto-scroll when messages change or processing
   useEffect(() => {
     if (messages.length > 0) {
-      // Delay pequeno para garantir que o DOM foi atualizado
-      setTimeout(() => scrollToBottom(), 100);
+      scrollToBottom();
     }
-  }, [messages.length, processing]);
+  }, [messages.length, processing, scrollToBottom]);
 
-  // Auto-scroll quando carrega conversa existente
+  // Auto-scroll immediately when loading existing conversation
   useEffect(() => {
     if (messages.length > 0 && !loading) {
-      // Scroll imediato ao carregar conversa existente
-      setTimeout(() => scrollToBottom('auto'), 50);
+      // Immediate scroll for existing conversations
+      scrollToBottom('auto');
     }
-  }, [messages.length, loading]);
+  }, [messages.length, loading, scrollToBottom]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -51,13 +74,9 @@ const ChatMessages = ({ messages, processing, loading = false, renderMessageExtr
   return (
     <div 
       ref={containerRef}
-      className="h-full overflow-y-auto overflow-x-hidden chat-scroll-container premium-scrollbar"
-      style={{
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain'
-      }}
+      className="h-full chat-scroll-container premium-scrollbar"
     >
-      <div className="p-4 space-y-4 min-h-full pb-safe-bottom-nav">
+      <div className="p-4 space-y-4 min-h-full chat-messages-mobile">
         {messages.map((message, index) => (
           <div key={message.id} className="space-y-2">
             <MessageBubble message={message} />

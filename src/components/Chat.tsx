@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
@@ -17,9 +18,8 @@ const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Estado da sidebar recolhível - CORRIGIDO
+  // Estado da sidebar recolhível
   const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile);
   
   const {
@@ -44,18 +44,6 @@ const Chat = () => {
     setSidebarCollapsed(isMobile);
   }, [isMobile]);
 
-  const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
-    }
-  };
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => scrollToBottom(), 100);
-    }
-  }, [messages.length]);
-
   const handleNewConversation = async () => {
     console.log('🔥 Criando nova conversa...');
     const newConversation = await createAndNavigateToNewConversation();
@@ -76,7 +64,7 @@ const Chat = () => {
     }
   };
 
-  // NOVO: Handlers para o menu de conversas
+  // Handlers para o menu de conversas
   const handleRenameConversation = async (conversationId: string, newName: string) => {
     try {
       await updateConversation(conversationId, { name: newName });
@@ -127,7 +115,7 @@ const Chat = () => {
     }
   };
 
-  // CORRIGIDO: Função para toggle da sidebar
+  // Função para toggle da sidebar
   const handleToggleSidebar = () => {
     console.log('🔄 Toggle sidebar, estado atual:', sidebarCollapsed);
     setSidebarCollapsed(prev => {
@@ -164,7 +152,6 @@ const Chat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    scrollToBottom();
 
     try {
       const response = await processMessage(message, conversationId);
@@ -193,7 +180,6 @@ const Chat = () => {
 
         setMessages(prev => [...prev, aiMessage]);
         await updateConversationTimestamp(conversationId);
-        scrollToBottom();
 
         toast({
           title: "Mensagem enviada",
@@ -272,7 +258,7 @@ const Chat = () => {
 
   return (
     <div className="h-full relative flex overflow-hidden">
-      {/* Botão Toggle Sidebar - MELHORADO com estado visual correto */}
+      {/* Botão Toggle Sidebar - Posicionamento otimizado */}
       {isMobile && (
         <Button
           onClick={handleToggleSidebar}
@@ -289,7 +275,7 @@ const Chat = () => {
         </Button>
       )}
 
-      {/* Layout principal do chat com overflow controlado */}
+      {/* Layout principal do chat - altura total sem overflow */}
       <div className="flex-1 h-full overflow-hidden">
         <PremiumChatLayout
           conversations={conversations}
@@ -311,16 +297,14 @@ const Chat = () => {
         />
       </div>
 
-      <div ref={messagesEndRef} />
-
-      {/* Floating Action Button - Mobile */}
+      {/* Floating Action Button - Mobile com z-index correto */}
       {isMobile && (
         <FloatingActionButton 
           onAction={handleFloatingAction}
           currentSection="chat"
           hasActiveChat={!!currentConversation}
           hasDocument={false}
-          className="bottom-20"
+          className="bottom-24 z-bottom-nav"
         />
       )}
 

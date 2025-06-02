@@ -133,12 +133,12 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         />
       )}
 
-      {/* Main Content - CORRIGIDO para permitir scroll adequado */}
+      {/* Main Content - Fixed height structure for proper scroll */}
       <main className={cn(
-        "flex-1 flex flex-col min-h-screen relative",
+        "flex-1 flex flex-col h-screen overflow-hidden relative",
         !isMobile && "ml-20"
       )}>
-        {/* Header */}
+        {/* Header - Fixed at top */}
         <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0 relative z-30">
           <h1 className="font-semibold text-gray-900 dark:text-gray-100 capitalize text-xl">
             {getSectionTitle(currentSection)}
@@ -161,24 +161,19 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
           </div>
         </header>
 
-        {/* Content Area - CORRIGIDO para scroll adequado */}
+        {/* Content Area - Scrollable with proper overflow handling */}
         <div className={cn(
-          "flex-1 relative z-10",
-          // Chat precisa de overflow controlado
+          "flex-1 min-h-0 relative z-10",
+          // Chat needs special overflow handling
           currentSection === 'chat' ? "overflow-hidden" : cn(
-            // Dashboard e outras seções precisam de scroll funcional
-            isMobile ? "main-content-wrapper" : "dashboard-scroll-container"
+            // Other sections get scrollable content with proper padding
+            isMobile ? "mobile-content-safe" : "dashboard-scroll-container"
           )
         )}>
-          <div className={cn(
-            "w-full",
-            currentSection === 'chat' ? "h-full overflow-hidden" : "h-auto"
-          )}>
-            {children}
-          </div>
+          {children}
         </div>
 
-        {/* Bottom Navigation (Mobile only) */}
+        {/* Bottom Navigation (Mobile only) - Fixed at bottom */}
         <BottomNavigation 
           currentSection={currentSection} 
           onSectionChange={handleSectionChange}

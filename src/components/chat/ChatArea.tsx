@@ -33,9 +33,9 @@ const ChatArea = ({
   });
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* Header - Fixo no topo */}
-      <div className="flex-shrink-0">
+    <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-gray-950">
+      {/* Header - Fixed at top */}
+      <div className="flex-shrink-0 border-b border-gray-200/50 dark:border-gray-700/50">
         <ChatHeader
           currentConversation={currentConversation}
           onBackToConversations={onBackToConversations}
@@ -44,7 +44,7 @@ const ChatArea = ({
         />
       </div>
 
-      {/* Content Area - Área scrollável com overflow controlado */}
+      {/* Content Area - Scrollable section */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <ChatContent
           currentConversation={currentConversation}
@@ -55,8 +55,8 @@ const ChatArea = ({
         />
       </div>
 
-      {/* Input Area - Fixo na parte inferior */}
-      <div className="flex-shrink-0">
+      {/* Input Area - Fixed at bottom */}
+      <div className="flex-shrink-0 z-chat-input">
         <ChatInputArea
           processing={processing}
           onSendMessage={onSendMessage}
