@@ -115,23 +115,29 @@ const Index = () => {
         );
       case "privacy":
         return (
-          <div className="p-6">
-            <h1 className="text-2xl text-white">Configurações de Privacidade</h1>
-            <p className="text-white/60">Em desenvolvimento...</p>
+          <div className="p-6 h-full overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Configurações de Privacidade</h1>
+              <p className="text-gray-600 dark:text-gray-400">Em desenvolvimento...</p>
+            </div>
           </div>
         );
       case "subscription":
         return (
-          <div className="p-6">
-            <h1 className="text-2xl text-white">Gerenciamento de Assinatura</h1>
-            <p className="text-white/60">Em desenvolvimento...</p>
+          <div className="p-6 h-full overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Gerenciamento de Assinatura</h1>
+              <p className="text-gray-600 dark:text-gray-400">Em desenvolvimento...</p>
+            </div>
           </div>
         );
       case "security":
         return (
-          <div className="p-6">
-            <h1 className="text-2xl text-white">Configurações de Segurança</h1>
-            <p className="text-white/60">Em desenvolvimento...</p>
+          <div className="p-6 h-full overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Configurações de Segurança</h1>
+              <p className="text-gray-600 dark:text-gray-400">Em desenvolvimento...</p>
+            </div>
           </div>
         );
       default:
@@ -146,9 +152,9 @@ const Index = () => {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-white dark:bg-gray-950">
+      <div className="min-h-screen bg-white dark:bg-gray-950 w-full">
         <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
-          <div className="relative h-full overflow-hidden">
+          <div className="relative h-full w-full">
             <PageTransition>
               {renderContent(currentSection)}
             </PageTransition>

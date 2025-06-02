@@ -31,9 +31,12 @@ const BottomNavigation = ({ currentSection, onSectionChange, onMenuToggle }: Bot
   if (!isMobile) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50">
-      <div className="safe-area-inset-bottom">
-        <div className="flex items-center justify-between px-2 py-2">
+    <div 
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
+      <div className="px-2 py-2">
+        <div className="flex items-center justify-between">
           {/* Navigation Items */}
           <div className="flex items-center justify-around flex-1 space-x-1">
             {navigationItems.map((item) => {

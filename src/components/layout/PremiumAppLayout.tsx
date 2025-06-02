@@ -65,10 +65,6 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
               description: "Cmd/Ctrl + N para novo chat",
             });
             break;
-          case 'f':
-            e.preventDefault();
-            window.dispatchEvent(new CustomEvent('activate-focus-mode'));
-            break;
           default:
             break;
         }
@@ -77,8 +73,6 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
       if (e.key === 'Escape') {
         if (sidebarOpen) {
           handleSidebarClose();
-        } else {
-          window.dispatchEvent(new CustomEvent('escape-pressed'));
         }
       }
     };
@@ -101,6 +95,24 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         return 'Busca';
       case 'actions':
         return 'Projetos';
+      case 'cognitive-graph':
+        return 'Rede Cognitiva';
+      case 'insights':
+        return 'Insights';
+      case 'cortex-dashboard':
+        return 'Córtex Dashboard';
+      case 'integrations-status':
+        return 'Status Integrações';
+      case 'integrations-manager':
+        return 'Gerenciar APIs';
+      case 'preferences':
+        return 'Preferências';
+      case 'privacy':
+        return 'Privacidade';
+      case 'subscription':
+        return 'Assinatura';
+      case 'security':
+        return 'Segurança';
       default:
         return 'AlexIA';
     }
@@ -118,7 +130,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 flex flex-col h-screen overflow-hidden relative",
+        "flex-1 flex flex-col min-h-screen overflow-hidden relative",
         !isMobile && "ml-20"
       )}>
         {/* Header */}
@@ -144,10 +156,12 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
 
         {/* Content Area */}
         <div className={cn(
-          "flex-1 overflow-hidden relative z-10",
+          "flex-1 overflow-y-auto relative z-10",
           isMobile && "pb-20" // Space for bottom navigation
         )}>
-          {children}
+          <div className="h-full w-full">
+            {children}
+          </div>
         </div>
 
         {/* Bottom Navigation (Mobile only) */}
