@@ -104,6 +104,14 @@ function castAlertStatus(status: string): CognitiveAlert['status'] {
   return validStatuses.includes(status as CognitiveAlert['status']) ? status as CognitiveAlert['status'] : 'active';
 }
 
+// Helper function to safely cast Json to Record<string, any>
+function safeJsonCast(json: any): Record<string, any> {
+  if (typeof json === 'object' && json !== null && !Array.isArray(json)) {
+    return json as Record<string, any>;
+  }
+  return {};
+}
+
 export function useAutonomousProjects() {
   const [epics, setEpics] = useState<Epic[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -214,9 +222,7 @@ export function useAutonomousProjects() {
       // Cast the data to Epic type with proper status casting
       const newEpic: Epic = {
         ...data,
-        status: castEpicStatus(data.status),
-        tags: data.tags || [],
-        metadata: data.metadata || {}
+        status: castEpicStatus(data.status)
       };
 
       setEpics(prev => [newEpic, ...prev]);
@@ -270,12 +276,12 @@ export function useAutonomousProjects() {
         return false;
       }
 
-      // Cast the data to Task type with proper status casting
+      // Cast the data to Task type with proper status casting and metadata handling
       const newTask: Task = {
         ...data,
         status: castTaskStatus(data.status),
         tags: data.tags || [],
-        metadata: data.metadata || {}
+        metadata: safeJsonCast(data.metadata)
       };
 
       setTasks(prev => [newTask, ...prev]);
@@ -352,9 +358,9 @@ export function useAutonomousProjects() {
       const typedDecisions: Decision[] = (data || []).map(item => ({
         ...item,
         decision_type: castDecisionType(item.decision_type),
-        context: item.context || {},
+        context: safeJsonCast(item.context),
         options: item.options || [],
-        impact_assessment: item.impact_assessment || {}
+        impact_assessment: safeJsonCast(item.impact_assessment)
       }));
 
       setDecisions(typedDecisions);
@@ -424,7 +430,7 @@ export function useAutonomousProjects() {
         alert_type: castAlertType(item.alert_type),
         severity: castAlertSeverity(item.severity),
         status: castAlertStatus(item.status),
-        metadata: item.metadata || {}
+        metadata: safeJsonCast(item.metadata)
       }));
 
       setAlerts(typedAlerts);

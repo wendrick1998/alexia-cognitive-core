@@ -1,3 +1,4 @@
+
 /**
  * @description Secure authentication hook with enhanced validation
  * @created_by Security Audit - Alex iA
@@ -67,14 +68,14 @@ export function useSecureAuth(): SecureAuthContextType {
     // Validate inputs
     const emailValidation = validateSafely(emailSchema, email, 'signup_email');
     if (!emailValidation.success) {
-      setError(emailValidation.error);
-      return { error: emailValidation.error };
+      setError(emailValidation.error || 'Email inválido');
+      return { error: emailValidation.error || 'Email inválido' };
     }
 
     const passwordValidation = validateSafely(passwordSchema, password, 'signup_password');
     if (!passwordValidation.success) {
-      setError(passwordValidation.error);
-      return { error: passwordValidation.error };
+      setError(passwordValidation.error || 'Senha inválida');
+      return { error: passwordValidation.error || 'Senha inválida' };
     }
 
     try {
@@ -133,8 +134,8 @@ export function useSecureAuth(): SecureAuthContextType {
       'signin_email'
     );
     if (!emailValidation.success) {
-      setError(emailValidation.error);
-      return { error: emailValidation.error };
+      setError(emailValidation.error || 'Email inválido');
+      return { error: emailValidation.error || 'Email inválido' };
     }
 
     if (!password || password.length > 128) {
