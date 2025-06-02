@@ -86,7 +86,12 @@ export function useMemoryFeedback() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Garantir que confidence_level está no tipo correto
+      return (data || []).map(item => ({
+        ...item,
+        confidence_level: item.confidence_level as MemoryFeedback['confidence_level']
+      }));
     } catch (error) {
       console.error('Erro ao buscar feedback:', error);
       return [];

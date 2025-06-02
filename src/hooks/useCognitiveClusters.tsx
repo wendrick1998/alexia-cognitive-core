@@ -106,8 +106,28 @@ export function useCognitiveClusters() {
 
         const needsValidation = validatedNodes < cluster.member_nodes.length * 0.5; // Menos de 50% validado
 
+        // Converter centroid_embedding de string para number[] se necessário
+        let centroidEmbedding: number[] = [];
+        if (cluster.centroid_embedding) {
+          if (typeof cluster.centroid_embedding === 'string') {
+            try {
+              centroidEmbedding = JSON.parse(cluster.centroid_embedding);
+            } catch {
+              centroidEmbedding = [];
+            }
+          } else if (Array.isArray(cluster.centroid_embedding)) {
+            centroidEmbedding = cluster.centroid_embedding;
+          }
+        }
+
         clustersWithFeedback.push({
-          ...cluster,
+          id: cluster.id,
+          cluster_type: cluster.cluster_type || 'semantic',
+          member_nodes: cluster.member_nodes || [],
+          centroid_embedding: centroidEmbedding,
+          density_score: cluster.density_score || 0,
+          coherence_score: cluster.coherence_score || 0,
+          created_at: cluster.created_at,
           nodes_with_feedback: nodesWithFeedback,
           cluster_confidence_score: Math.round(clusterConfidenceScore),
           needs_validation: needsValidation
