@@ -68,14 +68,16 @@ export function useSecureAuth(): SecureAuthContextType {
     // Validate inputs
     const emailValidation = validateSafely(emailSchema, email, 'signup_email');
     if (!emailValidation.success) {
-      setError(emailValidation.error || 'Email inválido');
-      return { error: emailValidation.error || 'Email inválido' };
+      const errorMsg = emailValidation.error || 'Email inválido';
+      setError(errorMsg);
+      return { error: errorMsg };
     }
 
     const passwordValidation = validateSafely(passwordSchema, password, 'signup_password');
     if (!passwordValidation.success) {
-      setError(passwordValidation.error || 'Senha inválida');
-      return { error: passwordValidation.error || 'Senha inválida' };
+      const errorMsg = passwordValidation.error || 'Senha inválida';
+      setError(errorMsg);
+      return { error: errorMsg };
     }
 
     try {
@@ -134,8 +136,9 @@ export function useSecureAuth(): SecureAuthContextType {
       'signin_email'
     );
     if (!emailValidation.success) {
-      setError(emailValidation.error || 'Email inválido');
-      return { error: emailValidation.error || 'Email inválido' };
+      const errorMsg = emailValidation.error || 'Email inválido';
+      setError(errorMsg);
+      return { error: errorMsg };
     }
 
     if (!password || password.length > 128) {

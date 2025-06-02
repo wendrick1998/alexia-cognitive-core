@@ -112,6 +112,14 @@ function safeJsonCast(json: any): Record<string, any> {
   return {};
 }
 
+// Helper function to safely cast Json to array
+function safeArrayCast(json: any): any[] {
+  if (Array.isArray(json)) {
+    return json;
+  }
+  return [];
+}
+
 export function useAutonomousProjects() {
   const [epics, setEpics] = useState<Epic[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -359,7 +367,7 @@ export function useAutonomousProjects() {
         ...item,
         decision_type: castDecisionType(item.decision_type),
         context: safeJsonCast(item.context),
-        options: item.options || [],
+        options: safeArrayCast(item.options),
         impact_assessment: safeJsonCast(item.impact_assessment)
       }));
 
