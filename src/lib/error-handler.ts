@@ -4,8 +4,6 @@
  * @created_by Security Audit - Alex iA
  */
 
-import { supabase } from '@/integrations/supabase/client';
-
 export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export interface SecurityEvent {
@@ -30,9 +28,24 @@ class ErrorHandler {
     return ErrorHandler.instance;
   }
   
-  // Log security events
+  // Log security events (simplified without database table for now)
   async logSecurityEvent(event: SecurityEvent): Promise<void> {
     try {
+      // For now, just log to console in a structured way
+      // In production, this would go to a proper logging service
+      console.warn('🔒 Security Event:', {
+        timestamp: new Date().toISOString(),
+        userId: event.userId || 'anonymous',
+        action: event.action,
+        resource: event.resource,
+        severity: event.severity,
+        details: event.details,
+        userAgent: event.userAgent || navigator?.userAgent,
+        ip: event.ip || 'unknown'
+      });
+      
+      // TODO: Once security_events table is created, uncomment this:
+      /*
       const { error } = await supabase
         .from('security_events')
         .insert({
@@ -49,6 +62,7 @@ class ErrorHandler {
       if (error) {
         console.error('Failed to log security event:', error);
       }
+      */
     } catch (err) {
       console.error('Security logging error:', err);
     }

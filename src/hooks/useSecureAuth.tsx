@@ -6,9 +6,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/secure-client';
+import { supabase } from '@/integrations/supabase/client';
 import { errorHandler } from '@/lib/error-handler';
-import { rateLimiter, RATE_LIMITS } from '@/lib/rate-limiter';
+import { rateLimiter } from '@/lib/rate-limiter';
 import { validateSafely } from '@/lib/validation';
 import { z } from 'zod';
 

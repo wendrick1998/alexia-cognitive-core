@@ -4,28 +4,9 @@
  * @created_by Security Audit - Alex iA
  */
 
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from './types';
+import { supabase } from '@/integrations/supabase/client';
 import { secureConfig } from '@/config/secure-environment';
 import { errorHandler } from '@/lib/error-handler';
-
-// Create Supabase client with secure configuration
-export const supabase = createClient<Database>(
-  secureConfig.supabase.url,
-  secureConfig.supabase.anonKey,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
-    },
-    global: {
-      headers: {
-        'X-Client-Info': 'alex-ia-secure-client'
-      }
-    }
-  }
-);
 
 // Secure wrapper for Supabase operations
 export class SecureSupabaseClient {
@@ -48,7 +29,8 @@ export class SecureSupabaseClient {
     filters: Record<string, any> = {}
   ): Promise<{ data: T[] | null; error: string | null }> {
     try {
-      let query = supabase
+      // Use any to bypass TypeScript checking for dynamic table names
+      let query = (supabase as any)
         .from(table)
         .select(columns)
         .eq('user_id', userId);
@@ -90,7 +72,7 @@ export class SecureSupabaseClient {
   }
   
   // Secure insert with validation
-  async secureInsert<T>(
+  async secureInsert<T extends Record<string, any>>(
     table: string,
     data: T & { user_id: string },
     userId: string
@@ -109,7 +91,8 @@ export class SecureSupabaseClient {
         return { data: null, error: 'Acesso não autorizado' };
       }
       
-      const { data: result, error } = await supabase
+      // Use any to bypass TypeScript checking for dynamic table names
+      const { data: result, error } = await (supabase as any)
         .from(table)
         .insert(data)
         .select()
@@ -137,14 +120,15 @@ export class SecureSupabaseClient {
   }
   
   // Secure update with ownership validation
-  async secureUpdate<T>(
+  async secureUpdate<T extends Record<string, any>>(
     table: string,
     id: string,
     updates: Partial<T>,
     userId: string
   ): Promise<{ data: T | null; error: string | null }> {
     try {
-      const { data: result, error } = await supabase
+      // Use any to bypass TypeScript checking for dynamic table names
+      const { data: result, error } = await (supabase as any)
         .from(table)
         .update(updates)
         .eq('id', id)

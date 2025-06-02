@@ -98,7 +98,7 @@ export const validateSafely = <T>(
       console.warn(`Validation failed in ${context || 'unknown'}:`, {
         field: firstError.path.join('.'),
         message: firstError.message,
-        received: firstError.received
+        input: data
       });
       
       return {
