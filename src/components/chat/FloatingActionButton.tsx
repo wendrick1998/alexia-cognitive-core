@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, MessageSquare, Focus, Sidebar, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsAuthRoute } from '@/hooks/useIsAuthRoute';
 
 interface FloatingActionButtonProps {
   onAction: (action: string) => void;
@@ -20,6 +21,12 @@ const FloatingActionButton = ({
   className = ""
 }: FloatingActionButtonProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isAuthRoute = useIsAuthRoute();
+
+  // Hide button on auth routes
+  if (isAuthRoute) {
+    return null;
+  }
 
   const actions = [
     {
@@ -63,7 +70,12 @@ const FloatingActionButton = ({
   };
 
   return (
-    <div className={cn("fixed right-4 z-50 flex flex-col-reverse items-end space-y-reverse space-y-3", className)}>
+    <div className={cn(
+      "fixed right-4 z-50 flex flex-col-reverse items-end space-y-reverse space-y-3",
+      // Add safe area support for iOS
+      "pb-safe-area-bottom",
+      className
+    )}>
       {/* Action Buttons */}
       {isExpanded && visibleActions.map((action, index) => {
         const Icon = action.icon;

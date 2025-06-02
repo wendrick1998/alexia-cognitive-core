@@ -41,26 +41,27 @@ const Logo = ({ size = 'md', animate = true, className = '' }: LogoProps) => {
       }}
       whileTap={{ scale: 0.95 }}
     >
-      {/* Background glow */}
+      {/* Simplified background glow - removed to avoid duplication */}
       <motion.div
-        className={`absolute inset-0 bg-gradient-to-br ${gradientClass} rounded-2xl opacity-20 blur-xl`}
+        className={`absolute inset-0 bg-gradient-to-br ${gradientClass} rounded-2xl opacity-15 blur-lg`}
         animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.2, 0.3, 0.2]
+          scale: [1, 1.1, 1],
+          opacity: [0.15, 0.25, 0.15]
         }}
         transition={{
-          duration: 4,
+          duration: 3,
           repeat: Infinity,
           ease: "easeInOut"
         }}
       />
       
-      {/* Main logo */}
-      <div className={`relative z-10 font-bold ${sizes[size].split(' ')[2]} bg-gradient-to-br ${gradientClass} bg-clip-text text-transparent`}>
+      {/* Single clean logo text - removed duplication */}
+      <div className={`relative z-10 font-bold ${sizes[size].split(' ')[2]} bg-gradient-to-br ${gradientClass} bg-clip-text text-transparent select-none`}>
         <motion.span
           initial={animate ? { opacity: 0, y: 10 } : {}}
           animate={animate ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.3 }}
+          className="inline-block"
         >
           A
         </motion.span>
@@ -68,23 +69,23 @@ const Logo = ({ size = 'md', animate = true, className = '' }: LogoProps) => {
           initial={animate ? { opacity: 0, y: 10 } : {}}
           animate={animate ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.4 }}
-          className="italic"
+          className="italic inline-block ml-1"
         >
           i
         </motion.span>
       </div>
 
-      {/* Subtle sparkle effect */}
+      {/* Single subtle sparkle - positioned to avoid text overlap */}
       <motion.div
-        className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full opacity-60"
+        className="absolute top-2 right-2 w-1.5 h-1.5 bg-white/60 rounded-full"
         animate={{
           scale: [0, 1, 0],
-          opacity: [0, 1, 0]
+          opacity: [0, 0.8, 0]
         }}
         transition={{
-          duration: 2,
+          duration: 2.5,
           repeat: Infinity,
-          delay: 1
+          delay: 1.5
         }}
       />
     </motion.div>
