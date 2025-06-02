@@ -19,7 +19,6 @@ const Chat = () => {
     setCurrentConversation
   } = useConversations();
 
-  const [inputValue, setInputValue] = useState("");
   const [processing, setProcessing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -31,16 +30,14 @@ const Chat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || processing) return;
+  const handleSendMessage = async (message: string) => {
+    if (!message.trim() || processing) return;
 
-    const messageContent = inputValue.trim();
-    setInputValue("");
     setProcessing(true);
 
     try {
       // Process message logic here
-      console.log("Sending message:", messageContent);
+      console.log("Sending message:", message);
       
       // Simulate processing delay
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -100,10 +97,9 @@ const Chat = () => {
       <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
         <div className="p-4">
           <ChatInput
-            value={inputValue}
-            onChange={setInputValue}
-            onSend={handleSendMessage}
-            disabled={processing}
+            processing={processing}
+            currentConversation={currentConversation}
+            onSendMessage={handleSendMessage}
             placeholder="Digite sua mensagem..."
           />
         </div>
