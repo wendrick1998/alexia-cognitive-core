@@ -37,13 +37,13 @@ export function useAutoMemoryDecay() {
         .from('cognitive_nodes')
         .update({
           memory_type: 'short_term',
-          consolidation_score: Math.min(1.0, 0.1), // Will be calculated properly in the database
+          consolidation_score: 0.1,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
         .eq('memory_type', 'working')
         .lt('last_accessed_at', workingThreshold)
-        .gt('activation_strength', 0.3) // Apenas memórias com alguma ativação
+        .gt('activation_strength', 0.3)
         .select();
 
       if (workingError) throw workingError;
@@ -55,26 +55,58 @@ export function useAutoMemoryDecay() {
         .from('cognitive_nodes')
         .update({
           memory_type: 'long_term',
-          consolidation_score: Math.min(1.0, 0.2), // Will be calculated properly in the database
+          consolidation_score: 0.2,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
         .eq('memory_type', 'short_term')
         .lt('last_accessed_at', shortTermThreshold)
-        .gt('activation_strength', 0.5) // Threshold maior para long-term
+        .gt('activation_strength', 0.5)
         .select();
 
       if (shortError) throw shortError;
 
-      // 3. Aplicar decay gradual para memórias long-term usando RPC function
-      const { data: longTermDecay, error: decayError } = await supabase
-        .rpc('apply_memory_decay', {
-          p_user_id: user.id,
-          p_decay_rate: config.longTermDecayRate,
-          p_protect_sensitive: config.sensitiveMemoryProtection
-        });
+      // 3. Aplicar decay gradual para memórias long-term
+      const daysSinceLastAccess = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      
+      // Buscar memórias long-term elegíveis para decay
+      const { data: longTermNodes, error: fetchError } = await supabase
+        .from('cognitive_nodes')
+        .select('id, activation_strength')
+        .eq('user_id', user.id)
+        .eq('memory_type', 'long_term')
+        .lt('last_accessed_at', daysSinceLastAccess);
 
-      if (decayError) throw decayError;
+      if (fetchError) throw fetchError;
+
+      let decayedCount = 0;
+      if (longTermNodes && longTermNodes.length > 0) {
+        // Aplicar decay para cada nó elegível
+        for (const node of longTermNodes) {
+          // Proteger dados sensíveis se configurado
+          if (config.sensitiveMemoryProtection) {
+            const { data: sensitiveCheck } = await supabase
+              .from('cognitive_nodes')
+              .select('is_sensitive')
+              .eq('id', node.id)
+              .single();
+            
+            if (sensitiveCheck?.is_sensitive) continue;
+          }
+
+          const newActivation = Math.max(0.1, node.activation_strength * (1 - config.longTermDecayRate));
+          
+          const { error: updateError } = await supabase
+            .from('cognitive_nodes')
+            .update({
+              activation_strength: newActivation,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', node.id);
+
+          if (!updateError) decayedCount++;
+        }
+      }
 
       // 4. Remover memórias muito antigas com baixa ativação
       const { data: removed, error: removeError } = await supabase
@@ -82,9 +114,9 @@ export function useAutoMemoryDecay() {
         .delete()
         .eq('user_id', user.id)
         .lt('activation_strength', 0.1)
-        .lt('last_accessed_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // 30 dias
-        .neq('is_sensitive', true) // Nunca remover dados sensíveis
-        .neq('memory_type', 'long_term') // Nunca remover long-term
+        .lt('last_accessed_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .neq('is_sensitive', true)
+        .neq('memory_type', 'long_term')
         .select();
 
       if (removeError) throw removeError;
@@ -92,7 +124,7 @@ export function useAutoMemoryDecay() {
       console.log('✅ Decay de memória aplicado:', {
         workingToShort: workingToShort?.length || 0,
         shortToLong: shortToLong?.length || 0,
-        decayed: Array.isArray(longTermDecay) ? longTermDecay.length : 0,
+        decayed: decayedCount,
         removed: removed?.length || 0
       });
 
