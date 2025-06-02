@@ -1,113 +1,92 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Sparkles, MessageCircle, Mic, Camera, Zap } from "lucide-react";
-import QuickActionsScreen from "../quick-actions/QuickActionsScreen";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus, MessageSquare, Focus, FileText } from 'lucide-react';
 
 interface FloatingActionButtonProps {
   onAction: (action: string) => void;
-  currentSection?: string;
-  hasActiveChat?: boolean;
-  hasDocument?: boolean;
+  currentSection: string;
+  hasActiveChat: boolean;
+  hasDocument: boolean;
+  className?: string;
 }
 
-const RADIAL_ACTIONS = [
-  { id: 'new-chat', icon: MessageCircle, label: 'Nova conversa', angle: 0 },
-  { id: 'voice-mode', icon: Mic, label: 'Modo voz', angle: 72 },
-  { id: 'focus-mode', icon: Sparkles, label: 'Focus Mode', angle: 144 },
-  { id: 'quick-actions', icon: Zap, label: 'Ações rápidas', angle: 216 },
-];
-
-const FloatingActionButton = ({ 
-  onAction, 
-  currentSection = '',
-  hasActiveChat = false,
-  hasDocument = false 
+const FloatingActionButton = ({
+  onAction,
+  currentSection,
+  hasActiveChat,
+  hasDocument,
+  className = ""
 }: FloatingActionButtonProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [showActions, setShowActions] = useState(false);
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-    // Haptic feedback
-    if ('vibrate' in navigator) {
-      navigator.vibrate(50);
+  const actions = [
+    {
+      id: 'new-chat',
+      label: 'Nova conversa',
+      icon: MessageSquare,
+      show: currentSection === 'chat'
+    },
+    {
+      id: 'focus-mode',
+      label: 'Focus Mode',
+      icon: Focus,
+      show: currentSection === 'chat' && hasActiveChat
+    },
+    {
+      id: 'new-document',
+      label: 'Novo documento',
+      icon: FileText,
+      show: currentSection === 'documents'
+    }
+  ];
+
+  const visibleActions = actions.filter(action => action.show);
+
+  const handleMainAction = () => {
+    if (visibleActions.length === 1) {
+      onAction(visibleActions[0].id);
+    } else {
+      setShowActions(!showActions);
     }
   };
 
-  const handleAction = (actionId: string) => {
-    setIsOpen(false);
-    
-    if (actionId === 'quick-actions') {
-      setShowQuickActions(true);
-    } else {
-      onAction(actionId);
-    }
-    
-    // Haptic feedback
-    if ('vibrate' in navigator) {
-      navigator.vibrate(100);
-    }
+  const handleActionSelect = (actionId: string) => {
+    onAction(actionId);
+    setShowActions(false);
   };
 
   return (
-    <>
-      <div className="fixed bottom-32 right-3 z-40">
-        {/* Radial Menu Items */}
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <div 
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm -z-10"
-              onClick={() => setIsOpen(false)}
-            />
-            
-            {/* Radial Actions */}
-            {RADIAL_ACTIONS.map((action, index) => {
-              const Icon = action.icon;
-              const radius = 70;
-              const angleRad = (action.angle * Math.PI) / 180;
-              const x = Math.cos(angleRad) * radius;
-              const y = Math.sin(angleRad) * radius;
-              
-              return (
-                <Button
-                  key={action.id}
-                  onClick={() => handleAction(action.id)}
-                  className="absolute w-10 h-10 rounded-full bg-[#1A1A1A] hover:bg-[#2A2A2A] border border-white/10 text-white shadow-lg transition-all duration-300 hover:scale-110"
-                  style={{
-                    transform: `translate(${x}px, ${y}px)`,
-                    animation: `scale-in 0.2s ease-out ${index * 0.05}s both`
-                  }}
-                  title={action.label}
-                >
-                  <Icon className="w-4 h-4" />
-                </Button>
-              );
-            })}
-          </>
-        )}
+    <div className={`fixed bottom-6 right-6 z-50 ${className}`}>
+      {/* Action Menu */}
+      {showActions && visibleActions.length > 1 && (
+        <div className="absolute bottom-16 right-0 flex flex-col gap-2 mb-2">
+          {visibleActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Button
+                key={action.id}
+                onClick={() => handleActionSelect(action.id)}
+                className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20 flex items-center gap-2"
+                size="sm"
+              >
+                <Icon className="w-4 h-4" />
+                {action.label}
+              </Button>
+            );
+          })}
+        </div>
+      )}
 
-        {/* Main FAB */}
-        <Button
-          onClick={toggleMenu}
-          className={`w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white/80 hover:text-white shadow-lg transition-all duration-300 hover:scale-105 border border-white/20 ${
-            isOpen ? 'rotate-45 bg-white/20' : ''
-          }`}
-        >
-          <Sparkles className="w-5 h-5" />
-        </Button>
-      </div>
-
-      {/* Quick Actions Screen */}
-      <QuickActionsScreen
-        isOpen={showQuickActions}
-        onClose={() => setShowQuickActions(false)}
-        currentSection={currentSection}
-        hasActiveChat={hasActiveChat}
-        hasDocument={hasDocument}
-      />
-    </>
+      {/* Main FAB */}
+      <Button
+        onClick={handleMainAction}
+        className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+        size="lg"
+      >
+        <Plus className={`w-6 h-6 transition-transform ${showActions ? 'rotate-45' : ''}`} />
+      </Button>
+    </div>
   );
 };
 

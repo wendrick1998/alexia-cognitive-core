@@ -17,6 +17,8 @@ interface PremiumChatLayoutProps {
   onSendMessage: (message: string) => void;
   isCreatingNew?: boolean;
   isNavigating?: boolean;
+  renderMessageExtras?: (message: Message) => React.ReactNode;
+  className?: string;
 }
 
 const PremiumChatLayout = ({ 
@@ -28,7 +30,9 @@ const PremiumChatLayout = ({
   onNewConversation,
   onSendMessage,
   isCreatingNew = false,
-  isNavigating = false
+  isNavigating = false,
+  renderMessageExtras,
+  className = ""
 }: PremiumChatLayoutProps) => {
   const [showSidebar, setShowSidebar] = useState(false);
   const isMobile = useIsMobile();
@@ -53,7 +57,7 @@ const PremiumChatLayout = ({
   });
 
   return (
-    <div className="h-full flex bg-transparent">
+    <div className={`h-full flex bg-transparent ${className}`}>
       {/* Sidebar - Desktop sempre visível, Mobile condicional */}
       {(!isMobile || showSidebar) && (
         <div className={`${isMobile ? 'absolute inset-0 z-50' : 'w-80 border-r border-white/10'} glass-card`}>
@@ -106,6 +110,7 @@ const PremiumChatLayout = ({
           onBackToConversations={isMobile ? handleBackToConversations : undefined}
           isMobile={isMobile}
           isNavigating={isNavigating}
+          renderMessageExtras={renderMessageExtras}
         />
       </div>
     </div>

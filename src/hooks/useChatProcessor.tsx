@@ -8,6 +8,13 @@ export interface ChatResponse {
   response: string;
   context_used: boolean;
   chunks_found: number;
+  model?: string;
+  metadata?: {
+    fromCache?: boolean;
+    usedFallback?: boolean;
+    originalModel?: string;
+    responseTime?: number;
+  };
 }
 
 export function useChatProcessor() {
