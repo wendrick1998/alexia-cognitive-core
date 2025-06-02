@@ -27,6 +27,10 @@ export interface ChatMessage {
   llm_model?: string;
 }
 
+// Supabase configuration constants
+const SUPABASE_URL = "https://wmxscmwtaqyduotuectx.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndteHNjbXd0YXF5ZHVvdHVlY3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyOTAwNjksImV4cCI6MjA2Mzg2NjA2OX0.QydAwz1AUU0GYB8I3aR6uXvzd4c52HWBpNiCnbhC-OU";
+
 export function useChatSessions() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
@@ -73,10 +77,10 @@ export function useChatSessions() {
       setMessagesLoading(true);
       
       // Query the chat_messages table directly with proper typing
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_messages?session_id=eq.${sessionId}&order=created_at.asc`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_messages?session_id=eq.${sessionId}&order=created_at.asc`, {
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json'
         }
       });
@@ -104,11 +108,11 @@ export function useChatSessions() {
 
     try {
       // Use direct HTTP call to create session
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_sessions`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_sessions`, {
         method: 'POST',
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=representation'
         },
@@ -196,11 +200,11 @@ export function useChatSessions() {
   // Renomear sessão
   const renameSession = useCallback(async (sessionId: string, newTitle: string) => {
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
         method: 'PATCH',
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
@@ -237,11 +241,11 @@ export function useChatSessions() {
   // Excluir sessão
   const deleteSession = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
         method: 'DELETE',
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json'
         }
       });
@@ -275,11 +279,11 @@ export function useChatSessions() {
     if (!session) return;
 
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
         method: 'PATCH',
         headers: {
-          'apikey': supabase.supabaseKey,
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
