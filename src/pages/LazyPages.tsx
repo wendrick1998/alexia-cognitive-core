@@ -3,7 +3,6 @@ import { lazy } from 'react';
 
 // Lazy loading de todas as páginas principais
 export const Dashboard = lazy(() => import('../components/dashboard/Dashboard'));
-export const Chat = lazy(() => import('../components/Chat'));
 export const SemanticSearch = lazy(() => import('../components/SemanticSearch'));
 export const MemoryManager = lazy(() => import('../components/MemoryManager'));
 export const DocumentsManager = lazy(() => import('../components/DocumentsManager'));
