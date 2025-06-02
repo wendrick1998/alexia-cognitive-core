@@ -11,6 +11,7 @@ import UpdatePrompt from "@/components/pwa/UpdatePrompt";
 import PWAInstallBanner from "@/components/pwa/PWAInstallBanner";
 import { FullPageLoader } from "@/components/ui/page-loader";
 import { RoutePrefetcher } from "@/components/ui/route-prefetcher";
+import { ConnectionRetry } from "@/components/ui/connection-retry";
 import "./App.css";
 
 // Lazy load principais componentes
@@ -43,28 +44,9 @@ function AppContent() {
     setShowSplash(false);
   };
 
-  // Mostrar erro se ambiente não estiver configurado corretamente
-  if (!envStatus.isValid && !showSplash) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-900/10">
-        <div className="text-center p-8 max-w-md">
-          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">
-            Configuração Incompleta
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            O Alex iA precisa de algumas configurações para funcionar corretamente:
-          </p>
-          <ul className="text-left text-sm text-gray-500 dark:text-gray-400 mb-6">
-            {envStatus.missingSecrets.map(secret => (
-              <li key={secret}>• {secret}</li>
-            ))}
-          </ul>
-          <p className="text-xs text-gray-400">
-            Verifique as configurações do projeto no Supabase.
-          </p>
-        </div>
-      </div>
-    );
+  // Show connection retry only for actual connection failures
+  if (!envStatus.isValid && !envStatus.supabaseConnected && !showSplash) {
+    return <ConnectionRetry />;
   }
 
   return (

@@ -1,47 +1,49 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EnvironmentStatus {
   isValid: boolean;
-  missingSecrets: string[];
   supabaseConnected: boolean;
+  connectionError: string | null;
   warnings: string[];
 }
 
 export function useEnvironmentValidation() {
   const [status, setStatus] = useState<EnvironmentStatus>({
     isValid: true,
-    missingSecrets: [],
     supabaseConnected: true,
+    connectionError: null,
     warnings: []
   });
   const { toast } = useToast();
 
   useEffect(() => {
-    const validateEnvironment = () => {
-      const missingSecrets: string[] = [];
+    const validateEnvironment = async () => {
       const warnings: string[] = [];
+      let connectionError: string | null = null;
+      let supabaseConnected = false;
 
-      // Verificar se o Supabase está configurado
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
-      const supabaseConnected = !!(supabaseUrl && supabaseKey);
-
-      // Verificar variáveis críticas
-      const requiredEnvVars = [
-        'VITE_SUPABASE_URL',
-        'VITE_SUPABASE_ANON_KEY'
-      ];
-
-      requiredEnvVars.forEach(envVar => {
-        if (!import.meta.env[envVar]) {
-          missingSecrets.push(envVar);
+      try {
+        // Test Supabase connection by attempting to get session
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.warn('Supabase auth warning:', error.message);
+          // Don't treat auth errors as connection failures
+          supabaseConnected = true;
+        } else {
+          supabaseConnected = true;
+          console.log('🔗 Supabase connection verified');
         }
-      });
+      } catch (error) {
+        console.error('🚨 Supabase connection failed:', error);
+        connectionError = 'Falha na conexão com Supabase';
+        supabaseConnected = false;
+      }
 
-      // Verificar variáveis opcionais mas recomendadas
+      // Check for optional environment variables
       const optionalEnvVars = [
         'VITE_OPENAI_API_KEY',
         'VITE_LLM_WHISPERER_API_KEY'
@@ -53,24 +55,26 @@ export function useEnvironmentValidation() {
         }
       });
 
-      const isValid = missingSecrets.length === 0 && supabaseConnected;
+      const isValid = supabaseConnected;
 
       setStatus({
         isValid,
-        missingSecrets,
         supabaseConnected,
+        connectionError,
         warnings
       });
 
-      // Mostrar toast apenas se houver problemas críticos
-      if (!isValid) {
+      // Only show error toast for actual connection failures
+      if (!supabaseConnected && connectionError) {
         toast({
-          title: "Configuração Incompleta",
-          description: `Variáveis de ambiente faltando: ${missingSecrets.join(', ')}`,
+          title: "Erro de Conexão",
+          description: connectionError,
           variant: "destructive",
         });
       } else if (warnings.length > 0) {
         console.warn('⚠️ Avisos de configuração:', warnings);
+      } else if (supabaseConnected) {
+        console.log('✅ Ambiente validado com sucesso');
       }
     };
 
