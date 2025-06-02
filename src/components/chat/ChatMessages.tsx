@@ -74,24 +74,30 @@ const ChatMessages = ({ messages, processing, loading = false, renderMessageExtr
   return (
     <div 
       ref={containerRef}
-      className="h-full chat-scroll-container premium-scrollbar"
+      className="h-full overflow-y-auto overflow-x-hidden chat-messages-scroll"
+      style={{
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain'
+      }}
     >
-      <div className="p-4 space-y-4 min-h-full chat-messages-mobile">
-        {messages.map((message, index) => (
-          <div key={message.id} className="space-y-2">
-            <MessageBubble message={message} />
-            {renderMessageExtras && renderMessageExtras(message)}
-          </div>
-        ))}
-        
-        {processing && (
-          <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 py-4">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>IA está pensando...</span>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} className="h-1" />
+      <div className="pb-32 md:pb-8">
+        <div className="p-4 space-y-4 min-h-full">
+          {messages.map((message, index) => (
+            <div key={message.id} className="space-y-2">
+              <MessageBubble message={message} />
+              {renderMessageExtras && renderMessageExtras(message)}
+            </div>
+          ))}
+          
+          {processing && (
+            <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400 py-4">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>IA está pensando...</span>
+            </div>
+          )}
+          
+          <div ref={messagesEndRef} className="h-1" />
+        </div>
       </div>
     </div>
   );
