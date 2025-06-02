@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAutonomousProjects } from '@/hooks/useAutonomousProjects';
 import { useProjects } from '@/hooks/useProjects';
 import { Brain, CheckCircle, Clock, AlertTriangle, Plus, Calendar, Users, Target, Lightbulb } from 'lucide-react';
+import ExecutionDashboard from './ExecutionDashboard';
 
 const AutonomousProjectsManager = () => {
   const { projects } = useProjects();
