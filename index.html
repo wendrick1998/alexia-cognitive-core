@@ -3,19 +3,49 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Alex iA - Agente Cognitivo Pessoal</title>
     <meta name="description" content="Alex iA - Seu agente cognitivo pessoal e copiloto full-stack" />
     <meta name="author" content="Alex iA Team" />
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/icon-192x192.png" type="image/png" />
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Alex iA" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/icon-180x180.png" sizes="180x180" />
+    
+    <!-- iOS Splash Screens -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-startup-image" href="/icon-512x512.png" />
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="msapplication-TileColor" content="#3b82f6" />
+    <meta name="msapplication-navbutton-color" content="#3b82f6" />
+    
+    <!-- Disable automatic phone number detection -->
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Open Graph -->
     <meta property="og:title" content="Alex iA - Agente Cognitivo Pessoal" />
     <meta property="og:description" content="Alex iA - Seu agente cognitivo pessoal e copiloto full-stack" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/icon-192x192.png" as="image" />
   </head>
 
   <body>

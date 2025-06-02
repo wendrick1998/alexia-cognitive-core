@@ -40,6 +40,101 @@ window.addEventListener('unhandledrejection', (event) => {
   }
 });
 
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      });
+      
+      console.log('✅ Service Worker registered successfully:', registration.scope);
+      
+      // Listen for updates
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('🔄 New service worker available, will update on next visit');
+              // Optionally show update notification
+              window.dispatchEvent(new CustomEvent('sw-update-available'));
+            }
+          });
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Service Worker registration failed:', error);
+    }
+  });
+  
+  // Handle service worker messages
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    console.log('📨 Message from service worker:', event.data);
+    
+    if (event.data.type === 'CACHE_UPDATED') {
+      console.log('💾 Cache updated:', event.data.payload);
+    }
+  });
+}
+
+// PWA Install Prompt Detection
+let deferredPrompt: any;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  console.log('📱 PWA install prompt triggered');
+  event.preventDefault();
+  deferredPrompt = event;
+  
+  // Dispatch custom event for components to listen
+  window.dispatchEvent(new CustomEvent('pwa-install-available', {
+    detail: { prompt: event }
+  }));
+});
+
+// PWA Install Success Detection
+window.addEventListener('appinstalled', () => {
+  console.log('✅ PWA was installed successfully');
+  deferredPrompt = null;
+  
+  window.dispatchEvent(new CustomEvent('pwa-installed'));
+});
+
+// iOS PWA Detection and Optimization
+const isIOSPWA = () => {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         (window.navigator as any).standalone === true;
+};
+
+// iOS Specific Optimizations
+if (isIOSPWA()) {
+  console.log('🍎 Running as iOS PWA');
+  
+  // Prevent zoom on double tap
+  document.addEventListener('touchstart', (event) => {
+    if (event.touches.length > 1) {
+      event.preventDefault();
+    }
+  });
+  
+  // Prevent bounce scroll
+  document.addEventListener('touchmove', (event) => {
+    if (event.touches.length > 1) {
+      event.preventDefault();
+    }
+  }, { passive: false });
+  
+  // Add iOS PWA class for specific styling
+  document.documentElement.classList.add('ios-pwa');
+}
+
+// Check if running in standalone mode
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  console.log('📱 Running in standalone mode');
+  document.documentElement.classList.add('standalone-mode');
+}
+
 // Otimização de inicialização
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 

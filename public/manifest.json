@@ -3,7 +3,7 @@
   "name": "Alex iA - Agente Cognitivo Pessoal",
   "short_name": "Alex iA",
   "description": "Seu agente cognitivo pessoal e copiloto full-stack com IA avançada",
-  "start_url": "/",
+  "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#3b82f6",
@@ -11,7 +11,7 @@
   "scope": "/",
   "lang": "pt-BR",
   "dir": "ltr",
-  "categories": ["productivity", "business", "education"],
+  "categories": ["productivity", "business", "education", "utilities"],
   "screenshots": [
     {
       "src": "/screenshots/desktop-1.png",
@@ -60,6 +60,12 @@
       "purpose": "any"
     },
     {
+      "src": "/icon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
@@ -83,7 +89,7 @@
       "name": "Nova Conversa",
       "short_name": "Chat",
       "description": "Iniciar nova conversa com Alex iA",
-      "url": "/?action=new-chat",
+      "url": "/?action=new-chat&utm_source=pwa_shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",
@@ -95,7 +101,7 @@
       "name": "Memórias",
       "short_name": "Memórias",
       "description": "Visualizar memórias cognitivas",
-      "url": "/?action=memories",
+      "url": "/?action=memories&utm_source=pwa_shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",
@@ -107,7 +113,7 @@
       "name": "Sistema Cognitivo",
       "short_name": "Cognitivo",
       "description": "Acessar painel cognitivo avançado",
-      "url": "/?action=cognitive",
+      "url": "/?action=cognitive&utm_source=pwa_shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",
@@ -124,5 +130,12 @@
   },
   "handle_links": "preferred",
   "related_applications": [],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "protocol_handlers": [
+    {
+      "protocol": "web+alexia",
+      "url": "/?action=%s"
+    }
+  ]
 }

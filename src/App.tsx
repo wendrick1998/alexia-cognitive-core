@@ -7,6 +7,7 @@ import { AccessibilityProvider } from "@/components/accessibility/AccessibilityP
 import { AuthProvider } from "@/hooks/useAuth";
 import SplashScreen from "@/components/branding/SplashScreen";
 import UpdatePrompt from "@/components/pwa/UpdatePrompt";
+import PWAInstallBanner from "@/components/pwa/PWAInstallBanner";
 import { FullPageLoader } from "@/components/ui/page-loader";
 import { RoutePrefetcher } from "@/components/ui/route-prefetcher";
 import "./App.css";
@@ -64,6 +65,7 @@ function App() {
               <RoutePrefetcher />
               <Toaster />
               <UpdatePrompt />
+              <PWAInstallBanner />
             </>
           )}
         </AccessibilityProvider>
