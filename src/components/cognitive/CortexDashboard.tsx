@@ -1,69 +1,74 @@
 
+import { useState } from 'react';
 import { useCortexLogs } from '@/hooks/useCortexLogs';
+import { useCognitiveNodes } from '@/hooks/useCognitiveNodes';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Brain, Cpu, Network, Trash2, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Brain, Cpu, Activity, Zap, Clock, Target, AlertCircle, CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const CortexDashboard = () => {
-  const { logs, loading, loadLogs, clearLogs } = useCortexLogs();
+  const { logs, loading: logsLoading, clearLogs } = useCortexLogs();
+  const { nodes, loading: nodesLoading } = useCognitiveNodes();
+  const [selectedLog, setSelectedLog] = useState<any>(null);
 
-  const getModelColor = (model: string) => {
-    if (model.includes('gpt-4')) return 'bg-green-500/20 text-green-400 border-green-500/30';
-    if (model.includes('gpt-3.5')) return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-    if (model.includes('claude')) return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-    return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  const getModelIcon = (model: string) => {
+    if (model.includes('gpt')) return <Brain className="w-4 h-4" />;
+    if (model.includes('claude')) return <Cpu className="w-4 h-4" />;
+    return <Activity className="w-4 h-4" />;
   };
 
-  const avgExecutionTime = logs.length > 0 
-    ? Math.round(logs.reduce((acc, log) => acc + log.execution_time_ms, 0) / logs.length)
-    : 0;
+  const formatExecutionTime = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  };
 
-  const fallbackRate = logs.length > 0
-    ? Math.round((logs.filter(log => log.fallback_used).length / logs.length) * 100)
-    : 0;
+  const getDecisionTypeColor = (fallbackUsed: boolean) => {
+    return fallbackUsed 
+      ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+      : 'bg-green-500/20 text-green-400 border-green-500/30';
+  };
 
-  const modelsUsed = [...new Set(logs.map(log => log.selected_model))];
+  const recentLogs = logs.slice(0, 10);
+  const activeNodes = nodes.filter(node => node.activation_strength > 0.5);
+  const totalDecisions = logs.length;
+  const fallbackRate = logs.filter(log => log.fallback_used).length / Math.max(totalDecisions, 1);
+  const avgExecutionTime = logs.reduce((acc, log) => acc + log.execution_time_ms, 0) / Math.max(totalDecisions, 1);
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Córtex Prefrontal</h1>
-          <p className="text-white/70">Auditoria completa das decisões e processos cognitivos</p>
+          <h1 className="text-3xl font-bold text-white">Córtex Dashboard</h1>
+          <p className="text-white/70">Auditoria completa do sistema cognitivo Alex IA</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={loadLogs}
-            variant="outline"
-            className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Atualizar
-          </Button>
           <Button
             onClick={clearLogs}
             variant="outline"
             className="border-red-500/30 text-red-400 hover:bg-red-500/10"
           >
-            <Trash2 className="w-4 h-4 mr-2" />
             Limpar Logs
           </Button>
+          <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+            {totalDecisions} decisões registradas
+          </Badge>
         </div>
       </div>
 
-      {/* Métricas do Córtex */}
+      {/* Métricas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-gray-900/50 border-white/10">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white/60 text-sm">Decisões Processadas</p>
-                <p className="text-white text-2xl font-bold">{logs.length}</p>
+                <p className="text-white/60 text-sm">Decisões Totais</p>
+                <p className="text-white text-2xl font-bold">{totalDecisions}</p>
               </div>
               <Brain className="w-8 h-8 text-blue-400/30" />
             </div>
@@ -74,10 +79,10 @@ const CortexDashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white/60 text-sm">Tempo Médio</p>
-                <p className="text-white text-2xl font-bold">{avgExecutionTime}ms</p>
+                <p className="text-white/60 text-sm">Nós Ativos</p>
+                <p className="text-green-400 text-2xl font-bold">{activeNodes.length}</p>
               </div>
-              <Cpu className="w-8 h-8 text-green-400/30" />
+              <Activity className="w-8 h-8 text-green-400/30" />
             </div>
           </CardContent>
         </Card>
@@ -87,9 +92,11 @@ const CortexDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/60 text-sm">Taxa de Fallback</p>
-                <p className="text-white text-2xl font-bold">{fallbackRate}%</p>
+                <p className="text-yellow-400 text-2xl font-bold">
+                  {(fallbackRate * 100).toFixed(1)}%
+                </p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-yellow-400/30" />
+              <AlertCircle className="w-8 h-8 text-yellow-400/30" />
             </div>
           </CardContent>
         </Card>
@@ -98,167 +105,233 @@ const CortexDashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white/60 text-sm">Modelos Utilizados</p>
-                <p className="text-white text-2xl font-bold">{modelsUsed.length}</p>
+                <p className="text-white/60 text-sm">Tempo Médio</p>
+                <p className="text-purple-400 text-2xl font-bold">
+                  {formatExecutionTime(avgExecutionTime)}
+                </p>
               </div>
-              <Network className="w-8 h-8 text-purple-400/30" />
+              <Clock className="w-8 h-8 text-purple-400/30" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Log de Decisões */}
-      <Card className="bg-gray-900/50 border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Brain className="w-5 h-5" />
-            Log de Decisões do Córtex
-          </CardTitle>
-          <CardDescription className="text-white/60">
-            Registro detalhado das decisões tomadas pela Alex IA
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : logs.length === 0 ? (
-            <div className="text-center py-12">
-              <Brain className="w-16 h-16 text-white/30 mx-auto mb-4" />
-              <h3 className="text-white text-xl mb-2">Nenhum Log de Decisão</h3>
-              <p className="text-white/60">
-                Inicie uma conversa com Alex IA para ver as decisões do córtex
-              </p>
-            </div>
-          ) : (
-            <ScrollArea className="h-96">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-white/5">
-                    <TableHead className="text-white/70">Solicitação do Usuário</TableHead>
-                    <TableHead className="text-white/70">Modelo Selecionado</TableHead>
-                    <TableHead className="text-white/70">Raciocínio</TableHead>
-                    <TableHead className="text-white/70">Tempo</TableHead>
-                    <TableHead className="text-white/70">Status</TableHead>
-                    <TableHead className="text-white/70">Data</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logs.map((log) => (
-                    <TableRow key={log.id} className="border-white/10 hover:bg-white/5">
-                      <TableCell className="max-w-xs">
-                        <div className="text-white text-sm">
-                          {log.user_request.substring(0, 80)}
-                          {log.user_request.length > 80 && '...'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={getModelColor(log.selected_model)}>
-                          {log.selected_model}
+      <Tabs defaultValue="decisions" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-gray-900/50">
+          <TabsTrigger value="decisions" className="data-[state=active]:bg-blue-500/20">
+            Decisões do Córtex
+          </TabsTrigger>
+          <TabsTrigger value="network" className="data-[state=active]:bg-purple-500/20">
+            Rede Neural Ativa
+          </TabsTrigger>
+          <TabsTrigger value="insights" className="data-[state=active]:bg-green-500/20">
+            Insights Gerados
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="decisions" className="space-y-4">
+          <Card className="bg-gray-900/50 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Log de Decisões em Tempo Real</CardTitle>
+              <CardDescription className="text-white/60">
+                Acompanhe como a Alex IA toma decisões e processa informações
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {logsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <ScrollArea className="h-96">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-white/10">
+                        <TableHead className="text-white/70">Solicitação</TableHead>
+                        <TableHead className="text-white/70">Modelo</TableHead>
+                        <TableHead className="text-white/70">Status</TableHead>
+                        <TableHead className="text-white/70">Tempo</TableHead>
+                        <TableHead className="text-white/70">Data</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {recentLogs.map((log) => (
+                        <TableRow 
+                          key={log.id} 
+                          className="border-white/10 hover:bg-white/5 cursor-pointer"
+                          onClick={() => setSelectedLog(log)}
+                        >
+                          <TableCell className="text-white max-w-xs truncate">
+                            {log.user_request}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getModelIcon(log.selected_model)}
+                              <span className="text-white/80">{log.selected_model}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={getDecisionTypeColor(log.fallback_used)}>
+                              {log.fallback_used ? 'Fallback' : 'Principal'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-white/60">
+                            {formatExecutionTime(log.execution_time_ms)}
+                          </TableCell>
+                          <TableCell className="text-white/60">
+                            {formatDistanceToNow(new Date(log.created_at), { 
+                              addSuffix: true, 
+                              locale: ptBR 
+                            })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="network" className="space-y-4">
+          <Card className="bg-gray-900/50 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Rede de Nós Cognitivos Ativos</CardTitle>
+              <CardDescription className="text-white/60">
+                Visualização dos nós com maior ativação no momento
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {nodesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {activeNodes.slice(0, 6).map((node) => (
+                    <div 
+                      key={node.id}
+                      className="p-4 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          {node.node_type}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="text-white/60 text-sm">
-                          {log.reasoning ? (
-                            <>
-                              {log.reasoning.substring(0, 60)}
-                              {log.reasoning.length > 60 && '...'}
-                            </>
-                          ) : (
-                            'Seleção automática'
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-white/60">
-                        {log.execution_time_ms}ms
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {log.fallback_used ? (
-                            <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                          ) : (
-                            <CheckCircle className="w-4 h-4 text-green-400" />
-                          )}
-                          <span className="text-white/60 text-sm">
-                            {log.fallback_used ? 'Fallback' : 'Sucesso'}
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                          <span className="text-xs text-white/60">
+                            {(node.activation_strength * 100).toFixed(0)}%
                           </span>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-white/60">
-                        {formatDistanceToNow(new Date(log.created_at), { 
-                          addSuffix: true, 
-                          locale: ptBR 
-                        })}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Rede de Nós Ativados */}
-      <Card className="bg-gray-900/50 border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Network className="w-5 h-5" />
-            Rede de Nós Ativados
-          </CardTitle>
-          <CardDescription className="text-white/60">
-            Visualização dos nós cognitivos ativados nas últimas decisões
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {logs.slice(0, 5).map((log) => (
-              <div key={log.id} className="border border-white/10 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-white font-medium">
-                    Sessão: {log.session_id || 'N/A'}
-                  </div>
-                  <div className="text-white/60 text-sm">
-                    {formatDistanceToNow(new Date(log.created_at), { 
-                      addSuffix: true, 
-                      locale: ptBR 
-                    })}
-                  </div>
-                </div>
-                <div className="text-white/80 text-sm mb-3">
-                  {log.user_request.substring(0, 100)}...
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {log.activated_nodes.length > 0 ? (
-                    log.activated_nodes.map((nodeId, index) => (
-                      <Badge key={index} variant="outline" className="text-xs bg-blue-500/20 text-blue-400">
-                        Nó {String(nodeId).substring(0, 8)}...
-                      </Badge>
-                    ))
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-gray-500/20 text-gray-400">
-                      Nenhum nó ativado
-                    </Badge>
-                  )}
-                </div>
-                {log.insights_generated.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-white/10">
-                    <div className="text-white/60 text-xs mb-1">Insights Gerados:</div>
-                    <div className="flex flex-wrap gap-1">
-                      {log.insights_generated.map((insight, index) => (
-                        <Badge key={index} variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400">
-                          {String(insight).substring(0, 20)}...
-                        </Badge>
-                      ))}
+                      </div>
+                      <h4 className="text-white font-medium text-sm mb-1">{node.title}</h4>
+                      <p className="text-white/60 text-xs line-clamp-2">{node.content}</p>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="insights" className="space-y-4">
+          <Card className="bg-gray-900/50 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Insights Gerados por Decisão</CardTitle>
+              <CardDescription className="text-white/60">
+                Insights automáticos criados durante o processamento
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentLogs
+                  .filter(log => log.insights_generated && log.insights_generated.length > 0)
+                  .slice(0, 5)
+                  .map((log) => (
+                    <div key={log.id} className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Zap className="w-4 h-4 text-green-400" />
+                        <span className="text-green-400 text-sm font-medium">
+                          {log.insights_generated.length} insights gerados
+                        </span>
+                      </div>
+                      <p className="text-white/80 text-sm">{log.reasoning}</p>
+                      <p className="text-white/60 text-xs mt-1">
+                        Para: "{log.user_request.substring(0, 80)}..."
+                      </p>
+                    </div>
+                  ))}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Modal de Detalhes */}
+      {selectedLog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="bg-gray-900 border-gray-700 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-white">Detalhes da Decisão</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedLog(null)}
+                  className="text-white/60 hover:text-white"
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="text-white font-medium mb-2">Solicitação do Usuário:</h4>
+                <p className="text-white/80 bg-gray-800 p-3 rounded">{selectedLog.user_request}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-white font-medium mb-1">Modelo Selecionado:</h4>
+                  <p className="text-blue-400">{selectedLog.selected_model}</p>
+                </div>
+                <div>
+                  <h4 className="text-white font-medium mb-1">Tempo de Execução:</h4>
+                  <p className="text-purple-400">{formatExecutionTime(selectedLog.execution_time_ms)}</p>
+                </div>
+              </div>
+
+              {selectedLog.reasoning && (
+                <div>
+                  <h4 className="text-white font-medium mb-2">Raciocínio da Decisão:</h4>
+                  <p className="text-white/80 bg-gray-800 p-3 rounded">{selectedLog.reasoning}</p>
+                </div>
+              )}
+
+              {selectedLog.fallback_used && (
+                <div>
+                  <h4 className="text-white font-medium mb-2">Motivo do Fallback:</h4>
+                  <p className="text-yellow-400 bg-yellow-500/10 p-3 rounded border border-yellow-500/20">
+                    {selectedLog.fallback_reason}
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <h4 className="text-white font-medium mb-2">Nós Ativados:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedLog.activated_nodes?.map((nodeId: string, idx: number) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      Nó {idx + 1}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
