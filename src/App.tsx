@@ -25,6 +25,10 @@ const SecurityPage = lazy(() => import("./pages/SecurityPage"));
 const CortexDashboard = lazy(() => import("./pages/CortexDashboard"));
 const ValidationDashboard = lazy(() => import("./pages/ValidationDashboard"));
 
+// Novas páginas da Fase 5
+const UnifiedDashboardPage = lazy(() => import("./pages/UnifiedDashboardPage"));
+const InteractiveGuide = lazy(() => import("./components/documentation/InteractiveGuide"));
+
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
   const envStatus = useEnvironmentValidation();
@@ -55,6 +59,11 @@ function AppContent() {
               <Route path="/security" element={<SecurityPage />} />
               <Route path="/cortex-dashboard" element={<CortexDashboard />} />
               <Route path="/validation" element={<ValidationDashboard />} />
+              
+              {/* Novas rotas da Fase 5 */}
+              <Route path="/unified-dashboard" element={<UnifiedDashboardPage />} />
+              <Route path="/guide" element={<InteractiveGuide />} />
+              
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>

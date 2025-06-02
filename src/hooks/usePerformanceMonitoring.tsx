@@ -175,6 +175,30 @@ export function usePerformanceMonitoring() {
     }
   }, [toast]);
 
+  // Get performance score
+  const getPerformanceScore = useCallback(() => {
+    const { LCP, FID, CLS, FCP, TTFB } = metrics;
+    
+    if (!LCP || !FID || !CLS) return 85; // Default good score
+
+    let score = 100;
+    
+    // Deduct points for poor metrics
+    if (LCP > 4000) score -= 30;
+    else if (LCP > 2500) score -= 15;
+    
+    if (FID > 300) score -= 25;
+    else if (FID > 100) score -= 10;
+    
+    if (CLS > 0.25) score -= 25;
+    else if (CLS > 0.1) score -= 10;
+    
+    if (FCP && FCP > 3000) score -= 10;
+    if (TTFB && TTFB > 1800) score -= 10;
+
+    return Math.max(0, score);
+  }, [metrics]);
+
   // Track API response times
   const trackAPICall = useCallback((startTime: number, endTime: number, success: boolean) => {
     const responseTime = endTime - startTime;
@@ -197,103 +221,11 @@ export function usePerformanceMonitoring() {
     updateMetric('errorRate', errorRate);
   }, [updateMetric]);
 
-  // Calculate user satisfaction score (Apdex-like)
-  const calculateUserSatisfaction = useCallback(() => {
-    const { LCP, FID, CLS } = metrics;
-    
-    if (LCP === null || FID === null || CLS === null) return 0;
-
-    // Scoring based on Core Web Vitals
-    let score = 0;
-    
-    // LCP scoring
-    if (LCP <= 2500) score += 40;
-    else if (LCP <= 4000) score += 20;
-    
-    // FID scoring
-    if (FID <= 100) score += 30;
-    else if (FID <= 300) score += 15;
-    
-    // CLS scoring
-    if (CLS <= 0.1) score += 30;
-    else if (CLS <= 0.25) score += 15;
-
-    return score;
-  }, [metrics]);
-
-  // Update user satisfaction periodically
-  useEffect(() => {
-    const satisfaction = calculateUserSatisfaction();
-    if (satisfaction > 0) {
-      updateMetric('userSatisfaction', satisfaction);
-    }
-  }, [metrics.LCP, metrics.FID, metrics.CLS, calculateUserSatisfaction, updateMetric]);
-
-  // Get performance score
-  const getPerformanceScore = useCallback(() => {
-    const { LCP, FID, CLS, FCP, TTFB } = metrics;
-    
-    if (!LCP || !FID || !CLS) return 0;
-
-    let score = 100;
-    
-    // Deduct points for poor metrics
-    if (LCP > 4000) score -= 30;
-    else if (LCP > 2500) score -= 15;
-    
-    if (FID > 300) score -= 25;
-    else if (FID > 100) score -= 10;
-    
-    if (CLS > 0.25) score -= 25;
-    else if (CLS > 0.1) score -= 10;
-    
-    if (FCP && FCP > 3000) score -= 10;
-    if (TTFB && TTFB > 1800) score -= 10;
-
-    return Math.max(0, score);
-  }, [metrics]);
-
-  // Export analytics data
-  const exportAnalytics = useCallback(() => {
-    const analyticsData = {
-      timestamp: new Date().toISOString(),
-      metrics: metrics,
-      alerts: alerts,
-      score: getPerformanceScore(),
-      userAgent: navigator.userAgent,
-      connection: (navigator as any).connection ? {
-        effectiveType: (navigator as any).connection.effectiveType,
-        downlink: (navigator as any).connection.downlink,
-        rtt: (navigator as any).connection.rtt
-      } : null
-    };
-
-    // Send to analytics service or download
-    const blob = new Blob([JSON.stringify(analyticsData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `alex-ia-analytics-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "📊 Analytics Exportadas",
-      description: "Dados de performance salvos com sucesso",
-    });
-  }, [metrics, alerts, getPerformanceScore, toast]);
-
-  // Clear alerts
-  const clearAlerts = useCallback(() => {
-    setAlerts([]);
-  }, []);
-
   return {
     metrics,
     alerts,
-    performanceScore: getPerformanceScore(),
+    getPerformanceScore,
     trackAPICall,
-    exportAnalytics,
-    clearAlerts
+    updateMetric
   };
 }
