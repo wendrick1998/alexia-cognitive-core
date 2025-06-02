@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
@@ -11,6 +12,7 @@ import UnifiedDashboardPage from '@/pages/UnifiedDashboardPage';
 import PerformanceDashboard from '@/components/PerformanceDashboard';
 import TaskFrameworkDashboard from '@/components/autonomous/TaskFrameworkDashboard';
 import MultiAgentDashboard from '@/components/multiagent/MultiAgentDashboard';
+import AdaptiveLearningDashboardPage from '@/pages/AdaptiveLearningDashboardPage';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -71,6 +73,12 @@ function App() {
                 <PremiumAppLayout>
                   <MultiAgentDashboard />
                 </PremiumAppLayout>
+              </AuthGuard>
+            } />
+
+            <Route path="/adaptive-learning-dashboard" element={
+              <AuthGuard>
+                <AdaptiveLearningDashboardPage />
               </AuthGuard>
             } />
             
