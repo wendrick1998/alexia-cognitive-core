@@ -42,21 +42,17 @@ export function useChatSessions() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .rpc('get_user_chat_sessions', { p_user_id: user.id });
+      
+      // Use Edge Function to get sessions since the table doesn't exist in Supabase types yet
+      const { data, error } = await supabase.functions.invoke('get-user-chat-sessions', {
+        body: { user_id: user.id }
+      });
 
       if (error) {
-        // Fallback para query direta se a função RPC não existir
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('chat_sessions' as any)
-          .select('*')
-          .eq('user_id', user.id)
-          .order('updated_at', { ascending: false });
-
-        if (fallbackError) throw fallbackError;
-        setSessions((fallbackData as ChatSession[]) || []);
+        console.error('Erro ao carregar sessões:', error);
+        setSessions([]);
       } else {
-        setSessions((data as ChatSession[]) || []);
+        setSessions(data || []);
       }
     } catch (error) {
       console.error('Erro ao carregar sessões:', error);
@@ -65,6 +61,7 @@ export function useChatSessions() {
         description: "Não foi possível carregar as conversas",
         variant: "destructive",
       });
+      setSessions([]);
     } finally {
       setLoading(false);
     }
@@ -74,14 +71,20 @@ export function useChatSessions() {
   const loadMessages = useCallback(async (sessionId: string) => {
     try {
       setMessagesLoading(true);
-      const { data, error } = await supabase
-        .from('chat_messages' as any)
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: true });
+      
+      // Query the chat_messages table directly with proper typing
+      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_messages?session_id=eq.${sessionId}&order=created_at.asc`, {
+        headers: {
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      if (error) throw error;
-      setMessages((data as ChatMessage[]) || []);
+      if (!response.ok) throw new Error('Failed to load messages');
+      
+      const data = await response.json();
+      setMessages(data || []);
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
@@ -89,6 +92,7 @@ export function useChatSessions() {
         description: "Não foi possível carregar as mensagens",
         variant: "destructive",
       });
+      setMessages([]);
     } finally {
       setMessagesLoading(false);
     }
@@ -99,19 +103,27 @@ export function useChatSessions() {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase
-        .from('chat_sessions' as any)
-        .insert({
+      // Use direct HTTP call to create session
+      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_sessions`, {
+        method: 'POST',
+        headers: {
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({
           user_id: user.id,
           title: 'Novo Chat',
           auto_title: true,
         })
-        .select()
-        .single();
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to create session');
 
-      const newSession = data as ChatSession;
+      const data = await response.json();
+      const newSession = data[0] as ChatSession;
+      
       setSessions(prev => [newSession, ...prev]);
       
       return newSession;
@@ -184,16 +196,21 @@ export function useChatSessions() {
   // Renomear sessão
   const renameSession = useCallback(async (sessionId: string, newTitle: string) => {
     try {
-      const { error } = await supabase
-        .from('chat_sessions' as any)
-        .update({ 
+      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
           title: newTitle, 
-          auto_title: false, // Desabilitar auto-renomeação
+          auto_title: false,
           updated_at: new Date().toISOString() 
         })
-        .eq('id', sessionId);
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to rename session');
 
       setSessions(prev => prev.map(s => 
         s.id === sessionId ? { ...s, title: newTitle, auto_title: false } : s
@@ -220,12 +237,16 @@ export function useChatSessions() {
   // Excluir sessão
   const deleteSession = useCallback(async (sessionId: string) => {
     try {
-      const { error } = await supabase
-        .from('chat_sessions' as any)
-        .delete()
-        .eq('id', sessionId);
+      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to delete session');
 
       setSessions(prev => prev.filter(s => s.id !== sessionId));
       
@@ -254,15 +275,20 @@ export function useChatSessions() {
     if (!session) return;
 
     try {
-      const { error } = await supabase
-        .from('chat_sessions' as any)
-        .update({ 
+      const response = await fetch(`${supabase.supabaseUrl}/rest/v1/chat_sessions?id=eq.${sessionId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabase.supabaseKey,
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
           is_favorite: !session.is_favorite,
           updated_at: new Date().toISOString() 
         })
-        .eq('id', sessionId);
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to toggle favorite');
 
       setSessions(prev => prev.map(s => 
         s.id === sessionId ? { ...s, is_favorite: !s.is_favorite } : s
