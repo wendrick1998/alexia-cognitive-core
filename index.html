@@ -3,7 +3,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <title>Alex iA - Agente Cognitivo Pessoal</title>
     <meta name="description" content="Alex iA - Seu agente cognitivo pessoal e copiloto full-stack" />
     <meta name="author" content="Alex iA Team" />
@@ -18,12 +18,40 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Alex iA" />
-    <link rel="apple-touch-icon" href="/icon-192x192.png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/icon-180x180.png" sizes="180x180" />
+    <link rel="apple-touch-icon" href="/icon-152x152.png" sizes="152x152" />
+    <link rel="apple-touch-icon" href="/icon-144x144.png" sizes="144x144" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" sizes="192x192" />
     
     <!-- iOS Splash Screens -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-startup-image" href="/icon-512x512.png" />
+    
+    <!-- Safe Area CSS Variables for iOS -->
+    <meta name="supports-color-scheme" content="dark light" />
+    <style>
+      :root {
+        --safe-area-inset-top: env(safe-area-inset-top, 0px);
+        --safe-area-inset-right: env(safe-area-inset-right, 0px);
+        --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-area-inset-left: env(safe-area-inset-left, 0px);
+      }
+      
+      /* iOS PWA Fullscreen Fix */
+      @media (display-mode: standalone) {
+        body {
+          padding-top: var(--safe-area-inset-top);
+          padding-bottom: var(--safe-area-inset-bottom);
+          padding-left: var(--safe-area-inset-left);
+          padding-right: var(--safe-area-inset-right);
+        }
+      }
+      
+      /* Prevent iOS zoom on input focus */
+      input, textarea, select {
+        font-size: 16px !important;
+      }
+    </style>
     
     <!-- Theme Colors -->
     <meta name="theme-color" content="#3b82f6" />
@@ -46,6 +74,21 @@
     
     <!-- Preload critical resources -->
     <link rel="preload" href="/icon-192x192.png" as="image" />
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </head>
 
   <body>

@@ -1,0 +1,187 @@
+
+/* PWA and Mobile Optimizations */
+
+/* iOS PWA Status Bar */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .ios-safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .ios-safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .ios-safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .ios-safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* PWA Standalone Mode */
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide scrollbars in standalone mode for cleaner look */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-appearance: none) {
+  /* Fix viewport height on iOS */
+  .ios-vh-fix {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Remove iOS input styling */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    -webkit-appearance: none;
+    -webkit-border-radius: 0;
+  }
+}
+
+/* Touch optimizations */
+.touch-action-none {
+  touch-action: none;
+}
+
+.touch-action-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-action-manipulation {
+  touch-action: manipulation;
+}
+
+/* Smooth scrolling for mobile */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Battery saving mode */
+.battery-saving-mode * {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
+
+/* High contrast mode for accessibility */
+@media (prefers-contrast: high) {
+  .text-gray-400 {
+    color: #000000 !important;
+  }
+  
+  .dark .text-gray-400 {
+    color: #ffffff !important;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Keyboard aware layout */
+.keyboard-aware-container {
+  transition: height 0.3s ease;
+}
+
+@media (max-height: 500px) {
+  .keyboard-aware-container {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+/* Chat area mobile optimizations */
+.chat-mobile-container {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-mobile-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.chat-mobile-input {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Hide elements when keyboard is open on mobile */
+@media (max-height: 500px) and (orientation: portrait) {
+  .hide-on-keyboard {
+    display: none !important;
+  }
+}
+
+/* PWA splash screen */
+.pwa-splash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.pwa-splash.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Focus styles for accessibility */
+.focus-visible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* High performance scrolling */
+.optimized-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
+  will-change: scroll-position;
+}

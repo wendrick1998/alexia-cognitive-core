@@ -156,7 +156,7 @@ export function usePWA() {
 
   // Request notification permission
   const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
-    if (typeof Notification === 'undefined') return false;
+    if (!('Notification' in window)) return false;
 
     try {
       const permission = await Notification.requestPermission();
@@ -183,7 +183,7 @@ export function usePWA() {
 
   // Send test notification
   const sendTestNotification = useCallback(async () => {
-    if (!capabilities.hasNotificationPermission || typeof Notification === 'undefined') return;
+    if (!capabilities.hasNotificationPermission || !('Notification' in window)) return;
 
     try {
       if ('serviceWorker' in navigator) {
