@@ -632,6 +632,84 @@ export type Database = {
           },
         ]
       }
+      llm_call_logs: {
+        Row: {
+          answer_length: number
+          cache_hit: boolean | null
+          created_at: string | null
+          end_time: string
+          error_message: string | null
+          estimated_cost: number
+          fallback_model: string | null
+          fallback_reason: string | null
+          id: string
+          metadata: Json | null
+          model_name: string
+          provider: string
+          question: string
+          response_time: number
+          session_id: string
+          start_time: string
+          status: string | null
+          task_type: string
+          tokens_input: number
+          tokens_output: number
+          total_tokens: number
+          used_fallback: boolean | null
+          user_id: string
+        }
+        Insert: {
+          answer_length: number
+          cache_hit?: boolean | null
+          created_at?: string | null
+          end_time: string
+          error_message?: string | null
+          estimated_cost: number
+          fallback_model?: string | null
+          fallback_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          model_name: string
+          provider: string
+          question: string
+          response_time: number
+          session_id: string
+          start_time: string
+          status?: string | null
+          task_type: string
+          tokens_input: number
+          tokens_output: number
+          total_tokens: number
+          used_fallback?: boolean | null
+          user_id: string
+        }
+        Update: {
+          answer_length?: number
+          cache_hit?: boolean | null
+          created_at?: string | null
+          end_time?: string
+          error_message?: string | null
+          estimated_cost?: number
+          fallback_model?: string | null
+          fallback_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          model_name?: string
+          provider?: string
+          question?: string
+          response_time?: number
+          session_id?: string
+          start_time?: string
+          status?: string | null
+          task_type?: string
+          tokens_input?: number
+          tokens_output?: number
+          total_tokens?: number
+          used_fallback?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       llm_execution_logs: {
         Row: {
           created_at: string | null
@@ -665,6 +743,135 @@ export type Database = {
           success?: boolean | null
           tokens_used?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      llm_feedback: {
+        Row: {
+          answer: string
+          created_at: string | null
+          id: string
+          model_name: string
+          processed: boolean | null
+          processed_at: string | null
+          provider: string
+          question: string
+          rating: string | null
+          response_time: number
+          score: number | null
+          session_id: string
+          timestamp: string | null
+          tokens_used: number
+          used_fallback: boolean | null
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          id?: string
+          model_name: string
+          processed?: boolean | null
+          processed_at?: string | null
+          provider: string
+          question: string
+          rating?: string | null
+          response_time: number
+          score?: number | null
+          session_id: string
+          timestamp?: string | null
+          tokens_used: number
+          used_fallback?: boolean | null
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          id?: string
+          model_name?: string
+          processed?: boolean | null
+          processed_at?: string | null
+          provider?: string
+          question?: string
+          rating?: string | null
+          response_time?: number
+          score?: number | null
+          session_id?: string
+          timestamp?: string | null
+          tokens_used?: number
+          used_fallback?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      llm_model_metrics: {
+        Row: {
+          avg_response_time: number
+          avg_tokens_per_call: number
+          cache_hit_count: number
+          cache_hit_rate: number
+          created_at: string | null
+          failed_calls: number
+          fallback_count: number
+          fallback_rate: number
+          id: string
+          model_name: string
+          p50_response_time: number
+          p95_response_time: number
+          p99_response_time: number
+          period_end: string
+          period_start: string
+          provider: string
+          successful_calls: number
+          timeout_calls: number
+          total_calls: number
+          total_cost: number
+          total_tokens_used: number
+        }
+        Insert: {
+          avg_response_time: number
+          avg_tokens_per_call: number
+          cache_hit_count: number
+          cache_hit_rate: number
+          created_at?: string | null
+          failed_calls: number
+          fallback_count: number
+          fallback_rate: number
+          id?: string
+          model_name: string
+          p50_response_time: number
+          p95_response_time: number
+          p99_response_time: number
+          period_end: string
+          period_start: string
+          provider: string
+          successful_calls: number
+          timeout_calls: number
+          total_calls: number
+          total_cost: number
+          total_tokens_used: number
+        }
+        Update: {
+          avg_response_time?: number
+          avg_tokens_per_call?: number
+          cache_hit_count?: number
+          cache_hit_rate?: number
+          created_at?: string | null
+          failed_calls?: number
+          fallback_count?: number
+          fallback_rate?: number
+          id?: string
+          model_name?: string
+          p50_response_time?: number
+          p95_response_time?: number
+          p99_response_time?: number
+          period_end?: string
+          period_start?: string
+          provider?: string
+          successful_calls?: number
+          timeout_calls?: number
+          total_calls?: number
+          total_cost?: number
+          total_tokens_used?: number
         }
         Relationships: []
       }

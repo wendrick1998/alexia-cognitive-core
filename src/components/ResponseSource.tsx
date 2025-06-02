@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Clock, RefreshCw, Zap, Server } from 'lucide-react';
+import { Clock, RefreshCw, Zap, Server, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ResponseSourceProps {
@@ -25,33 +25,61 @@ const ResponseSource: React.FC<ResponseSourceProps> = ({
     return null;
   }
   
+  const getPerformanceBadge = () => {
+    if (fromCache) {
+      return (
+        <Badge variant="outline" className="badge-info">
+          <Clock className="w-3 h-3 mr-1" />
+          Cache ({responseTime}ms)
+        </Badge>
+      );
+    }
+    
+    if (usedFallback) {
+      return (
+        <Badge variant="outline" className="badge-warning">
+          <RefreshCw className="w-3 h-3 mr-1" />
+          Fallback
+        </Badge>
+      );
+    }
+    
+    if (responseTime > 0) {
+      if (responseTime < 500) {
+        return (
+          <Badge variant="outline" className="badge-success">
+            <Zap className="w-3 h-3 mr-1" />
+            Rápido ({responseTime}ms)
+          </Badge>
+        );
+      } else if (responseTime < 2000) {
+        return (
+          <Badge variant="outline" className="badge-info">
+            <TrendingUp className="w-3 h-3 mr-1" />
+            Normal ({responseTime}ms)
+          </Badge>
+        );
+      } else {
+        return (
+          <Badge variant="outline" className="badge-warning">
+            <Clock className="w-3 h-3 mr-1" />
+            Lento ({responseTime}ms)
+          </Badge>
+        );
+      }
+    }
+    
+    return null;
+  };
+  
   return (
     <div className={`flex flex-wrap items-center gap-2 text-xs mt-2 ${className}`}>
-      {fromCache && (
-        <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-300 border-blue-500/30">
-          <Clock className="w-3 h-3" />
-          <span>Cache ({responseTime}ms)</span>
-        </Badge>
-      )}
-      
-      {usedFallback && (
-        <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 text-amber-300 border-amber-500/30">
-          <RefreshCw className="w-3 h-3" />
-          <span>Fallback</span>
-        </Badge>
-      )}
-      
-      {!fromCache && !usedFallback && responseTime > 0 && responseTime < 500 && (
-        <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-300 border-green-500/30">
-          <Zap className="w-3 h-3" />
-          <span>Rápido ({responseTime}ms)</span>
-        </Badge>
-      )}
+      {getPerformanceBadge()}
       
       {currentModel && (
-        <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 bg-white/10 text-white/70 border-white/20">
-          <Server className="w-3 h-3" />
-          <span>{currentModel.split('-')[0]}</span>
+        <Badge variant="outline" className="badge-primary">
+          <Server className="w-3 h-3 mr-1" />
+          {currentModel.split('-')[0]}
         </Badge>
       )}
     </div>

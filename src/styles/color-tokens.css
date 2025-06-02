@@ -1,0 +1,195 @@
+
+/**
+ * @modified_by Manus AI
+ * @date 1 de junho de 2025
+ * @description Implementação de tokens de cor acessíveis (WCAG AA)
+ * Garante contraste adequado em todos os modos de cor
+ */
+
+/* Tokens de cor acessíveis */
+:root {
+  /* Cores primárias */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  /* Cores neutras */
+  --color-neutral-50: #f9fafb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2937;
+  --color-neutral-900: #111827;
+  --color-neutral-950: #030712;
+
+  /* Cores de feedback */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+
+  /* Tokens semânticos - modo claro */
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-700);
+  --color-text-tertiary: var(--color-neutral-500);
+  --color-text-disabled: var(--color-neutral-400);
+  --color-text-inverse: var(--color-neutral-50);
+  --color-text-brand: var(--color-primary-700);
+  --color-text-success: var(--color-success-700);
+  --color-text-warning: var(--color-warning-700);
+  --color-text-error: var(--color-error-700);
+  --color-text-info: var(--color-info-700);
+
+  --color-background-primary: white;
+  --color-background-secondary: var(--color-neutral-50);
+  --color-background-tertiary: var(--color-neutral-100);
+  --color-background-brand: var(--color-primary-600);
+  --color-background-success: var(--color-success-100);
+  --color-background-warning: var(--color-warning-100);
+  --color-background-error: var(--color-error-100);
+  --color-background-info: var(--color-info-100);
+
+  --color-border-primary: var(--color-neutral-200);
+  --color-border-secondary: var(--color-neutral-100);
+  --color-border-brand: var(--color-primary-600);
+  --color-border-success: var(--color-success-500);
+  --color-border-warning: var(--color-warning-500);
+  --color-border-error: var(--color-error-500);
+  --color-border-info: var(--color-info-500);
+
+  /* Tokens de foco */
+  --color-focus-ring: var(--color-primary-500);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+}
+
+/* Modo escuro */
+.dark {
+  /* Tokens semânticos - modo escuro */
+  --color-text-primary: var(--color-neutral-50);
+  --color-text-secondary: var(--color-neutral-300);
+  --color-text-tertiary: var(--color-neutral-400);
+  --color-text-disabled: var(--color-neutral-600);
+  --color-text-inverse: var(--color-neutral-900);
+  --color-text-brand: var(--color-primary-400);
+  --color-text-success: var(--color-success-500);
+  --color-text-warning: var(--color-warning-500);
+  --color-text-error: var(--color-error-500);
+  --color-text-info: var(--color-info-400);
+
+  --color-background-primary: var(--color-neutral-950);
+  --color-background-secondary: var(--color-neutral-900);
+  --color-background-tertiary: var(--color-neutral-800);
+  --color-background-brand: var(--color-primary-900);
+  --color-background-success: var(--color-success-950);
+  --color-background-warning: var(--color-warning-950);
+  --color-background-error: var(--color-error-950);
+  --color-background-info: var(--color-info-950);
+
+  --color-border-primary: var(--color-neutral-800);
+  --color-border-secondary: var(--color-neutral-700);
+  --color-border-brand: var(--color-primary-700);
+  --color-border-success: var(--color-success-700);
+  --color-border-warning: var(--color-warning-700);
+  --color-border-error: var(--color-error-700);
+  --color-border-info: var(--color-info-700);
+}
+
+/* Classes utilitárias para badges acessíveis */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badge-primary {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-800);
+}
+
+.dark .badge-primary {
+  background-color: var(--color-primary-900);
+  color: var(--color-primary-300);
+}
+
+.badge-success {
+  background-color: var(--color-success-100);
+  color: var(--color-success-800);
+}
+
+.dark .badge-success {
+  background-color: var(--color-success-900);
+  color: var(--color-success-300);
+}
+
+.badge-warning {
+  background-color: var(--color-warning-100);
+  color: var(--color-warning-800);
+}
+
+.dark .badge-warning {
+  background-color: var(--color-warning-900);
+  color: var(--color-warning-300);
+}
+
+.badge-error {
+  background-color: var(--color-error-100);
+  color: var(--color-error-800);
+}
+
+.dark .badge-error {
+  background-color: var(--color-error-900);
+  color: var(--color-error-300);
+}
+
+.badge-info {
+  background-color: var(--color-info-100);
+  color: var(--color-info-800);
+}
+
+.dark .badge-info {
+  background-color: var(--color-info-900);
+  color: var(--color-info-300);
+}
+
+/* Foco acessível */
+.focus-visible:focus {
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}

@@ -9,6 +9,7 @@ import FocusMode from './focus/FocusMode';
 import FloatingActionButton from './chat/FloatingActionButton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ResponseSource from './ResponseSource';
+import FeedbackSystem from './FeedbackSystem';
 
 const Chat = () => {
   const { user } = useAuth();
@@ -180,19 +181,35 @@ const Chat = () => {
     isCreating: conversationState.isCreatingNew
   });
 
-  const renderMessageWithSource = (message: any) => {
-    if (message.role !== 'assistant' || !message.metadata) {
+  const renderMessageWithSourceAndFeedback = (message: any) => {
+    if (message.role !== 'assistant') {
       return null;
     }
     
     return (
-      <ResponseSource 
-        fromCache={message.metadata.fromCache}
-        usedFallback={message.metadata.usedFallback}
-        originalModel={message.metadata.originalModel}
-        currentModel={message.metadata.currentModel}
-        responseTime={message.metadata.responseTime}
-      />
+      <div className="space-y-2">
+        {message.metadata && (
+          <ResponseSource 
+            fromCache={message.metadata.fromCache}
+            usedFallback={message.metadata.usedFallback}
+            originalModel={message.metadata.originalModel}
+            currentModel={message.metadata.currentModel}
+            responseTime={message.metadata.responseTime}
+          />
+        )}
+        
+        <FeedbackSystem
+          messageId={message.id}
+          question={messages.find(m => m.id === message.id - 1)?.content || ''}
+          answer={message.content}
+          modelName={message.metadata?.currentModel || 'gpt-4o-mini'}
+          provider="openai"
+          responseTime={message.metadata?.responseTime}
+          tokensUsed={Math.ceil(message.content.length / 4)}
+          usedFallback={message.metadata?.usedFallback}
+          sessionId={currentConversation?.session_id || ''}
+        />
+      </div>
     );
   };
 
@@ -210,7 +227,7 @@ const Chat = () => {
           onSendMessage={handleSendMessage}
           isCreatingNew={conversationState.isCreatingNew}
           isNavigating={conversationState.isNavigating}
-          renderMessageExtras={renderMessageWithSource}
+          renderMessageExtras={renderMessageWithSourceAndFeedback}
           className="h-full"
         />
 

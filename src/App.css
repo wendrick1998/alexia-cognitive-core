@@ -1,7 +1,10 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Importar tokens CSS */
+@import './styles/color-tokens.css';
+@import './styles/spacing-tokens.css';
 
 /* Reset básico para garantir scroll nativo */
 * {
