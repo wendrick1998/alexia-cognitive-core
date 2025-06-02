@@ -23,6 +23,7 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const IntegrationsManagerPage = lazy(() => import("./pages/IntegrationsManagerPage"));
 const SecurityPage = lazy(() => import("./pages/SecurityPage"));
 const CortexDashboard = lazy(() => import("./pages/CortexDashboard"));
+const ValidationDashboard = lazy(() => import("./pages/ValidationDashboard"));
 
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
@@ -53,6 +54,7 @@ function AppContent() {
               <Route path="/integrations-manager" element={<IntegrationsManagerPage />} />
               <Route path="/security" element={<SecurityPage />} />
               <Route path="/cortex-dashboard" element={<CortexDashboard />} />
+              <Route path="/validation" element={<ValidationDashboard />} />
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>

@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -17,9 +18,11 @@ import {
   Plug,
   LogOut,
   Sparkles,
-  Cpu
+  Cpu,
+  CheckCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   activeSection: string;
@@ -29,6 +32,7 @@ interface SidebarProps {
 
 const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const navigationSections = [
     {
@@ -47,22 +51,23 @@ const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
       items: [
         { id: "cognitive-graph", label: "Grafo Cognitivo", icon: Brain, description: "Visualizar nós cognitivos" },
         { id: "insights", label: "Insights", icon: Sparkles, description: "Insights automáticos" },
-        { id: "cortex-dashboard", label: "Córtex Dashboard", icon: Cpu, description: "Auditoria completa" }
+        { id: "cortex-dashboard", label: "Córtex Dashboard", icon: Cpu, description: "Auditoria completa", route: "/cortex-dashboard" },
+        { id: "validation", label: "Validação", icon: CheckCircle, description: "Prevenção de alucinações", route: "/validation", badge: "Novo" }
       ]
     },
     {
       title: "INTEGRAÇÕES",
       items: [
         { id: "integrations-status", label: "Status LLMs", icon: Shield, description: "Monitoramento APIs" },
-        { id: "integrations-manager", label: "Gerenciar LLMs", icon: Plug, description: "Adicionar integrações" }
+        { id: "integrations-manager", label: "Gerenciar LLMs", icon: Plug, description: "Adicionar integrações", route: "/integrations-manager" }
       ]
     },
     {
       title: "CONFIGURAÇÕES",
       items: [
         { id: "preferences", label: "Preferências", icon: User, description: "Configurações pessoais" },
-        { id: "ai-config", label: "Configurações de IA", icon: Settings, description: "Parâmetros do sistema" },
-        { id: "security", label: "Segurança", icon: Shield, description: "Proteção e acesso" }
+        { id: "ai-config", label: "Configurações de IA", icon: Settings, description: "Parâmetros do sistema", route: "/settings" },
+        { id: "security", label: "Segurança", icon: Shield, description: "Proteção e acesso", route: "/security" }
       ]
     },
     {
@@ -74,8 +79,12 @@ const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
     }
   ];
 
-  const handleItemClick = (itemId: string) => {
-    onSectionChange(itemId);
+  const handleItemClick = (item: any) => {
+    if (item.route) {
+      navigate(item.route);
+    } else {
+      onSectionChange(item.id);
+    }
     if (onClose) onClose();
   };
 
@@ -114,7 +123,7 @@ const Sidebar = ({ activeSection, onSectionChange, onClose }: SidebarProps) => {
                 return (
                   <Button
                     key={item.id}
-                    onClick={() => handleItemClick(item.id)}
+                    onClick={() => handleItemClick(item)}
                     variant="ghost"
                     className={cn(
                       "w-full justify-start h-auto p-3 rounded-xl transition-all duration-200",
