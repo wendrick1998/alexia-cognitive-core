@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +24,30 @@ export interface ChatMessage {
   created_at: string;
   tokens_used?: number;
   llm_model?: string;
+}
+
+// Database message type (what we get from Supabase)
+interface DatabaseMessage {
+  id: string;
+  session_id: string;
+  role: string;
+  content: string;
+  created_at: string;
+  tokens_used?: number;
+  llm_model?: string;
+}
+
+// Type guard to ensure role is valid
+function isValidRole(role: string): role is 'user' | 'assistant' {
+  return role === 'user' || role === 'assistant';
+}
+
+// Transform database message to ChatMessage
+function transformMessage(dbMessage: DatabaseMessage): ChatMessage {
+  return {
+    ...dbMessage,
+    role: isValidRole(dbMessage.role) ? dbMessage.role : 'user' // fallback to 'user' if invalid
+  };
 }
 
 export function useChatSessions() {
@@ -83,7 +106,9 @@ export function useChatSessions() {
         console.error('Erro ao carregar mensagens:', error);
         setMessages([]);
       } else {
-        setMessages(data || []);
+        // Transform database messages to ChatMessage type
+        const transformedMessages = (data || []).map(transformMessage);
+        setMessages(transformedMessages);
       }
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
