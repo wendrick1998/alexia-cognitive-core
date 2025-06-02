@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
@@ -134,7 +133,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         />
       )}
 
-      {/* Main Content - CORRIGIDO para permitir scroll */}
+      {/* Main Content - CORRIGIDO para permitir scroll adequado */}
       <main className={cn(
         "flex-1 flex flex-col min-h-screen relative",
         !isMobile && "ml-20"
@@ -167,9 +166,8 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
           "flex-1 relative z-10",
           // Chat precisa de overflow controlado
           currentSection === 'chat' ? "overflow-hidden" : cn(
-            "overflow-y-auto",
-            // Mobile: adicionar padding para bottom nav
-            isMobile && "mobile-content-area"
+            // Dashboard e outras seções precisam de scroll funcional
+            isMobile ? "main-content-wrapper" : "dashboard-scroll-container"
           )
         )}>
           <div className={cn(

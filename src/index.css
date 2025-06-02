@@ -108,7 +108,7 @@
   animation: scale-in 0.2s ease-out forwards;
 }
 
-/* Chat specific scroll container - OTIMIZADO para iOS */
+/* Chat specific scroll container - CORRIGIDO para iOS */
 .chat-scroll-container {
   height: 100%;
   overflow-y: auto;
@@ -116,12 +116,22 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
-  /* iOS específico para scroll suave */
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
 }
 
-/* Mobile scroll optimization - MELHORADO */
+/* NOVO: Container principal de dashboard com scroll funcional */
+.dashboard-scroll-container {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Mobile scroll optimization - CORRIGIDO */
 @media (max-width: 768px) {
   .premium-scrollbar {
     -webkit-overflow-scrolling: touch;
@@ -131,7 +141,6 @@
   /* Garantir scroll funcional no mobile */
   body {
     overscroll-behavior: none;
-    /* REMOVIDO: position: fixed que causava problemas de scroll */
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
@@ -141,7 +150,6 @@
   #root {
     min-height: 100vh;
     min-height: 100dvh;
-    /* REMOVIDO: overflow: hidden que impedia scroll */
   }
   
   /* Touch scroll otimizado */
@@ -151,19 +159,26 @@
     scroll-behavior: smooth;
   }
   
-  /* Chat mobile com padding para bottom nav */
+  /* Chat mobile com padding para bottom nav - CORRIGIDO */
   .chat-scroll-container {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     scroll-behavior: smooth;
     touch-action: pan-y;
-    /* Padding para compensar bottom nav */
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
   }
   
-  /* Dashboard e outras seções com padding bottom */
+  /* Dashboard e outras seções com padding bottom - CORRIGIDO */
   .mobile-content-area {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Container principal para evitar sobreposição */
+  .main-content-wrapper {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+    height: calc(100vh - 140px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -186,13 +201,11 @@
   /* CORRIGIDO: Permitir scroll horizontal e vertical */
   html, body {
     width: 100%;
-    /* REMOVIDO: overflow-x: hidden que causava problemas */
   }
 
   /* iOS Safari fixes - OTIMIZADO */
   body {
     position: relative;
-    /* REMOVIDO: overflow: hidden */
     min-height: 100vh;
     min-height: 100dvh;
   }
@@ -200,7 +213,6 @@
   #root {
     min-height: 100vh;
     min-height: 100dvh;
-    /* REMOVIDO: overflow: hidden */
   }
 }
 
@@ -249,6 +261,15 @@
   }
   
   .pb-safe-bottom-nav {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* NOVO: Utilitário para auto-scroll */
+  .auto-scroll-bottom {
+    scroll-behavior: smooth;
+  }
+  
+  .auto-scroll-bottom:last-child {
+    scroll-snap-align: end;
   }
 }

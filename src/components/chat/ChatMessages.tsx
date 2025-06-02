@@ -15,13 +15,27 @@ const ChatMessages = ({ messages, processing, loading = false, renderMessageExtr
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    }
   };
 
+  // Auto-scroll quando mensagens mudam ou processamento
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, processing]);
+    if (messages.length > 0) {
+      // Delay pequeno para garantir que o DOM foi atualizado
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  }, [messages.length, processing]);
+
+  // Auto-scroll quando carrega conversa existente
+  useEffect(() => {
+    if (messages.length > 0 && !loading) {
+      // Scroll imediato ao carregar conversa existente
+      setTimeout(() => scrollToBottom('auto'), 50);
+    }
+  }, [messages.length, loading]);
 
   if (loading) {
     return (
@@ -43,7 +57,7 @@ const ChatMessages = ({ messages, processing, loading = false, renderMessageExtr
         overscrollBehavior: 'contain'
       }}
     >
-      <div className="p-4 space-y-4 min-h-full">
+      <div className="p-4 space-y-4 min-h-full pb-safe-bottom-nav">
         {messages.map((message, index) => (
           <div key={message.id} className="space-y-2">
             <MessageBubble message={message} />

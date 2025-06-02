@@ -21,6 +21,9 @@ interface PremiumChatLayoutProps {
   className?: string;
   sidebarCollapsed?: boolean;
   onToggleSidebar?: () => void;
+  onRenameConversation?: (conversationId: string, newName: string) => void;
+  onTogglePinConversation?: (conversationId: string, isPinned: boolean) => void;
+  onDeleteConversation?: (conversationId: string) => void;
 }
 
 const PremiumChatLayout = ({ 
@@ -36,7 +39,10 @@ const PremiumChatLayout = ({
   renderMessageExtras,
   className = "",
   sidebarCollapsed = false,
-  onToggleSidebar
+  onToggleSidebar,
+  onRenameConversation,
+  onTogglePinConversation,
+  onDeleteConversation
 }: PremiumChatLayoutProps) => {
   const isMobile = useIsMobile();
 
@@ -91,6 +97,9 @@ const PremiumChatLayout = ({
                 onConversationSelect={handleConversationSelect}
                 onNewConversation={onNewConversation}
                 isMobile={isMobile}
+                onRenameConversation={onRenameConversation}
+                onTogglePinConversation={onTogglePinConversation}
+                onDeleteConversation={onDeleteConversation}
               />
             </div>
           </div>
@@ -141,6 +150,9 @@ const PremiumChatLayout = ({
                   onConversationSelect={handleConversationSelect}
                   onNewConversation={onNewConversation}
                   isMobile={isMobile}
+                  onRenameConversation={onRenameConversation}
+                  onTogglePinConversation={onTogglePinConversation}
+                  onDeleteConversation={onDeleteConversation}
                 />
               </div>
             </div>

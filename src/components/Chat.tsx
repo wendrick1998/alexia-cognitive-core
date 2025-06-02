@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +30,10 @@ const Chat = () => {
     navigateToConversation,
     conversationState,
     setMessages,
-    updateConversationTimestamp
+    updateConversationTimestamp,
+    updateConversation,
+    deleteConversation,
+    favoriteConversation
   } = useConversations();
 
   const { processing, processMessage } = useChatProcessor();
@@ -71,6 +73,57 @@ const Chat = () => {
     // Auto-colapsar sidebar no mobile após seleção
     if (isMobile) {
       setSidebarCollapsed(true);
+    }
+  };
+
+  // NOVO: Handlers para o menu de conversas
+  const handleRenameConversation = async (conversationId: string, newName: string) => {
+    try {
+      await updateConversation(conversationId, { name: newName });
+      toast({
+        title: "Conversa renomeada",
+        description: "O nome da conversa foi atualizado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível renomear a conversa",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTogglePinConversation = async (conversationId: string, isPinned: boolean) => {
+    try {
+      await favoriteConversation(conversationId, isPinned);
+      toast({
+        title: isPinned ? "Conversa fixada" : "Conversa desfixada",
+        description: isPinned 
+          ? "A conversa foi fixada no topo da lista." 
+          : "A conversa foi removida dos fixados.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível alterar o status da conversa",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteConversation = async (conversationId: string) => {
+    try {
+      await deleteConversation(conversationId);
+      toast({
+        title: "Conversa apagada",
+        description: "A conversa foi removida permanentemente.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível apagar a conversa",
+        variant: "destructive",
+      });
     }
   };
 
@@ -252,6 +305,9 @@ const Chat = () => {
           className="h-full"
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={handleToggleSidebar}
+          onRenameConversation={handleRenameConversation}
+          onTogglePinConversation={handleTogglePinConversation}
+          onDeleteConversation={handleDeleteConversation}
         />
       </div>
 
