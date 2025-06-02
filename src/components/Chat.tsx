@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
@@ -186,6 +187,11 @@ const Chat = () => {
       return null;
     }
     
+    // Find the previous message (user question) by array index
+    const messageIndex = messages.findIndex(m => m.id === message.id);
+    const previousMessage = messageIndex > 0 ? messages[messageIndex - 1] : null;
+    const userQuestion = previousMessage?.role === 'user' ? previousMessage.content : '';
+    
     return (
       <div className="space-y-2">
         {message.metadata && (
@@ -200,7 +206,7 @@ const Chat = () => {
         
         <FeedbackSystem
           messageId={message.id}
-          question={messages.find(m => m.id === message.id - 1)?.content || ''}
+          question={userQuestion}
           answer={message.content}
           modelName={message.metadata?.currentModel || 'gpt-4o-mini'}
           provider="openai"
@@ -215,7 +221,6 @@ const Chat = () => {
 
   return (
     <>
-      {/* CORRIGIDO: Container principal com height full e scroll */}
       <div className="h-full w-full relative">
         <PremiumChatLayout
           conversations={conversations}
