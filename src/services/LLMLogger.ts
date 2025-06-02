@@ -311,7 +311,7 @@ export class LLMLogger {
         return [];
       }
       
-      // Agrupar logs por modelo
+      // Agrupar logs por modelo e converter para tipo correto
       const logsByModel: Record<string, LLMCallLog[]> = {};
       
       data.forEach(log => {
@@ -319,11 +319,33 @@ export class LLMLogger {
           logsByModel[log.model_name] = [];
         }
         
-        logsByModel[log.model_name].push({
-          ...log,
+        // Converter dados do banco para tipo LLMCallLog
+        const convertedLog: LLMCallLog = {
+          id: log.id,
+          userId: log.user_id,
+          sessionId: log.session_id,
+          modelName: log.model_name,
+          provider: log.provider,
+          taskType: log.task_type,
+          question: log.question,
+          answerLength: log.answer_length,
           startTime: new Date(log.start_time),
-          endTime: new Date(log.end_time)
-        } as LLMCallLog);
+          endTime: new Date(log.end_time),
+          responseTime: log.response_time,
+          tokensInput: log.tokens_input,
+          tokensOutput: log.tokens_output,
+          totalTokens: log.total_tokens,
+          estimatedCost: log.estimated_cost,
+          usedFallback: log.used_fallback,
+          fallbackReason: log.fallback_reason,
+          fallbackModel: log.fallback_model,
+          cacheHit: log.cache_hit,
+          status: log.status,
+          errorMessage: log.error_message,
+          metadata: log.metadata
+        };
+        
+        logsByModel[log.model_name].push(convertedLog);
       });
       
       // Calcular métricas para cada modelo
