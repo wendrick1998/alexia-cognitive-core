@@ -1,19 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-
-// Definir TaskType como tipo exportado
-export type TaskType = 
-  | 'question_answering'
-  | 'code_generation'
-  | 'creative_writing'
-  | 'analysis'
-  | 'planning'
-  | 'research'
-  | 'general'
-  | 'chat'
-  | 'document_analysis'
-  | 'memory_retrieval';
+import type { TaskType } from '@/services/MultiLLMRouter';
 
 // Interface para configuração de modelos LLM
 interface LLMConfig {
@@ -33,7 +21,7 @@ const LLM_MODELS: Record<string, LLMConfig> = {
     maxTokens: 4096,
     temperature: 0.7,
     costPerToken: 0.00003,
-    capabilities: ['question_answering', 'code_generation', 'creative_writing', 'analysis', 'planning', 'research', 'general', 'chat']
+    capabilities: ['general', 'coding', 'creative', 'analysis', 'technical']
   },
   'gpt-4o-mini': {
     provider: 'openai',
@@ -41,7 +29,7 @@ const LLM_MODELS: Record<string, LLMConfig> = {
     maxTokens: 16384,
     temperature: 0.3,
     costPerToken: 0.000015,
-    capabilities: ['question_answering', 'code_generation', 'analysis', 'general', 'chat', 'document_analysis']
+    capabilities: ['general', 'coding', 'analysis', 'technical']
   },
   'claude-3-sonnet': {
     provider: 'anthropic',
@@ -49,7 +37,7 @@ const LLM_MODELS: Record<string, LLMConfig> = {
     maxTokens: 4096,
     temperature: 0.7,
     costPerToken: 0.000003,
-    capabilities: ['creative_writing', 'analysis', 'planning', 'research', 'general']
+    capabilities: ['creative', 'analysis', 'general']
   }
 };
 
@@ -73,25 +61,16 @@ export function useLLMRouter() {
     const lowerInput = input.toLowerCase();
     
     if (lowerInput.includes('código') || lowerInput.includes('code') || lowerInput.includes('função')) {
-      return 'code_generation';
+      return 'coding';
     }
     if (lowerInput.includes('analis') || lowerInput.includes('avaliar') || lowerInput.includes('comparar')) {
       return 'analysis';
     }
     if (lowerInput.includes('criar') || lowerInput.includes('escrever') || lowerInput.includes('história')) {
-      return 'creative_writing';
+      return 'creative';
     }
-    if (lowerInput.includes('plano') || lowerInput.includes('estratégia') || lowerInput.includes('organizar')) {
-      return 'planning';
-    }
-    if (lowerInput.includes('pesquis') || lowerInput.includes('pesquis') || lowerInput.includes('investigar')) {
-      return 'research';
-    }
-    if (lowerInput.includes('documento') || lowerInput.includes('arquivo') || lowerInput.includes('pdf')) {
-      return 'document_analysis';
-    }
-    if (lowerInput.includes('lembr') || lowerInput.includes('memória') || lowerInput.includes('anterior')) {
-      return 'memory_retrieval';
+    if (lowerInput.includes('técnico') || lowerInput.includes('arquitetura') || lowerInput.includes('implementar')) {
+      return 'technical';
     }
     
     return 'general';
@@ -109,13 +88,13 @@ export function useLLMRouter() {
     }
 
     // Para tarefas criativas, preferir modelos mais expressivos
-    if (taskType === 'creative_writing') {
+    if (taskType === 'creative') {
       const claudeModel = compatibleModels.find(([key]) => key.includes('claude'));
       if (claudeModel) return claudeModel[0];
     }
 
     // Para código, preferir GPT-4
-    if (taskType === 'code_generation') {
+    if (taskType === 'coding') {
       const gpt4Model = compatibleModels.find(([key]) => key === 'gpt-4o');
       if (gpt4Model) return gpt4Model[0];
     }
@@ -196,3 +175,5 @@ export function useLLMRouter() {
     availableModels: Object.keys(LLM_MODELS)
   };
 }
+
+export { TaskType };
