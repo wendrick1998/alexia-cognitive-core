@@ -1,415 +1,345 @@
+/**
+ * @modified_by Manus AI
+ * @date 2 de junho de 2025
+ * @description Chat aprimorado com sidebar recolhível e navegação inferior fixa
+ */
 
-import { useState, useRef, useEffect } from 'react';
-import { useAlexChatSessions } from '@/hooks/useAlexChatSessions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Send, 
-  Plus, 
-  MessageCircle, 
-  Bot, 
-  User, 
-  Star, 
-  Pin,
-  MoreVertical,
-  Edit2,
-  Trash2,
-  RefreshCw
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { useToast } from "@/hooks/use-toast";
+import { useConversations } from '@/hooks/useConversations';
+import { useChatProcessor } from '@/hooks/useChatProcessor';
+import { useFocusMode } from '@/hooks/useFocusMode';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { MessageSquare, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import PremiumChatLayout from './chat/PremiumChatLayout';
+import FocusMode from './focus/FocusMode';
+import FloatingActionButton from './chat/FloatingActionButton';
+import ResponseSource from './ResponseSource';
+import { cn } from '@/lib/utils';
 
 const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const {
-    sessions,
-    currentSession,
-    messages,
-    loading,
-    messagesLoading,
-    createSession,
-    selectSession,
-    sendMessage,
-    renameSession,
-    deleteSession,
-    toggleFavorite,
-    togglePin,
-    resetAllSessions
-  } = useAlexChatSessions();
-
-  const [newMessage, setNewMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
+  const isMobile = useIsMobile();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Estado da sidebar recolhível
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile);
+  
+  const {
+    conversations,
+    currentConversation,
+    messages,
+    createAndNavigateToNewConversation,
+    navigateToConversation,
+    conversationState,
+    setMessages,
+    updateConversationTimestamp
+  } = useConversations();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const { processing, processMessage } = useChatProcessor();
+  const { isActive: isFocusModeActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
+
+  // Auto-colapsar sidebar no mobile
+  useEffect(() => {
+    setSidebarCollapsed(isMobile);
+  }, [isMobile]);
+
+  const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (messages.length > 0) {
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  }, [messages.length]);
 
-  const handleCreateSession = async () => {
-    const session = await createSession();
-    if (session) {
-      selectSession(session);
+  const handleNewConversation = async () => {
+    console.log('🔥 Criando nova conversa...');
+    const newConversation = await createAndNavigateToNewConversation();
+    if (newConversation) {
+      toast({
+        title: "Nova conversa criada",
+        description: "Conversa pronta para uso!",
+      });
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !currentSession || !user) return;
+  const handleConversationSelect = async (conversation: any) => {
+    console.log(`🧭 Selecionando conversa: ${conversation.id}`);
+    await navigateToConversation(conversation);
+    // Auto-colapsar sidebar no mobile após seleção
+    if (isMobile) {
+      setSidebarCollapsed(true);
+    }
+  };
 
-    const userMessage = newMessage.trim();
-    setNewMessage('');
-    setIsTyping(true);
+  const handleSendMessage = async (message: string) => {
+    if (!currentConversation) {
+      console.log('⚠️ Criando nova conversa automaticamente...');
+      const newConversation = await createAndNavigateToNewConversation();
+      if (!newConversation) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar uma nova conversa",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const conversationId = currentConversation?.id;
+    if (!conversationId) return;
+
+    const userMessage = {
+      id: `temp-${Date.now()}`,
+      conversation_id: conversationId,
+      role: 'user' as const,
+      content: message,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    scrollToBottom();
 
     try {
-      // Enviar mensagem do usuário
-      const success = await sendMessage(userMessage);
-      if (!success) {
-        throw new Error('Falha ao enviar mensagem');
+      const response = await processMessage(message, conversationId);
+      
+      if (response) {
+        const fromCache = response.metadata?.fromCache || false;
+        const usedFallback = response.metadata?.usedFallback || false;
+        const originalModel = response.metadata?.originalModel || '';
+        const responseTime = response.metadata?.responseTime || 0;
+        
+        const aiMessage = {
+          id: `temp-ai-${Date.now()}`,
+          conversation_id: conversationId,
+          role: 'assistant' as const,
+          content: response.response,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          metadata: {
+            fromCache,
+            usedFallback,
+            originalModel,
+            currentModel: response.model || '',
+            responseTime
+          }
+        };
+
+        setMessages(prev => [...prev, aiMessage]);
+        await updateConversationTimestamp(conversationId);
+        scrollToBottom();
+
+        toast({
+          title: "Mensagem enviada",
+          description: response.context_used ? "IA respondeu com contexto" : "IA respondeu",
+        });
       }
-
-      // Chamar Edge Function para processar com Alex IA
-      const { data, error } = await supabase.functions.invoke('process-chat-message-alex', {
-        body: {
-          session_id: currentSession.id,
-          user_message: userMessage,
-          user_id: user.id
-        }
-      });
-
-      if (error) {
-        console.error('Erro na Edge Function:', error);
-        throw error;
-      }
-
-      console.log('Resposta da Alex IA:', data);
-
-      toast({
-        title: "Mensagem Enviada",
-        description: "Alex IA processou sua mensagem com sucesso",
-      });
-
     } catch (error) {
-      console.error('Erro ao processar mensagem:', error);
+      console.error('❌ Erro ao enviar mensagem:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível processar a mensagem. Tente novamente.",
+        description: "Falha ao enviar mensagem",
         variant: "destructive",
       });
-    } finally {
-      setIsTyping(false);
     }
   };
 
-  const handleEditSession = (sessionId: string, currentTitle: string) => {
-    setEditingSessionId(sessionId);
-    setEditingTitle(currentTitle);
-  };
-
-  const handleSaveTitle = async (sessionId: string) => {
-    if (editingTitle.trim()) {
-      await renameSession(sessionId, editingTitle.trim());
+  const handleFloatingAction = (action: string) => {
+    switch (action) {
+      case 'new-chat':
+        handleNewConversation();
+        break;
+      case 'focus-mode':
+        activateFocusMode();
+        toast({
+          title: "Focus Mode Ativado",
+          description: "Modo de escrita minimalista ativado",
+        });
+        break;
+      case 'toggle-sidebar':
+        setSidebarCollapsed(!sidebarCollapsed);
+        break;
+      default:
+        console.log('Ação não reconhecida:', action);
     }
-    setEditingSessionId(null);
-    setEditingTitle('');
   };
 
-  const formatMessageTime = (timestamp: string) => {
-    return formatDistanceToNow(new Date(timestamp), { 
-      addSuffix: true, 
-      locale: ptBR 
-    });
+  useEffect(() => {
+    const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey) {
+        switch (e.key) {
+          case 'n':
+            e.preventDefault();
+            handleNewConversation();
+            break;
+          case 'f':
+            e.preventDefault();
+            activateFocusMode();
+            break;
+        }
+      }
+      
+      if (e.key === 'Escape' && isFocusModeActive) {
+        deactivateFocusMode();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyboardShortcuts);
+    return () => window.removeEventListener('keydown', handleKeyboardShortcuts);
+  }, [isFocusModeActive, deactivateFocusMode, activateFocusMode]);
+
+  const renderMessageWithSource = (message: any) => {
+    if (message.role !== 'assistant' || !message.metadata) {
+      return null;
+    }
+    
+    return (
+      <ResponseSource 
+        fromCache={message.metadata.fromCache}
+        usedFallback={message.metadata.usedFallback}
+        originalModel={message.metadata.originalModel}
+        currentModel={message.metadata.currentModel}
+        responseTime={message.metadata.responseTime}
+      />
+    );
   };
 
   return (
-    <div className="h-full flex bg-gradient-to-b from-black to-gray-900">
-      {/* Sidebar com Sessões */}
-      <div className="w-80 border-r border-white/10 flex flex-col">
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white">Conversas</h2>
-            <Button 
-              onClick={handleCreateSession}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
+    <>
+      {/* Container principal com padding para barra inferior */}
+      <div className="h-full relative flex" style={{ paddingBottom: isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : '0px' }}>
+        
+        {/* Botão Toggle Sidebar - Flutuante no mobile */}
+        {isMobile && (
+          <Button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            variant="outline"
+            size="icon"
+            className={cn(
+              "fixed top-20 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50 shadow-lg transition-all duration-300",
+              sidebarCollapsed ? "left-4" : "left-80"
+            )}
+          >
+            {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </Button>
+        )}
+
+        {/* Layout responsivo com sidebar recolhível */}
+        <div className={cn(
+          "flex w-full h-full transition-all duration-300 ease-in-out",
+          sidebarCollapsed && !isMobile && "ml-16" // Espaço mínimo no desktop
+        )}>
           
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={resetAllSessions}
-              className="flex-1 text-xs"
-            >
-              <RefreshCw className="w-3 h-3 mr-1" />
-              Reset
-            </Button>
+          {/* Sidebar Desktop Toggle */}
+          {!isMobile && (
+            <div className={cn(
+              "fixed left-0 top-0 h-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 z-40",
+              sidebarCollapsed ? "w-16" : "w-80"
+            )}>
+              {sidebarCollapsed ? (
+                // Sidebar colapsada - apenas ícone
+                <div className="p-4 h-full flex flex-col items-center">
+                  <Button
+                    onClick={() => setSidebarCollapsed(false)}
+                    variant="ghost"
+                    size="icon"
+                    className="mb-4 hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    onClick={handleNewConversation}
+                    variant="outline"
+                    size="icon"
+                    className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                // Sidebar expandida - lista completa
+                <div className="h-full">
+                  <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <h2 className="font-semibold text-gray-900 dark:text-gray-100">Conversas</h2>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleNewConversation}
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={() => setSidebarCollapsed(true)}
+                        variant="ghost"
+                        size="icon"
+                        className="w-8 h-8 hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Área principal do chat */}
+          <div className={cn(
+            "flex-1 h-full",
+            !isMobile && !sidebarCollapsed && "ml-80",
+            !isMobile && sidebarCollapsed && "ml-16"
+          )}>
+            <PremiumChatLayout
+              conversations={conversations}
+              currentConversation={currentConversation}
+              messages={messages}
+              processing={processing}
+              onConversationSelect={handleConversationSelect}
+              onNewConversation={handleNewConversation}
+              onSendMessage={handleSendMessage}
+              isCreatingNew={conversationState.isCreatingNew}
+              isNavigating={conversationState.isNavigating}
+              renderMessageExtras={renderMessageWithSource}
+              className="h-full"
+              sidebarCollapsed={sidebarCollapsed}
+            />
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
-          <div className="p-2 space-y-1">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              sessions.map((session) => (
-                <div
-                  key={session.id}
-                  className={`p-3 rounded-lg border transition-all cursor-pointer group ${
-                    currentSession?.id === session.id
-                      ? 'bg-blue-500/20 border-blue-500/30 text-white'
-                      : 'bg-gray-900/50 border-white/10 text-white/80 hover:bg-white/5'
-                  }`}
-                  onClick={() => selectSession(session)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      {session.pinned && <Pin className="w-3 h-3 text-yellow-400 flex-shrink-0" />}
-                      {session.is_favorite && <Star className="w-3 h-3 text-yellow-400 flex-shrink-0" />}
-                      
-                      {editingSessionId === session.id ? (
-                        <Input
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onBlur={() => handleSaveTitle(session.id)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSaveTitle(session.id)}
-                          className="h-6 text-sm bg-transparent border-white/20"
-                          autoFocus
-                        />
-                      ) : (
-                        <span className="font-medium text-sm truncate">{session.title}</span>
-                      )}
-                    </div>
+        <div ref={messagesEndRef} />
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <MoreVertical className="w-3 h-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-gray-900 border-gray-700">
-                        <DropdownMenuItem onClick={() => handleEditSession(session.id, session.title)}>
-                          <Edit2 className="w-3 h-3 mr-2" />
-                          Renomear
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleFavorite(session.id)}>
-                          <Star className="w-3 h-3 mr-2" />
-                          {session.is_favorite ? 'Desfavoritar' : 'Favoritar'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => togglePin(session.id)}>
-                          <Pin className="w-3 h-3 mr-2" />
-                          {session.pinned ? 'Desafixar' : 'Fixar'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => deleteSession(session.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="w-3 h-3 mr-2" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div className="mt-2 space-y-1">
-                    {session.last_message_preview && (
-                      <p className="text-xs text-white/60 line-clamp-2">
-                        {session.last_message_preview}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between text-xs text-white/50">
-                      <span>{formatDistanceToNow(new Date(session.updated_at), { locale: ptBR })}</span>
-                      {session.message_count && (
-                        <Badge variant="outline" className="text-xs h-4">
-                          {session.message_count}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* Área Principal do Chat */}
-      <div className="flex-1 flex flex-col">
-        {currentSession ? (
-          <>
-            {/* Header da Conversa */}
-            <div className="p-4 border-b border-white/10 bg-gray-900/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                      AI
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold text-white">{currentSession.title}</h3>
-                    <p className="text-sm text-white/60">Alex IA • Sistema Cognitivo Premium</p>
-                  </div>
-                </div>
-                <Badge variant="secondary" className="bg-green-500/20 text-green-400">
-                  Online
-                </Badge>
-              </div>
-            </div>
-
-            {/* Área de Mensagens */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4 max-w-4xl mx-auto">
-                {messagesLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex gap-3 ${
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
-                      {message.role === 'assistant' && (
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                            <Bot className="w-4 h-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-
-                      <div
-                        className={`max-w-[70%] rounded-xl p-4 ${
-                          message.role === 'user'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-800 text-white border border-white/10'
-                        }`}
-                      >
-                        <div className="whitespace-pre-wrap">{message.content}</div>
-                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
-                          <span className="text-xs text-white/60">
-                            {formatMessageTime(message.created_at)}
-                          </span>
-                          {message.llm_model && (
-                            <Badge variant="outline" className="text-xs">
-                              {message.llm_model}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      {message.role === 'user' && (
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-500 text-white">
-                            <User className="w-4 h-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                    </div>
-                  ))
-                )}
-
-                {isTyping && (
-                  <div className="flex gap-3 justify-start">
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                        <Bot className="w-4 h-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="bg-gray-800 text-white border border-white/10 rounded-xl p-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        </div>
-                        <span className="text-white/60 text-sm">Alex IA está pensando...</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
-
-            {/* Input de Mensagem */}
-            <div className="p-4 border-t border-white/10 bg-gray-900/50">
-              <form onSubmit={handleSendMessage} className="flex gap-2 max-w-4xl mx-auto">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Digite sua mensagem para Alex IA..."
-                  disabled={isTyping}
-                  className="flex-1 bg-gray-800 border-gray-600 text-white placeholder-white/40"
-                />
-                <Button 
-                  type="submit" 
-                  disabled={!newMessage.trim() || isTyping}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </form>
-            </div>
-          </>
-        ) : (
-          /* Estado Inicial */
-          <div className="flex-1 flex items-center justify-center">
-            <Card className="bg-gray-900/50 border-white/10 text-center max-w-md">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center justify-center gap-2">
-                  <MessageCircle className="w-6 h-6" />
-                  Bem-vindo ao Chat Alex IA
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-white/70">
-                  Inicie uma nova conversa para começar a interagir com a Alex IA.
-                </p>
-                <Button 
-                  onClick={handleCreateSession}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Conversa
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+        {/* Floating Action Button - Mobile */}
+        {isMobile && (
+          <FloatingActionButton 
+            onAction={handleFloatingAction}
+            currentSection="chat"
+            hasActiveChat={!!currentConversation}
+            hasDocument={false}
+            className="bottom-20"
+          />
         )}
       </div>
-    </div>
+
+      {/* Focus Mode Overlay */}
+      <FocusMode
+        isActive={isFocusModeActive}
+        onExit={deactivateFocusMode}
+        onSendMessage={handleSendMessage}
+        initialText=""
+      />
+    </>
   );
 };
 

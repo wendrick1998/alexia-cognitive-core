@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
@@ -162,11 +161,13 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
           </div>
         </header>
 
-        {/* Content Area */}
+        {/* Content Area com padding para barra inferior */}
         <div className={cn(
           "flex-1 overflow-y-auto relative z-10",
-          isMobile && "pb-20" // Space for bottom navigation
-        )}>
+          isMobile && "pb-20" // Espaçamento para barra inferior
+        )} style={{
+          paddingBottom: isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : undefined
+        }}>
           <div className="h-full w-full">
             {children}
           </div>

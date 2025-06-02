@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageSquare, Focus, FileText } from 'lucide-react';
+import { Plus, MessageSquare, Focus, Sidebar, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface FloatingActionButtonProps {
   onAction: (action: string) => void;
@@ -11,33 +12,43 @@ interface FloatingActionButtonProps {
   className?: string;
 }
 
-const FloatingActionButton = ({
-  onAction,
-  currentSection,
-  hasActiveChat,
+const FloatingActionButton = ({ 
+  onAction, 
+  currentSection, 
+  hasActiveChat, 
   hasDocument,
   className = ""
 }: FloatingActionButtonProps) => {
-  const [showActions, setShowActions] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const actions = [
     {
       id: 'new-chat',
-      label: 'Nova conversa',
       icon: MessageSquare,
+      label: 'Nova Conversa',
+      color: 'bg-blue-600 hover:bg-blue-700',
       show: currentSection === 'chat'
     },
     {
       id: 'focus-mode',
-      label: 'Focus Mode',
       icon: Focus,
+      label: 'Modo Foco',
+      color: 'bg-purple-600 hover:bg-purple-700',
       show: currentSection === 'chat' && hasActiveChat
     },
     {
-      id: 'new-document',
-      label: 'Novo documento',
-      icon: FileText,
-      show: currentSection === 'documents'
+      id: 'toggle-sidebar',
+      icon: Sidebar,
+      label: 'Toggle Conversas',
+      color: 'bg-gray-600 hover:bg-gray-700',
+      show: currentSection === 'chat'
+    },
+    {
+      id: 'quick-action',
+      icon: Zap,
+      label: 'Ação Rápida',
+      color: 'bg-orange-600 hover:bg-orange-700',
+      show: hasDocument
     }
   ];
 
@@ -47,44 +58,47 @@ const FloatingActionButton = ({
     if (visibleActions.length === 1) {
       onAction(visibleActions[0].id);
     } else {
-      setShowActions(!showActions);
+      setIsExpanded(!isExpanded);
     }
   };
 
-  const handleActionSelect = (actionId: string) => {
-    onAction(actionId);
-    setShowActions(false);
-  };
-
   return (
-    <div className={`fixed bottom-6 right-6 z-50 ${className}`}>
-      {/* Action Menu */}
-      {showActions && visibleActions.length > 1 && (
-        <div className="absolute bottom-16 right-0 flex flex-col gap-2 mb-2">
-          {visibleActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Button
-                key={action.id}
-                onClick={() => handleActionSelect(action.id)}
-                className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20 flex items-center gap-2"
-                size="sm"
-              >
-                <Icon className="w-4 h-4" />
-                {action.label}
-              </Button>
-            );
-          })}
-        </div>
-      )}
+    <div className={cn("fixed right-4 z-50 flex flex-col-reverse items-end space-y-reverse space-y-3", className)}>
+      {/* Action Buttons */}
+      {isExpanded && visibleActions.map((action, index) => {
+        const Icon = action.icon;
+        return (
+          <Button
+            key={action.id}
+            onClick={() => {
+              onAction(action.id);
+              setIsExpanded(false);
+            }}
+            className={cn(
+              "w-12 h-12 rounded-full shadow-lg transition-all duration-200 text-white",
+              action.color,
+              "animate-scale-in"
+            )}
+            style={{
+              animationDelay: `${index * 50}ms`
+            }}
+          >
+            <Icon className="w-5 h-5" />
+          </Button>
+        );
+      })}
 
-      {/* Main FAB */}
+      {/* Main Button */}
       <Button
         onClick={handleMainAction}
-        className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-        size="lg"
+        className={cn(
+          "w-14 h-14 rounded-full shadow-lg transition-all duration-200 text-white",
+          isExpanded 
+            ? "bg-red-600 hover:bg-red-700 rotate-45" 
+            : "bg-blue-600 hover:bg-blue-700"
+        )}
       >
-        <Plus className={`w-6 h-6 transition-transform ${showActions ? 'rotate-45' : ''}`} />
+        <Plus className={cn("w-6 h-6 transition-transform duration-200", isExpanded && "rotate-45")} />
       </Button>
     </div>
   );

@@ -1,501 +1,185 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-@import './styles/premium.css';
-@import './styles/premium-system.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.75rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+/* Root variables */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
 
-    /* Font size system */
-    --base-font-size: 16px;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
-
-  /* OLED True Black Theme */
-  .oled {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 0%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 0%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 4%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 4%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 0 0% 4%;
-    --accent-foreground: 0 0% 90%;
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 6%;
-    --input: 0 0% 4%;
-    --ring: 217.2 91.2% 59.8%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
-
-  /* Accessibility High Contrast */
-  .high-contrast {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --border: 0 0% 0%;
-    --primary: 240 100% 50%;
-  }
-
-  .high-contrast.dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --border: 0 0% 100%;
+/* Safe area support for mobile devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
+/* Custom scrollbar styles */
+.premium-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode scrollbar */
+.dark .premium-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.dark .premium-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Layout utilities */
+.flex-scroll-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.flex-scroll-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Touch improvements for mobile */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Glass effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Smooth transitions */
+.transition-layout {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animation keyframes */
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out forwards;
+}
+
+/* Base layer styles */
 @layer base {
   * {
     @apply border-border;
   }
   
-  html {
-    font-size: var(--base-font-size);
-    scroll-behavior: smooth;
-  }
-  
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: #000000;
-    color: rgba(255, 255, 255, 0.9);
-    
-    /* iOS safe area support */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
   }
 
-  /* OLED specific body styles */
-  .oled body {
-    background: #000000;
-    color: rgba(255, 255, 255, 0.95);
+  /* Prevent horizontal scroll on mobile */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
   }
 
-  /* Reduced Motion */
-  .reduced-motion * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-
-  /* Focus Indicators */
-  .focus-visible-enabled *:focus-visible {
-    outline: 2px solid hsl(var(--primary));
-    outline-offset: 2px;
-    border-radius: 4px;
-  }
-
-  .oled .focus-visible-enabled *:focus-visible {
-    outline-color: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
-  }
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  transition: background 0.2s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.oled ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.oled ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-/* Selection Colors */
-::selection {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-}
-
-::-moz-selection {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-}
-
-.oled ::selection {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.oled ::-moz-selection {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-/* OLED Optimizations */
-.glass-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(10px);
-}
-
-.glass-card:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-/* Media optimizations for dark modes */
-.dark img, .oled img {
-  opacity: 0.9;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-}
-
-.dark img:hover, .oled img:hover {
-  opacity: 1;
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: scale(1.02);
-}
-
-.oled img {
-  opacity: 0.85;
-  filter: brightness(0.9) contrast(1.1);
-}
-
-.oled img:hover {
-  opacity: 0.95;
-  filter: brightness(1) contrast(1);
-}
-
-/* Code block optimizations */
-.oled .code-block {
-  background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.dark .code-block {
-  background: #0D0D0D;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Enhanced safe area support for mobile devices */
-@supports (padding: max(0px)) {
-  .pb-safe {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
-  }
-  
-  .pt-safe {
-    padding-top: max(1rem, env(safe-area-inset-top));
-  }
-  
-  .pl-safe {
-    padding-left: max(1rem, env(safe-area-inset-left));
-  }
-  
-  .pr-safe {
-    padding-right: max(1rem, env(safe-area-inset-right));
-  }
-}
-
-/* iOS-specific safe area utilities */
-@supports (padding: env(safe-area-inset-bottom)) {
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  
-  .safe-top {
-    padding-top: env(safe-area-inset-top);
-  }
-  
-  .safe-left {
-    padding-left: env(safe-area-inset-left);
-  }
-  
-  .safe-right {
-    padding-right: env(safe-area-inset-right);
-  }
-}
-
-/* Global Premium Overrides */
-* {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
-}
-
-/* Enhanced touch interactions for iOS */
-.touch-manipulation {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* iOS scroll optimization */
-.ios-scroll {
-  -webkit-overflow-scrolling: touch;
-  overflow-scrolling: touch;
-}
-
-/* Focus ring for accessibility */
-.focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2;
-}
-
-.oled .focus-ring {
-  @apply focus:ring-white/20;
-}
-
-/* Mobile optimizations */
-@media (max-width: 768px) {
-  .glass-card {
-    border-radius: 12px;
-  }
-  
-  .btn-primary,
-  .btn-secondary {
-    padding: 12px 20px;
-    border-radius: 14px;
-    font-size: 0.9rem;
-    min-height: 44px; /* iOS minimum touch target */
-  }
-  
-  /* Prevent zoom on iOS inputs */
-  input, textarea, select {
-    font-size: 16px !important;
-  }
-  
-  /* Smooth scrolling for mobile */
-  html {
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Keyboard handling */
-  .keyboard-visible {
-    height: calc(100vh - env(keyboard-inset-height, 0px));
-  }
-}
-
-/* Enhanced haptic feedback for supported devices */
-@media (hover: none) and (pointer: coarse) {
-  .haptic-light {
-    transition: transform 0.1s ease-out;
-  }
-  
-  .haptic-light:active {
-    transform: scale(0.98);
-  }
-  
-  .haptic-medium {
-    transition: transform 0.15s ease-out;
-  }
-  
-  .haptic-medium:active {
-    transform: scale(0.95);
-  }
-  
-  .haptic-heavy {
-    transition: transform 0.2s ease-out;
-  }
-  
-  .haptic-heavy:active {
-    transform: scale(0.9);
-  }
-}
-
-/* Improved text rendering */
-.text-rendering-optimized {
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* iOS-style rubber band scrolling */
-.rubber-band-scroll {
-  overscroll-behavior: contain;
-}
-
-/* Gesture indicators */
-.swipe-indicator {
-  position: relative;
-}
-
-.swipe-indicator::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: -10px;
-  width: 4px;
-  height: 20px;
-  background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent);
-  border-radius: 2px;
-  transform: translateY(-50%);
-  opacity: 0;
-  animation: swipe-hint 2s ease-in-out infinite;
-}
-
-@keyframes swipe-hint {
-  0%, 100% { opacity: 0; transform: translateY(-50%) translateX(0); }
-  50% { opacity: 1; transform: translateY(-50%) translateX(10px); }
-}
-
-/* Orientation-specific styles */
-@media screen and (orientation: landscape) and (max-height: 500px) {
-  .mobile-landscape {
+  /* iOS Safari specific fixes */
+  body {
+    position: relative;
+    overflow: hidden;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
+  }
+
+  #root {
+    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
-  
-  .mobile-landscape .safe-top {
-    padding-top: 0;
+}
+
+/* Component layer styles */
+@layer components {
+  /* Container queries for responsive design */
+  .container {
+    @apply max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Focus states */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+
+  .dark .focus-ring {
+    @apply focus:ring-offset-gray-900;
   }
 }
 
-/* High refresh rate optimization */
-@media (min-resolution: 120dpi) {
-  * {
-    will-change: transform;
+/* Utilities layer */
+@layer utilities {
+  /* Text utilities */
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
   }
-  
-  .smooth-animation {
-    animation-duration: 0.2s;
-    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* Spacing utilities */
+  .space-safe-y > * + * {
+    margin-top: max(1rem, env(safe-area-inset-top));
   }
-}
 
-/* OLED Power Optimization */
-.oled {
-  /* Minimize white areas to save battery */
-}
-
-.oled .premium-card-dark {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.oled .premium-card-dark:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-/* Custom scrollbar for OLED */
-.oled .premium-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.oled .premium-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-/* Theme transition */
-.theme-transition * {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease !important;
-}
-
-/* Performance optimizations */
-.will-change-transform {
-  will-change: transform;
-}
-
-.will-change-auto {
-  will-change: auto;
-}
-
-/* Battery saving mode */
-.battery-saving-mode * {
-  animation-duration: 0s !important;
-  transition-duration: 0s !important;
-  will-change: auto !important;
-}
-
-/* Print styles */
-@media print {
-  body {
-    background: white !important;
-    color: black !important;
+  .space-safe-x > * + * {
+    margin-left: max(1rem, env(safe-area-inset-left));
   }
-  
-  .glass-card {
-    background: white !important;
-    border: 1px solid #ddd !important;
+
+  /* Layout utilities */
+  .full-height {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .min-touch-target {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
