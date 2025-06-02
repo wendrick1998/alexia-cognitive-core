@@ -79,6 +79,8 @@ export const useLLMRouter = () => {
     extraction: 'gpt-3.5-turbo'
   });
 
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
+  const [lastUsedModel, setLastUsedModel] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Carregar preferências do usuário do banco de dados
@@ -123,6 +125,8 @@ export const useLLMRouter = () => {
     
     if (preferredModel) {
       console.log(`✅ Modelo preferido selecionado: ${preferredModel.name}`);
+      setSelectedModel(preferredModel.name);
+      setLastUsedModel(preferredModel.name);
       return preferredModel;
     }
     
@@ -133,17 +137,17 @@ export const useLLMRouter = () => {
       throw new Error('Nenhum modelo LLM disponível');
     }
     
-    let selectedModel: LLMModel;
+    let selectedModelObj: LLMModel;
     
     switch (config.fallbackStrategy) {
       case 'fastest':
-        selectedModel = availableModels.reduce((fastest, current) => 
+        selectedModelObj = availableModels.reduce((fastest, current) => 
           current.avgResponseTime < fastest.avgResponseTime ? current : fastest
         );
         break;
         
       case 'cheapest':
-        selectedModel = availableModels.reduce((cheapest, current) => 
+        selectedModelObj = availableModels.reduce((cheapest, current) => 
           current.costPerToken < cheapest.costPerToken ? current : cheapest
         );
         break;
@@ -152,69 +156,34 @@ export const useLLMRouter = () => {
       default:
         // Priorizar GPT-4o para tarefas complexas, GPT-3.5 para tarefas simples
         if (['code', 'reasoning', 'academic'].includes(taskType)) {
-          selectedModel = availableModels.find(m => m.name === 'gpt-4o') || availableModels[0];
+          selectedModelObj = availableModels.find(m => m.name === 'gpt-4o') || availableModels[0];
         } else {
-          selectedModel = availableModels.find(m => m.name === 'gpt-3.5-turbo') || availableModels[0];
+          selectedModelObj = availableModels.find(m => m.name === 'gpt-3.5-turbo') || availableModels[0];
         }
         break;
     }
     
-    console.log(`🔄 Modelo fallback selecionado: ${selectedModel.name}`);
-    return selectedModel;
+    console.log(`🔄 Modelo fallback selecionado: ${selectedModelObj.name}`);
+    setSelectedModel(selectedModelObj.name);
+    setLastUsedModel(selectedModelObj.name);
+    return selectedModelObj;
   }, [config, preferences]);
 
-  // Log de chamada para o sistema de métricas
-  const logLLMCall = useCallback(async (
-    modelName: string,
-    provider: string,
-    taskType: TaskType,
-    question: string,
-    answerLength: number,
-    startTime: Date,
-    endTime: Date,
-    tokensInput: number,
-    tokensOutput: number,
-    estimatedCost: number,
-    status: 'success' | 'error' | 'timeout',
-    userId: string,
-    sessionId: string,
-    usedFallback: boolean = false,
-    errorMessage?: string
-  ) => {
+  // Função para roteamento inteligente
+  const routeToOptimalLLM = useCallback(async (input: string, taskType?: TaskType) => {
+    setIsLoading(true);
     try {
-      const responseTime = endTime.getTime() - startTime.getTime();
-      
-      await supabase.from('llm_call_logs').insert({
-        user_id: userId,
-        session_id: sessionId,
-        model_name: modelName,
-        provider: provider,
-        task_type: taskType,
-        question: question,
-        answer_length: answerLength,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
-        response_time: responseTime,
-        tokens_input: tokensInput,
-        tokens_output: tokensOutput,
-        total_tokens: tokensInput + tokensOutput,
-        estimated_cost: estimatedCost,
-        used_fallback: usedFallback,
-        status: status,
-        error_message: errorMessage,
-        cache_hit: false, // TODO: implementar detecção de cache
-        metadata: {
-          task_type: taskType,
-          user_agent: navigator.userAgent,
-          timestamp: new Date().toISOString()
-        }
-      });
-      
-      console.log(`📊 Log de chamada LLM registrado: ${modelName} - ${status}`);
-    } catch (error) {
-      console.error('Erro ao registrar log de chamada LLM:', error);
+      const detectedTaskType = taskType || detectTaskType(input);
+      const optimalModel = selectModel(detectedTaskType, input);
+      return {
+        model: optimalModel,
+        taskType: detectedTaskType,
+        reasoning: `Selecionado ${optimalModel.name} para tarefa ${detectedTaskType}`
+      };
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [selectModel]);
 
   // Detectar tipo de tarefa com base no input do usuário
   const detectTaskType = useCallback((userInput: string): TaskType => {
@@ -260,16 +229,42 @@ export const useLLMRouter = () => {
     return 'general';
   }, []);
 
+  // Função para obter estatísticas dos modelos
+  const getModelStats = useCallback(() => {
+    return config.models.map(model => ({
+      name: model.name,
+      provider: model.provider,
+      costPerToken: model.costPerToken,
+      avgResponseTime: model.avgResponseTime,
+      isAvailable: model.isAvailable,
+      maxTokens: model.maxTokens
+    }));
+  }, [config.models]);
+
+  // Função para selecionar melhor modelo
+  const selectBestModel = useCallback((taskType: TaskType): string => {
+    const model = selectModel(taskType);
+    return model.name;
+  }, [selectModel]);
+
+  // Lista de modelos disponíveis
+  const availableModels = config.models.filter(model => model.isAvailable).map(model => model.name);
+
   return {
     config,
     setConfig,
     preferences,
+    selectedModel,
+    lastUsedModel,
+    isLoading,
+    setIsLoading,
     loadUserPreferences,
     selectModel,
+    routeToOptimalLLM,
     detectTaskType,
-    logLLMCall,
-    isLoading,
-    setIsLoading
+    getModelStats,
+    selectBestModel,
+    availableModels
   };
 };
 

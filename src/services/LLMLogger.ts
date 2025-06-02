@@ -28,6 +28,18 @@ export interface LLMCallLog {
   errorMessage?: string;
 }
 
+export interface LLMMetrics {
+  modelName: string;
+  provider: string;
+  totalCalls: number;
+  successRate: number;
+  avgResponseTime: number;
+  totalTokensUsed: number;
+  totalCost: number;
+  fallbackRate: number;
+  cacheHitRate: number;
+}
+
 export class LLMLogger {
   private static instance: LLMLogger;
   private logQueue: LLMCallLog[] = [];
