@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Menu } from 'lucide-react';
 import AppSidebar from '../AppSidebar';
-import PremiumNavigationBar from '../premium/PremiumNavigationBar';
+import BottomNavigation from '../navigation/BottomNavigation';
 import DarkModeToggle from '../premium/DarkModeToggle';
 import DesktopSidebar from '../premium/DesktopSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -119,11 +119,11 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
           />
         )}
 
-        {/* Main Content - FIXED: Removed overflow-auto that was causing scroll issues */}
+        {/* Main Content */}
         <main className={`flex-1 flex flex-col h-screen ${!isMobile ? 'ml-20' : ''}`}>
           {/* Header for mobile */}
           {isMobile && (
-            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0">
+            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0 z-10">
               <SidebarTrigger>
                 <Button variant="ghost" size="sm" className="p-2 rounded-xl hover:bg-white/10 text-white">
                   <Menu className="w-5 h-5" />
@@ -140,7 +140,7 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
 
           {/* Desktop Header with shortcuts */}
           {!isMobile && (
-            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0">
+            <header className="premium-card-dark backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between transition-colors duration-300 flex-shrink-0 z-10">
               <h1 className="font-semibold text-white capitalize text-xl">
                 {getSectionTitle(currentSection)}
               </h1>
@@ -161,14 +161,16 @@ const AppLayout = ({ children, currentSection, onSectionChange }: AppLayoutProps
             </header>
           )}
 
-          {/* Content Area - FIXED: Removed overflow-auto, added proper flex layout */}
-          <div className="flex-1 min-h-0">
-            {children}
+          {/* Content Area */}
+          <div className="flex-1 relative overflow-hidden">
+            <div className="absolute inset-0 overflow-auto momentum-scroll">
+              {children}
+            </div>
           </div>
 
-          {/* Premium Bottom Navigation (Mobile only) */}
+          {/* Bottom Navigation (Mobile only) */}
           {isMobile && (
-            <PremiumNavigationBar 
+            <BottomNavigation 
               currentSection={currentSection} 
               onSectionChange={onSectionChange}
               onMenuToggle={handleMenuToggle}
