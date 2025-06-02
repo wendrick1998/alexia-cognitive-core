@@ -19,14 +19,17 @@ describe('MemoryTestPanel', () => {
         totalMemories: 10,
         activeNodes: 5,
         consolidationSessions: 2,
-        isConsolidating: false
+        isConsolidating: false,
+        lastConsolidation: new Date().toISOString()
       },
       runMemoryConsolidation: jest.fn(),
       saveInteractionAsMemory: jest.fn()
     });
 
     mockUseInteractionMemory.mockReturnValue({
-      interceptChatMessage: jest.fn()
+      interceptChatMessage: jest.fn(),
+      detectImportantPatterns: jest.fn().mockReturnValue(true),
+      determineMemoryType: jest.fn().mockReturnValue('note')
     });
   });
 
@@ -42,7 +45,9 @@ describe('MemoryTestPanel', () => {
   it('should handle test message submission', async () => {
     const mockInterceptChatMessage = jest.fn();
     mockUseInteractionMemory.mockReturnValue({
-      interceptChatMessage: mockInterceptChatMessage
+      interceptChatMessage: mockInterceptChatMessage,
+      detectImportantPatterns: jest.fn().mockReturnValue(true),
+      determineMemoryType: jest.fn().mockReturnValue('note')
     });
 
     render(<MemoryTestPanel />);

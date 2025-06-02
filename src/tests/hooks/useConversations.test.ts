@@ -1,6 +1,6 @@
 
-import { renderHook, waitFor } from '@/utils/testUtils';
-import { useConversations } from '@/hooks/useConversations';
+import { renderHook, waitFor } from '../../utils/testUtils';
+import { useConversations } from '../useConversations';
 import { createMockConversation } from '@/tests/factories/testDataFactory';
 
 // Mock Supabase client
@@ -11,7 +11,7 @@ describe('useConversations', () => {
     const { result } = renderHook(() => useConversations());
     
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.loading).toBe(false);
     });
     
     expect(result.current.conversations).toBeDefined();

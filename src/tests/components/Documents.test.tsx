@@ -13,10 +13,13 @@ describe('DocumentsManager', () => {
   beforeEach(() => {
     mockUseDocuments.mockReturnValue({
       documents: [],
-      isLoading: false,
+      loading: false,
+      uploading: false,
+      reprocessingIds: new Set(),
       uploadDocument: jest.fn(),
       deleteDocument: jest.fn(),
-      searchDocuments: jest.fn()
+      fetchDocuments: jest.fn(),
+      handleReprocessDocument: jest.fn()
     });
   });
 
@@ -29,10 +32,13 @@ describe('DocumentsManager', () => {
   it('should show loading state', () => {
     mockUseDocuments.mockReturnValue({
       documents: [],
-      isLoading: true,
+      loading: true,
+      uploading: false,
+      reprocessingIds: new Set(),
       uploadDocument: jest.fn(),
       deleteDocument: jest.fn(),
-      searchDocuments: jest.fn()
+      fetchDocuments: jest.fn(),
+      handleReprocessDocument: jest.fn()
     });
 
     render(<DocumentsManager />);
