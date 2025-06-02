@@ -24,10 +24,18 @@ describe('usePerformanceMonitoring', () => {
     const { result } = renderHook(() => usePerformanceMonitoring());
     
     expect(result.current.metrics).toEqual({
-      loadTime: 0,
+      LCP: null,
+      FID: null,
+      CLS: null,
+      FCP: null,
+      TTFB: null,
+      memoryUsage: 0,
+      jsHeapSize: 0,
       renderTime: 0,
-      interactionTime: 0,
-      memoryUsage: 0
+      apiResponseTime: 0,
+      cacheHitRate: 0,
+      errorRate: 0,
+      userSatisfaction: 0
     });
     expect(typeof result.current.trackAPICall).toBe('function');
     expect(typeof result.current.updateMetric).toBe('function');
@@ -41,7 +49,7 @@ describe('usePerformanceMonitoring', () => {
     });
 
     // Verify the API call was tracked
-    expect(result.current.metrics.loadTime).toBeGreaterThan(0);
+    expect(result.current.metrics.apiResponseTime).toBeGreaterThan(0);
   });
 
   it('should update metrics', () => {
@@ -57,7 +65,7 @@ describe('usePerformanceMonitoring', () => {
   it('should calculate performance score', () => {
     const { result } = renderHook(() => usePerformanceMonitoring());
     
-    const score = result.current.getPerformanceScore();
+    const score = result.current.performanceScore;
     expect(typeof score).toBe('number');
     expect(score).toBeGreaterThanOrEqual(0);
     expect(score).toBeLessThanOrEqual(100);
