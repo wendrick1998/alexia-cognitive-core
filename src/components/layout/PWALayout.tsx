@@ -30,15 +30,24 @@ export const PWALayout = ({ children, className }: PWALayoutProps) => {
       document.body.classList.add('ios-pwa');
     }
 
-    // Prevent zoom on iOS
+    // 🚫 ELIMINAR BOUNCE SCROLL - Prevent zoom on iOS
     if (isIOSDevice) {
       const meta = document.createElement('meta');
       meta.name = 'viewport';
-      meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+      meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+      
+      // Remove existing viewport meta if present
+      const existingMeta = document.querySelector('meta[name="viewport"]');
+      if (existingMeta) {
+        document.head.removeChild(existingMeta);
+      }
+      
       document.head.appendChild(meta);
 
       return () => {
-        document.head.removeChild(meta);
+        if (document.head.contains(meta)) {
+          document.head.removeChild(meta);
+        }
       };
     }
   }, []);
@@ -46,14 +55,19 @@ export const PWALayout = ({ children, className }: PWALayoutProps) => {
   return (
     <div 
       className={cn(
-        'min-h-screen w-full',
-        'premium-scrollbar momentum-scroll',
+        'min-h-screen w-full main-container',
+        'overscroll-contain touch-manipulation',
         {
           'standalone-mode': isStandalone,
           'ios-pwa': isIOS,
         },
         className
       )}
+      style={{
+        height: '100dvh',
+        overscrollBehavior: 'contain',
+        WebkitOverflowScrolling: 'touch'
+      }}
     >
       {children}
     </div>

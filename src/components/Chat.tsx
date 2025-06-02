@@ -9,6 +9,7 @@ import ChatHeader from "./chat/ChatHeader";
 import { ConnectionStatus } from "./ui/connection-status";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { MobileScrollWrapper } from "./layout/MobileScrollWrapper";
 
 const Chat = () => {
   const { user } = useAuth();
@@ -68,8 +69,9 @@ const Chat = () => {
     );
   }
 
-  return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-950">
+  // 🚫 SEM BOUNCE SCROLL - Wrapper específico para mobile
+  const ChatContent = () => (
+    <div className="flex flex-col h-full bg-white dark:bg-gray-950 overscroll-contain">
       {/* Header */}
       <div className="flex-shrink-0">
         <ChatHeader 
@@ -78,21 +80,26 @@ const Chat = () => {
         />
       </div>
 
-      {/* Messages Area with Scroll */}
-      <div className="flex-1 overflow-y-auto premium-scrollbar momentum-scroll">
-        <div className="h-full flex flex-col">
-          {messages.length === 0 ? (
-            <ChatWelcome />
-          ) : (
-            <div className="flex-1 px-4 py-6">
-              <ChatMessages 
-                messages={messages} 
-                loading={loading}
-                processing={processing}
-              />
-              <div ref={messagesEndRef} />
-            </div>
-          )}
+      {/* Messages Area with Controlled Scroll */}
+      <div className="flex-1 overflow-hidden">
+        <div className={cn(
+          "h-full overflow-y-auto overscroll-contain",
+          "premium-scrollbar momentum-scroll chat-messages-container"
+        )}>
+          <div className="h-full flex flex-col">
+            {messages.length === 0 ? (
+              <ChatWelcome />
+            ) : (
+              <div className="flex-1 px-4 py-6">
+                <ChatMessages 
+                  messages={messages} 
+                  loading={loading}
+                  processing={processing}
+                />
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -113,6 +120,15 @@ const Chat = () => {
 
       <ConnectionStatus />
     </div>
+  );
+
+  // Renderizar com wrapper mobile ou sem wrapper para desktop
+  return isMobile ? (
+    <MobileScrollWrapper className="h-full">
+      <ChatContent />
+    </MobileScrollWrapper>
+  ) : (
+    <ChatContent />
   );
 };
 
