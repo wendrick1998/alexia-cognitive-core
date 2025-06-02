@@ -1,10 +1,10 @@
 
-import { useSecureAuth } from './useSecureAuth';
+import { usePWAAuth } from './usePWAAuth';
 
-// Re-export the secure auth hook as useAuth for compatibility
-export const useAuth = useSecureAuth;
+// Re-export the PWA-optimized auth hook for Safari compatibility
+export const useAuth = usePWAAuth;
 
-// Create a simple AuthProvider that uses the secure auth
+// Create a simple AuthProvider that uses the PWA auth
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };

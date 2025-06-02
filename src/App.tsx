@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
 import { useState } from 'react';
 import AuthGuard from '@/components/auth/AuthGuard';
+import PWAAuthPage from '@/components/auth/PWAAuthPage';
 import PremiumAppLayout from '@/components/layout/PremiumAppLayout';
 import Chat from '@/components/Chat';
 import Dashboard from '@/components/dashboard/Dashboard';
@@ -37,6 +38,9 @@ function App() {
       <Router>
         <div className="App">
           <Routes>
+            {/* Auth route */}
+            <Route path="/auth" element={<PWAAuthPage />} />
+            
             <Route path="/" element={
               <AuthGuard>
                 <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
