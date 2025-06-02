@@ -1,4 +1,3 @@
-
 /**
  * @description Secure authentication hook with enhanced validation
  * @created_by Security Audit - Alex iA
@@ -187,7 +186,6 @@ export function useSecureAuth(): SecureAuthContextType {
     }
   }, [isRateLimited]);
 
-  // Secure sign out
   const signOut = useCallback(async () => {
     try {
       setError(null);
