@@ -83,7 +83,18 @@ export function useAlexChatSessions() {
         console.error('Erro ao carregar mensagens:', error);
         setMessages([]);
       } else {
-        setMessages(data || []);
+        // Validar e converter os dados para garantir tipagem correta
+        const validatedMessages: AlexChatMessage[] = (data || []).map(msg => ({
+          id: msg.id,
+          session_id: msg.session_id,
+          role: (msg.role === 'user' || msg.role === 'assistant') ? msg.role : 'user',
+          content: msg.content,
+          created_at: msg.created_at,
+          tokens_used: msg.tokens_used,
+          llm_model: msg.llm_model
+        }));
+        
+        setMessages(validatedMessages);
       }
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
