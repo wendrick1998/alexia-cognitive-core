@@ -1,4 +1,3 @@
-
 /**
  * @description Secure authentication hook with enhanced validation
  * @created_by Security Audit - Alex iA

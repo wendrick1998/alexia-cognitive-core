@@ -73,6 +73,37 @@ export interface CognitiveAlert {
   created_at: string;
 }
 
+// Helper function to safely cast status values
+function castEpicStatus(status: string): Epic['status'] {
+  const validStatuses: Epic['status'][] = ['planning', 'active', 'completed', 'archived'];
+  return validStatuses.includes(status as Epic['status']) ? status as Epic['status'] : 'planning';
+}
+
+function castTaskStatus(status: string): Task['status'] {
+  const validStatuses: Task['status'][] = ['pending', 'in_progress', 'done', 'blocked', 'cancelled'];
+  return validStatuses.includes(status as Task['status']) ? status as Task['status'] : 'pending';
+}
+
+function castDecisionType(type: string): Decision['decision_type'] {
+  const validTypes: Decision['decision_type'][] = ['task_prioritization', 'resource_allocation', 'deadline_adjustment', 'task_decomposition', 'risk_mitigation'];
+  return validTypes.includes(type as Decision['decision_type']) ? type as Decision['decision_type'] : 'task_prioritization';
+}
+
+function castAlertType(type: string): CognitiveAlert['alert_type'] {
+  const validTypes: CognitiveAlert['alert_type'][] = ['deadline_risk', 'task_blocked', 'resource_conflict', 'pattern_detected', 'optimization_suggested'];
+  return validTypes.includes(type as CognitiveAlert['alert_type']) ? type as CognitiveAlert['alert_type'] : 'deadline_risk';
+}
+
+function castAlertSeverity(severity: string): CognitiveAlert['severity'] {
+  const validSeverities: CognitiveAlert['severity'][] = ['low', 'medium', 'high', 'critical'];
+  return validSeverities.includes(severity as CognitiveAlert['severity']) ? severity as CognitiveAlert['severity'] : 'medium';
+}
+
+function castAlertStatus(status: string): CognitiveAlert['status'] {
+  const validStatuses: CognitiveAlert['status'][] = ['active', 'acknowledged', 'resolved', 'dismissed'];
+  return validStatuses.includes(status as CognitiveAlert['status']) ? status as CognitiveAlert['status'] : 'active';
+}
+
 export function useAutonomousProjects() {
   const [epics, setEpics] = useState<Epic[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -180,7 +211,15 @@ export function useAutonomousProjects() {
         return false;
       }
 
-      setEpics(prev => [data, ...prev]);
+      // Cast the data to Epic type with proper status casting
+      const newEpic: Epic = {
+        ...data,
+        status: castEpicStatus(data.status),
+        tags: data.tags || [],
+        metadata: data.metadata || {}
+      };
+
+      setEpics(prev => [newEpic, ...prev]);
       toast({
         title: "Épico criado com sucesso",
         description: `O épico "${epicData.name}" foi criado.`,
@@ -231,7 +270,15 @@ export function useAutonomousProjects() {
         return false;
       }
 
-      setTasks(prev => [data, ...prev]);
+      // Cast the data to Task type with proper status casting
+      const newTask: Task = {
+        ...data,
+        status: castTaskStatus(data.status),
+        tags: data.tags || [],
+        metadata: data.metadata || {}
+      };
+
+      setTasks(prev => [newTask, ...prev]);
       toast({
         title: "Tarefa criada com sucesso",
         description: `A tarefa "${taskData.title}" foi criada.`,
@@ -301,7 +348,16 @@ export function useAutonomousProjects() {
         return;
       }
 
-      setDecisions(data || []);
+      // Cast the data with proper type casting
+      const typedDecisions: Decision[] = (data || []).map(item => ({
+        ...item,
+        decision_type: castDecisionType(item.decision_type),
+        context: item.context || {},
+        options: item.options || [],
+        impact_assessment: item.impact_assessment || {}
+      }));
+
+      setDecisions(typedDecisions);
     } catch (error) {
       console.error('Error in fetchDecisions:', error);
     }
@@ -362,7 +418,16 @@ export function useAutonomousProjects() {
         return;
       }
 
-      setAlerts(data || []);
+      // Cast the data with proper type casting
+      const typedAlerts: CognitiveAlert[] = (data || []).map(item => ({
+        ...item,
+        alert_type: castAlertType(item.alert_type),
+        severity: castAlertSeverity(item.severity),
+        status: castAlertStatus(item.status),
+        metadata: item.metadata || {}
+      }));
+
+      setAlerts(typedAlerts);
     } catch (error) {
       console.error('Error in fetchAlerts:', error);
     }
