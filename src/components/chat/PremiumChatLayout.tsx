@@ -2,7 +2,7 @@
 import React from 'react';
 import { Conversation, Message } from '@/hooks/useConversations';
 import { cn } from '@/lib/utils';
-import ConversationSidebar from './ConversationSidebar';
+import ConversationSidebar from '../ConversationSidebar';
 import ChatArea from './ChatArea';
 import { useIsMobile } from '@/hooks/use-mobile';
 
