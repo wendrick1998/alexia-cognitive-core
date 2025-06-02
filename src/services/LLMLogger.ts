@@ -108,6 +108,108 @@ export class LLMLogger {
   }
   
   /**
+   * Registra o início de uma chamada LLM
+   * Retorna um ID de chamada para ser usado no logEnd
+   */
+  async logStart(
+    modelName: string,
+    provider: string,
+    taskType: string,
+    question: string,
+    tokensInput: number,
+    metadata?: Record<string, any>
+  ): Promise<string> {
+    const callId = `call_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Armazenar temporariamente em localStorage para recuperar no logEnd
+    const startData = {
+      callId,
+      startTime: new Date(),
+      modelName,
+      provider,
+      taskType,
+      question,
+      tokensInput,
+      metadata
+    };
+    
+    localStorage.setItem(`llm_call_${callId}`, JSON.stringify(startData));
+    
+    return callId;
+  }
+  
+  /**
+   * Registra o fim de uma chamada LLM
+   */
+  async logEnd(
+    callId: string,
+    answerLength: number,
+    tokensOutput: number,
+    status: 'success' | 'error' | 'timeout',
+    options: {
+      usedFallback?: boolean;
+      fallbackReason?: string;
+      fallbackModel?: string;
+      cacheHit?: boolean;
+      errorMessage?: string;
+      additionalMetadata?: Record<string, any>;
+    } = {}
+  ): Promise<void> {
+    // Recuperar dados do início da chamada
+    const startDataJson = localStorage.getItem(`llm_call_${callId}`);
+    if (!startDataJson) {
+      console.error(`No start data found for call ID: ${callId}`);
+      return;
+    }
+    
+    const startData = JSON.parse(startDataJson);
+    const endTime = new Date();
+    const startTime = new Date(startData.startTime);
+    const responseTime = endTime.getTime() - startTime.getTime();
+    const totalTokens = startData.tokensInput + tokensOutput;
+    const estimatedCost = this.calculateCost(startData.modelName, totalTokens);
+    
+    // Criar log completo
+    const logEntry: LLMCallLog = {
+      userId: this.options.userId,
+      sessionId: this.options.sessionId,
+      modelName: startData.modelName,
+      provider: startData.provider,
+      taskType: startData.taskType,
+      question: startData.question,
+      answerLength,
+      startTime,
+      endTime,
+      responseTime,
+      tokensInput: startData.tokensInput,
+      tokensOutput,
+      totalTokens,
+      estimatedCost,
+      usedFallback: options.usedFallback || false,
+      fallbackReason: options.fallbackReason,
+      fallbackModel: options.fallbackModel,
+      cacheHit: options.cacheHit || false,
+      status,
+      errorMessage: options.errorMessage,
+      metadata: {
+        ...startData.metadata,
+        ...options.additionalMetadata
+      }
+    };
+    
+    // Adicionar à fila de logs
+    this.logQueue.push(logEntry);
+    
+    // Limpar dados temporários
+    localStorage.removeItem(`llm_call_${callId}`);
+    
+    // Se logging em tempo real estiver ativado ou a fila atingir o tamanho do batch, fazer flush
+    if (this.options.enableRealTimeLogging || this.logQueue.length >= this.options.batchSize) {
+      await this.flushLogs();
+    }
+  }
+  
+  /**
    * Obtém métricas agregadas por modelo
    */
   async getMetricsByModel(): Promise<LLMMetrics[]> {
@@ -306,8 +408,50 @@ export class LLMLogger {
    * Envia logs acumulados para o Supabase
    */
   async flushLogs(): Promise<void> {
-    // Implementação básica para evitar erros
-    console.log('Flushing logs...');
+    if (this.logQueue.length === 0) return;
+    
+    const logsToFlush = [...this.logQueue];
+    this.logQueue = [];
+    
+    try {
+      // Converter logs para formato da tabela
+      const formattedLogs = logsToFlush.map(log => ({
+        user_id: log.userId,
+        session_id: log.sessionId,
+        model_name: log.modelName,
+        provider: log.provider,
+        task_type: log.taskType,
+        question: log.question,
+        answer_length: log.answerLength,
+        start_time: log.startTime.toISOString(),
+        end_time: log.endTime.toISOString(),
+        response_time: log.responseTime,
+        tokens_input: log.tokensInput,
+        tokens_output: log.tokensOutput,
+        total_tokens: log.totalTokens,
+        estimated_cost: log.estimatedCost,
+        used_fallback: log.usedFallback,
+        fallback_reason: log.fallbackReason,
+        fallback_model: log.fallbackModel,
+        cache_hit: log.cacheHit,
+        status: log.status,
+        error_message: log.errorMessage,
+        metadata: log.metadata
+      }));
+      
+      const { error } = await supabase
+        .from('llm_call_logs')
+        .insert(formattedLogs);
+      
+      if (error) throw error;
+      
+      console.log(`Successfully flushed ${logsToFlush.length} LLM call logs`);
+    } catch (error) {
+      console.error('Error flushing LLM logs:', error);
+      
+      // Recolocar logs na fila para tentar novamente mais tarde
+      this.logQueue = [...logsToFlush, ...this.logQueue];
+    }
   }
   
   /**
