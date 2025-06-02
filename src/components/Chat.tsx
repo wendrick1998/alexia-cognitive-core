@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
@@ -199,22 +198,21 @@ const Chat = () => {
 
   return (
     <>
-      <div className="h-full w-full relative overflow-hidden">
-        <div className="h-full overflow-y-auto">
-          <PremiumChatLayout
-            conversations={conversations}
-            currentConversation={currentConversation}
-            messages={messages}
-            processing={processing}
-            onConversationSelect={handleConversationSelect}
-            onNewConversation={handleNewConversation}
-            onSendMessage={handleSendMessage}
-            isCreatingNew={conversationState.isCreatingNew}
-            isNavigating={conversationState.isNavigating}
-            renderMessageExtras={renderMessageWithSource}
-            className="messages-container"
-          />
-        </div>
+      {/* CORRIGIDO: Container principal com height full e scroll */}
+      <div className="h-full w-full relative">
+        <PremiumChatLayout
+          conversations={conversations}
+          currentConversation={currentConversation}
+          messages={messages}
+          processing={processing}
+          onConversationSelect={handleConversationSelect}
+          onNewConversation={handleNewConversation}
+          onSendMessage={handleSendMessage}
+          isCreatingNew={conversationState.isCreatingNew}
+          isNavigating={conversationState.isNavigating}
+          renderMessageExtras={renderMessageWithSource}
+          className="h-full"
+        />
 
         <div ref={messagesEndRef} />
 

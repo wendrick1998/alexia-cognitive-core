@@ -52,7 +52,7 @@ const ChatArea = ({
   }, [processing]);
 
   return (
-    <div className="h-full flex flex-col bg-black">
+    <div className="h-full flex-scroll-layout bg-black">
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b border-white/10 bg-black/50 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -77,8 +77,8 @@ const ChatArea = ({
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Messages Area - CORRIGIDO: Com scroll funcional */}
+      <div className="flex-scroll-content scroll-container premium-scrollbar">
         {!currentConversation ? (
           <ChatWelcome />
         ) : (

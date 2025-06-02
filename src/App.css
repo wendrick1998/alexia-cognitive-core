@@ -12,18 +12,19 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  /* REMOVIDO: overflow: hidden; - Isso estava bloqueando o scroll */
 }
 
 #root {
   height: 100vh;
-  overflow: hidden;
+  /* REMOVIDO: overflow: hidden; - Permitir scroll natural */
 }
 
 /* Scroll nativo com estilo personalizado */
 .premium-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  -webkit-overflow-scrolling: touch; /* iOS scroll nativo */
 }
 
 .premium-scrollbar::-webkit-scrollbar {
@@ -52,12 +53,39 @@ html, body {
   }
 }
 
-/* Garantir que elementos com overflow funcionem corretamente */
+/* CORREÇÃO: Garantir que elementos com overflow funcionem corretamente */
 .overflow-y-auto {
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* NOVA CLASSE: Scroll container para componentes */
+.scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+/* Momentum scrolling para iOS */
+.momentum-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
 }
 
 /* Estilo para links e botões acessíveis */
@@ -195,4 +223,19 @@ select:focus-visible,
 
 .text-muted {
   @apply text-white/40 text-xs;
+}
+
+/* NOVA CLASSE: Layout flexível para componentes */
+.flex-scroll-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.flex-scroll-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
 }

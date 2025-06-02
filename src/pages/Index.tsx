@@ -50,10 +50,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex w-full">
+    <div className="h-screen bg-black text-white flex w-full overflow-hidden">
       {/* Mobile Header */}
       {isMobile && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10 px-4 py-3">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10 px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
@@ -72,7 +72,7 @@ const Index = () => {
 
       {/* Sidebar */}
       <div className={`
-        ${isMobile ? 'fixed inset-y-0 left-0 z-40' : 'relative'}
+        ${isMobile ? 'fixed inset-y-0 left-0 z-40' : 'relative flex-shrink-0'}
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         transition-transform duration-300 ease-in-out
         ${isMobile ? 'w-80' : 'w-64'}
@@ -93,12 +93,12 @@ const Index = () => {
         />
       )}
 
-      {/* Main Content */}
+      {/* Main Content - CORRIGIDO: Estrutura flex-scroll-layout */}
       <div className={`
-        flex-1 min-w-0 flex flex-col
+        flex-1 min-w-0 flex-scroll-layout
         ${isMobile ? 'pt-16' : ''}
       `}>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-scroll-content scroll-container premium-scrollbar">
           {renderContent()}
         </div>
       </div>

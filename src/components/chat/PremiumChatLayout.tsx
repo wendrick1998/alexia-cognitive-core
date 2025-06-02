@@ -60,8 +60,8 @@ const PremiumChatLayout = ({
     <div className={`h-full flex bg-transparent ${className}`}>
       {/* Sidebar - Desktop sempre visível, Mobile condicional */}
       {(!isMobile || showSidebar) && (
-        <div className={`${isMobile ? 'absolute inset-0 z-50' : 'w-80 border-r border-white/10'} glass-card`}>
-          <div className="h-full flex flex-col">
+        <div className={`${isMobile ? 'absolute inset-0 z-50' : 'w-80 border-r border-white/10 flex-shrink-0'} glass-card`}>
+          <div className="h-full flex-scroll-layout">
             {/* Header */}
             <div className="p-4 border-b border-white/10 flex-shrink-0">
               <div className="flex items-center justify-between mb-4">
@@ -86,8 +86,8 @@ const PremiumChatLayout = ({
               </div>
             </div>
 
-            {/* Conversations List */}
-            <div className="flex-1 overflow-y-auto min-h-0">
+            {/* Conversations List - CORRIGIDO: Com scroll */}
+            <div className="flex-scroll-content scroll-container premium-scrollbar">
               <ConversationsList
                 conversations={conversations}
                 currentConversation={currentConversation}
@@ -100,8 +100,8 @@ const PremiumChatLayout = ({
         </div>
       )}
 
-      {/* Main Chat Area - Guaranteed full height */}
-      <div className="flex-1 min-h-0 h-full">
+      {/* Main Chat Area - CORRIGIDO: Scroll garantido */}
+      <div className="flex-1 min-w-0 h-full">
         <ChatArea
           currentConversation={currentConversation}
           messages={messages}

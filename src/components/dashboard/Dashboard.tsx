@@ -69,7 +69,7 @@ const Dashboard = () => {
 
   return (
     <AuthGuard>
-      <div className="h-full w-full overflow-y-auto">
+      <div className="h-full w-full">
         <div className="min-h-full p-6 space-y-6 animate-premium-fade-in">
           {/* Header */}
           <div className="space-y-2">
@@ -145,9 +145,9 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Dashboard Grid */}
+          {/* Dashboard Grid - CORRIGIDO: Responsivo e com scroll natural */}
           {!statsLoading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
               {/* Activity Chart */}
               <div className="md:col-span-2">
                 <PremiumCard variant="elevated" className="h-full">
