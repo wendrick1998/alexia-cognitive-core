@@ -1,6 +1,6 @@
 
 import { renderHook, waitFor } from '../../utils/testUtils';
-import { useConversations } from '../useConversations';
+import { useConversations } from '../../hooks/useConversations';
 import { createMockConversation } from '@/tests/factories/testDataFactory';
 
 // Mock Supabase client

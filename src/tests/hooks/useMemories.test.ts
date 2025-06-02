@@ -1,6 +1,6 @@
 
 import { renderHook, waitFor } from '../../utils/testUtils';
-import { useMemories } from '../useMemories';
+import { useMemories } from '../../hooks/useMemories';
 
 // Mock the useQuery hook
 const mockUseQuery = jest.fn();

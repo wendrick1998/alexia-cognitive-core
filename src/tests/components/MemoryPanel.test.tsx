@@ -23,7 +23,10 @@ describe('MemoryTestPanel', () => {
         lastConsolidation: new Date().toISOString()
       },
       runMemoryConsolidation: jest.fn(),
-      saveInteractionAsMemory: jest.fn()
+      saveInteractionAsMemory: jest.fn(),
+      boostMemoryActivation: jest.fn(),
+      applyMemoryDecay: jest.fn(),
+      loadStats: jest.fn()
     });
 
     mockUseInteractionMemory.mockReturnValue({
