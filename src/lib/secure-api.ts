@@ -87,10 +87,6 @@ class SecureApi {
         }
       });
       
-      // Create abort controller for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-      
       // Make the function call
       const { data, error } = await supabase.functions.invoke(functionName, {
         body,
@@ -100,8 +96,6 @@ class SecureApi {
           ...headers
         }
       });
-      
-      clearTimeout(timeoutId);
       
       if (error) {
         await errorHandler.logSecurityEvent({
@@ -134,20 +128,6 @@ class SecureApi {
       return { data, error: null };
       
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        await errorHandler.logSecurityEvent({
-          action: 'api_call_timeout',
-          resource: functionName,
-          severity: 'medium',
-          details: { timeout, timestamp: Date.now() }
-        });
-        
-        return {
-          data: null,
-          error: 'Timeout na requisição. Tente novamente.'
-        };
-      }
-      
       await errorHandler.logSecurityEvent({
         action: 'api_call_exception',
         resource: functionName,
