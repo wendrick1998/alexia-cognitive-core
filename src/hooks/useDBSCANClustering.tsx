@@ -419,11 +419,11 @@ export function useDBSCANClustering() {
 
       return (data || []).map(node => ({
         id: node.id,
-        coordinates: node.embedding_general || [],
+        coordinates: Array.isArray(node.embedding_general) ? node.embedding_general : [],
         content: node.content || '',
         title: node.title,
         metadata: node.metadata || {}
-      }));
+      })).filter(point => point.coordinates.length > 0);
     } catch (error) {
       console.error('❌ Error converting nodes to points:', error);
       return [];
@@ -461,8 +461,6 @@ export function useDBSCANClustering() {
     clusters,
     metrics,
     isProcessing,
-    visualizeClusters,
-    exportClusters,
-    resetClustering
+    convertNodesToPoints
   };
 }

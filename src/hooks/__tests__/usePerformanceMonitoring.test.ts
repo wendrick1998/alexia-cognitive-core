@@ -29,41 +29,37 @@ describe('usePerformanceMonitoring', () => {
       interactionTime: 0,
       memoryUsage: 0
     });
-    expect(typeof result.current.startMeasurement).toBe('function');
-    expect(typeof result.current.endMeasurement).toBe('function');
+    expect(typeof result.current.trackAPICall).toBe('function');
+    expect(typeof result.current.updateMetric).toBe('function');
   });
 
-  it('should measure performance correctly', () => {
+  it('should track API calls correctly', () => {
     const { result } = renderHook(() => usePerformanceMonitoring());
     
     act(() => {
-      const measurementId = result.current.startMeasurement('test-operation');
-      expect(typeof measurementId).toBe('string');
+      result.current.trackAPICall(1000, 1500, true);
     });
 
-    mockPerformanceNow.mockReturnValue(1500);
-
-    act(() => {
-      result.current.endMeasurement('test-measurement-id', 500);
-    });
-
-    // Verify the measurement was recorded
-    expect(result.current.metrics.renderTime).toBeGreaterThan(0);
+    // Verify the API call was tracked
+    expect(result.current.metrics.loadTime).toBeGreaterThan(0);
   });
 
-  it('should handle memory usage measurement', () => {
+  it('should update metrics', () => {
     const { result } = renderHook(() => usePerformanceMonitoring());
     
-    // Mock memory API
-    Object.defineProperty(window.performance, 'memory', {
-      value: { usedJSHeapSize: 1000000 },
-      configurable: true
-    });
-
     act(() => {
-      result.current.endMeasurement('memory-test', 100);
+      result.current.updateMetric('renderTime', 100);
     });
 
-    expect(result.current.metrics.memoryUsage).toBeGreaterThan(0);
+    expect(result.current.metrics.renderTime).toBe(100);
+  });
+
+  it('should calculate performance score', () => {
+    const { result } = renderHook(() => usePerformanceMonitoring());
+    
+    const score = result.current.getPerformanceScore();
+    expect(typeof score).toBe('number');
+    expect(score).toBeGreaterThanOrEqual(0);
+    expect(score).toBeLessThanOrEqual(100);
   });
 });

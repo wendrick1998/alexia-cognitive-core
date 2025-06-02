@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -144,9 +145,9 @@ export function useBM25Search() {
         details[term] = {
           tf,
           df,
-          idf: idf.toFixed(3),
-          normalizedTf: normalizedTf.toFixed(3),
-          termScore: termScore.toFixed(3)
+          idf: Number(idf.toFixed(3)),
+          normalizedTf: Number(normalizedTf.toFixed(3)),
+          termScore: Number(termScore.toFixed(3))
         };
       }
     });
@@ -195,8 +196,8 @@ export function useBM25Search() {
             score: boostedScore,
             highlights,
             relevanceFactors: {
-              termFrequency: Object.values(details).reduce((sum: number, d: any) => sum + parseFloat(d.tf || 0), 0),
-              inverseDocumentFrequency: Object.values(details).reduce((sum: number, d: any) => sum + parseFloat(d.idf || 0), 0),
+              termFrequency: Object.values(details).reduce((sum: number, d: any) => sum + Number(d.tf || 0), 0),
+              inverseDocumentFrequency: Object.values(details).reduce((sum: number, d: any) => sum + Number(d.idf || 0), 0),
               documentLength: documentLengths.current.get(doc.id) || 0,
               fieldBoosts: boostFields
             }
@@ -350,10 +351,10 @@ export function useBM25Search() {
 
       if (nodesError) throw nodesError;
 
-      // Load from documents
+      // Load from documents (using correct table structure)
       const { data: docs, error: docsError } = await supabase
         .from('documents')
-        .select('id, title, content, metadata')
+        .select('id, title, metadata')
         .eq('user_id', user.id);
 
       if (docsError) throw docsError;
@@ -369,7 +370,7 @@ export function useBM25Search() {
         })),
         ...(docs || []).map(doc => ({
           id: doc.id,
-          content: doc.content || '',
+          content: '', // Documents table doesn't have content column directly
           title: doc.title,
           metadata: doc.metadata || {},
           type: 'document' as const

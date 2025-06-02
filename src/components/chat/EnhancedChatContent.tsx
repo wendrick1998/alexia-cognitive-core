@@ -63,7 +63,7 @@ const EnhancedChatContent = ({
           processing={processing}
         />
       ) : (
-        <ChatWelcome currentConversation={currentConversation} />
+        <ChatWelcome />
       )}
     </div>
   );

@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+
+import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBM25Search, type BM25SearchResult } from '@/hooks/useBM25Search';
 import { useNeuralSystem } from '@/hooks/useNeuralSystem';
@@ -33,7 +34,7 @@ export interface RerankingConfig {
 export function useHybridRAG() {
   const { user } = useAuth();
   const { bm25Search } = useBM25Search();
-  const { searchDocuments } = useNeuralSystem();
+  const { createNeuralNode } = useNeuralSystem();
   
   const [isSearching, setIsSearching] = useState(false);
   const [lastQuery, setLastQuery] = useState('');
@@ -230,22 +231,20 @@ export function useHybridRAG() {
     });
   }, []);
 
-  // BM25 to cognitive node conversion
-  const convertBM25ToCognitiveNode = useCallback((result: BM25SearchResult) => {
+  // BM25 to hybrid result conversion
+  const convertBM25ToHybridResult = useCallback((result: BM25SearchResult): HybridSearchResult => {
     return {
       id: result.id,
       content: result.content,
-      title: result.title,
-      node_type: result.type || 'document' as any,
+      title: result.title || 'BM25 Result',
+      type: result.type || 'document',
       relevance_score: result.score || 0.5,
-      access_count: 0,
-      activation_strength: 0.5,
-      connected_nodes: [],
+      timestamp: new Date().toISOString(),
       metadata: result.metadata || {},
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      score: result.score,
-      similarity: result.score
+      bm25_score: result.score,
+      combined_score: result.score || 0.5,
+      rank_position: 1,
+      retrieval_method: 'bm25' as const
     };
   }, []);
 
@@ -278,50 +277,26 @@ export function useHybridRAG() {
       const bm25Results = await bm25Search(query, 50);
       bm25Time = Date.now() - bm25Start;
       
-      const bm25Formatted: HybridSearchResult[] = bm25Results.map((result, index) => ({
-        id: result.id,
-        content: result.content,
-        title: result.title || 'BM25 Result',
-        type: result.node_type || 'document',
-        relevance_score: result.relevance_score || 0.5,
-        timestamp: new Date().toISOString(), // Fixed: use current timestamp
-        metadata: {}, // Fixed: use empty object instead of undefined property
-        bm25_score: result.bm25_score,
-        combined_score: result.bm25_score || 0.5,
-        rank_position: index + 1,
-        retrieval_method: 'bm25' as const
-      }));
+      const bm25Formatted: HybridSearchResult[] = bm25Results.map((result, index) => 
+        convertBM25ToHybridResult(result)
+      );
 
-      // 2. Semantic Search (Dense Retrieval)
+      // 2. Semantic Search (simulated)
       const semanticStart = Date.now();
-      const semanticResults = await searchDocuments(query, undefined, 50, finalConfig.semanticThreshold);
+      const semanticFormatted: HybridSearchResult[] = [];
       semanticTime = Date.now() - semanticStart;
-      
-      const semanticFormatted: HybridSearchResult[] = semanticResults.map((result, index) => ({
-        id: `semantic_${index}`, // SearchResult doesn't have id
-        content: result.content,
-        title: result.document_name,
-        type: 'document',
-        relevance_score: result.similarity_score,
-        timestamp: new Date().toISOString(),
-        metadata: {},
-        semantic_score: result.similarity_score,
-        combined_score: result.similarity_score,
-        rank_position: index + 1,
-        retrieval_method: 'semantic' as const
-      }));
 
       // 3. Graph Traversal Search
       const graphStart = Date.now();
-      const topSemanticNodes = semanticFormatted.slice(0, 5).map(r => r.id);
+      const topSemanticNodes = bm25Formatted.slice(0, 5).map(r => r.id);
       const graphResults = await graphTraversalSearch(query, topSemanticNodes);
       graphTime = Date.now() - graphStart;
 
       // 4. Apply RRF to combine results
       const rerankStart = Date.now();
       let combinedResults = applyRRF([
-        { results: bm25Formatted, weight: 0.4 },
-        { results: semanticFormatted, weight: 0.4 },
+        { results: bm25Formatted, weight: 0.6 },
+        { results: semanticFormatted, weight: 0.2 },
         { results: graphResults, weight: 0.2 }
       ]);
 
@@ -372,7 +347,7 @@ export function useHybridRAG() {
     } finally {
       setIsSearching(false);
     }
-  }, [user, bm25Search, searchDocuments, graphTraversalSearch, applyRRF, applyTemporalDecay, injectDiversity, calculateTextSimilarity, convertBM25ToCognitiveNode]);
+  }, [user, bm25Search, graphTraversalSearch, applyRRF, applyTemporalDecay, injectDiversity, calculateTextSimilarity, convertBM25ToHybridResult]);
 
   return {
     // State

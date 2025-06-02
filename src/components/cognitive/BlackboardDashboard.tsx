@@ -1,419 +1,239 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBlackboardSystem } from '@/hooks/useBlackboardSystem';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Brain, Cpu, Zap, Clock, CheckCircle, AlertCircle, Activity, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
-import { 
-  Layers, 
-  MessageSquare, 
-  Users, 
-  Clock, 
-  TrendingUp, 
-  Activity,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Brain
-} from 'lucide-react';
 
 const BlackboardDashboard: React.FC = () => {
-  const {
-    blackboardState,
-    processWithBlackboard,
-    addBlackboardEntry,
-    getBlackboardStatus,
-    isInitialized,
-    isProcessing
+  const { 
+    processWithBlackboard, 
+    getBlackboardStatus, 
+    isInitialized 
   } = useBlackboardSystem();
 
-  const [queryInput, setQueryInput] = useState('');
-  const [processingHistory, setProcessingHistory] = useState<any[]>([]);
-  const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
+  const [testInput, setTestInput] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [lastResult, setLastResult] = useState<any>(null);
+  const [status, setStatus] = useState<any>(null);
 
-  const handleBlackboardProcessing = useCallback(async () => {
-    if (!queryInput.trim()) return;
-
-    const processingTask = {
-      id: crypto.randomUUID(),
-      input: queryInput,
-      timestamp: new Date(),
-      status: 'processing'
+  useEffect(() => {
+    const updateStatus = () => {
+      setStatus(getBlackboardStatus());
     };
+    
+    updateStatus();
+    const interval = setInterval(updateStatus, 2000);
+    return () => clearInterval(interval);
+  }, [getBlackboardStatus]);
 
-    setProcessingHistory(prev => [processingTask, ...prev]);
-    setQueryInput('');
-
+  const handleTestProcessing = async () => {
+    if (!testInput.trim()) return;
+    
+    setIsProcessing(true);
     try {
-      const result = await processWithBlackboard(queryInput, {
-        source: 'dashboard',
-        timestamp: new Date().toISOString()
+      const result = await processWithBlackboard(testInput, {
+        source: 'blackboard-test', 
+        timestamp: Date.now() 
       });
-
-      const completedTask = {
-        ...processingTask,
-        status: result.success ? 'completed' : 'failed',
-        result,
-        duration: result.totalProcessingTime
-      };
-
-      setProcessingHistory(prev => 
-        prev.map(task => task.id === processingTask.id ? completedTask : task)
-      );
-
+      setLastResult(result);
     } catch (error) {
-      const failedTask = {
-        ...processingTask,
-        status: 'failed',
-        error: error.message,
-        duration: Date.now() - processingTask.timestamp.getTime()
-      };
-
-      setProcessingHistory(prev => 
-        prev.map(task => task.id === processingTask.id ? failedTask : task)
-      );
+      console.error('Test processing failed:', error);
+    } finally {
+      setIsProcessing(false);
     }
-  }, [queryInput, processWithBlackboard]);
+  };
 
-  const getStatusIcon = useCallback((status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'processing':
-        return <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />;
-      case 'failed':
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'pending':
-        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
-    }
-  }, []);
+  const renderSystemStatus = () => (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card>
+        <CardContent className="p-4 text-center">
+          <Brain className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+          <div className="text-2xl font-bold">{status?.totalEntries || 0}</div>
+          <div className="text-sm text-gray-600">Entradas no Blackboard</div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardContent className="p-4 text-center">
+          <Users className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+          <div className="text-2xl font-bold">{status?.knowledgeSourcesCount || 0}</div>
+          <div className="text-sm text-gray-600">Knowledge Sources</div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardContent className="p-4 text-center">
+          <Activity className="w-6 h-6 mx-auto mb-2 text-green-600" />
+          <div className="text-2xl font-bold">{isInitialized ? 'ON' : 'OFF'}</div>
+          <div className="text-sm text-gray-600">Sistema Ativo</div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardContent className="p-4 text-center">
+          <Cpu className="w-6 h-6 mx-auto mb-2 text-orange-600" />
+          <div className="text-2xl font-bold">{isProcessing ? 'PROC' : 'IDLE'}</div>
+          <div className="text-sm text-gray-600">Status</div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
-  const getEntryTypeColor = useCallback((agentType: string) => {
-    const colors = {
-      'analytical': 'bg-blue-100 text-blue-800',
-      'creative': 'bg-purple-100 text-purple-800', 
-      'technical': 'bg-green-100 text-green-800',
-      'integration': 'bg-orange-100 text-orange-800',
-      'memory': 'bg-pink-100 text-pink-800',
-      'search': 'bg-cyan-100 text-cyan-800'
-    };
-    return colors[agentType as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  }, []);
+  const renderKnowledgeSources = () => (
+    <div className="space-y-3">
+      {status?.activeAgents?.map((agent: string) => (
+        <Card key={agent} className="border border-gray-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium flex items-center gap-2">
+                {agent === 'analytical' && <Brain className="w-4 h-4 text-blue-600" />}
+                {agent === 'creative' && <Zap className="w-4 h-4 text-purple-600" />}
+                {agent === 'critical' && <AlertCircle className="w-4 h-4 text-red-600" />}
+                {agent === 'integrator' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                {agent}
+              </h4>
+              <Badge variant="default">Ativo</Badge>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              <Badge variant="outline" className="text-xs">
+                {agent}-agent
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 
-  const renderBlackboardEntries = useCallback(() => {
-    return (
-      <div className="space-y-2">
-        {blackboardState.entries.slice(0, 10).map(entry => (
-          <Card 
-            key={entry.id}
-            className={`border cursor-pointer transition-all ${
-              selectedEntry === entry.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-md'
-            }`}
-            onClick={() => setSelectedEntry(selectedEntry === entry.id ? null : entry.id)}
-          >
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Badge className={getEntryTypeColor(entry.agentType)}>
-                    {entry.agentType}
-                  </Badge>
-                  <span className="text-sm font-medium">
-                    Priority {entry.priority}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(entry.status)}
-                  <span className="text-xs text-gray-500">
-                    {entry.timestamp.toLocaleTimeString()}
-                  </span>
-                </div>
+  const renderRecentEntries = () => (
+    <div className="space-y-3 max-h-96 overflow-y-auto">
+      {status?.recentEntries?.map((entry: any) => (
+        <Card key={entry.id} className="border border-gray-200">
+          <CardContent className="p-3">
+            <div className="flex items-start justify-between mb-2">
+              <Badge variant="outline" className="text-xs">
+                {entry.type}
+              </Badge>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Clock className="w-3 h-3" />
+                {new Date(entry.timestamp).toLocaleTimeString()}
               </div>
-              
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">
-                  Confidence: {(entry.confidence * 100).toFixed(0)}%
-                </span>
-                <Progress value={entry.confidence * 100} className="w-16 h-2" />
-              </div>
-              
-              {entry.dependencies.length > 0 && (
-                <div className="mt-2 text-xs text-gray-500">
-                  Dependencies: {entry.dependencies.length}
-                </div>
-              )}
-              
-              {selectedEntry === entry.id && (
-                <div className="mt-3 p-2 bg-gray-50 rounded text-xs">
-                  <pre className="whitespace-pre-wrap text-gray-700">
-                    {JSON.stringify(entry.content, null, 2).substring(0, 300)}...
-                  </pre>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+            <p className="text-sm text-gray-700 mb-2">
+              Fonte: {entry.source} | Confiança: {(entry.confidence * 100).toFixed(0)}%
+            </p>
+            {entry.content?.result && (
+              <p className="text-xs text-gray-600 line-clamp-2">
+                {typeof entry.content.result === 'string' 
+                  ? entry.content.result.substring(0, 150) + '...'
+                  : JSON.stringify(entry.content).substring(0, 150) + '...'
+                }
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+      {(!status?.recentEntries || status.recentEntries.length === 0) && (
+        <div className="text-center text-gray-500 py-8">
+          <Brain className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Nenhuma entrada recente no Blackboard</p>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderTestInterface = () => (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Input
+          value={testInput}
+          onChange={(e) => setTestInput(e.target.value)}
+          placeholder="Teste o sistema Blackboard com uma tarefa complexa..."
+          onKeyPress={(e) => e.key === 'Enter' && handleTestProcessing()}
+        />
+        <Button 
+          onClick={handleTestProcessing}
+          disabled={isProcessing || !testInput.trim() || !isInitialized}
+        >
+          {isProcessing ? <Cpu className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+        </Button>
       </div>
-    );
-  }, [blackboardState.entries, selectedEntry, getEntryTypeColor, getStatusIcon]);
 
-  const renderProcessingHistory = useCallback(() => {
-    return (
-      <div className="space-y-3">
-        {processingHistory.slice(0, 5).map(task => (
-          <Card key={task.id} className="border border-gray-200">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1">
-                  <p className="text-sm font-medium mb-1">
-                    {task.input.substring(0, 80)}...
+      {lastResult && (
+        <Card className="border border-blue-200 bg-blue-50/30">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              Resultado do Processamento Paralelo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div>
+                <Badge variant={lastResult.success ? "default" : "destructive"}>
+                  {lastResult.success ? "Sucesso" : "Falha"}
+                </Badge>
+              </div>
+              
+              {lastResult.result && (
+                <div className="bg-white p-3 rounded border">
+                  <h4 className="font-medium mb-2">Resultado Integrado:</h4>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    {typeof lastResult.result === 'string' 
+                      ? lastResult.result 
+                      : JSON.stringify(lastResult.result, null, 2)
+                    }
                   </p>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <Clock className="w-3 h-3" />
-                    <span>{task.timestamp.toLocaleTimeString()}</span>
-                    {task.duration && (
-                      <>
-                        <span>•</span>
-                        <span>{task.duration}ms</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(task.status)}
-                  <Badge variant={
-                    task.status === 'completed' ? 'default' :
-                    task.status === 'failed' ? 'destructive' : 'secondary'
-                  }>
-                    {task.status}
-                  </Badge>
-                </div>
-              </div>
-              
-              {task.result && (
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span>Quality Score:</span>
-                    <Badge variant="outline">
-                      {(task.result.qualityScore * 100).toFixed(0)}%
-                    </Badge>
-                  </div>
-                  
-                  {task.result.agentContributions && (
-                    <div className="text-xs">
-                      <span className="font-medium">Agents Used: </span>
-                      {task.result.agentContributions.map((contrib: any) => contrib.agent).join(', ')}
-                    </div>
-                  )}
-                  
-                  {task.result.synthesizedInsights && task.result.synthesizedInsights.length > 0 && (
-                    <div className="text-xs">
-                      <span className="font-medium">Insights: </span>
-                      {task.result.synthesizedInsights.slice(0, 2).join(', ')}
-                    </div>
-                  )}
                 </div>
               )}
-              
-              {task.error && (
-                <div className="mt-2 p-2 bg-red-50 rounded text-xs">
-                  <span className="font-medium text-red-700">Error: </span>
-                  <span className="text-red-600">{task.error}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }, [processingHistory, getStatusIcon]);
-
-  const renderKnowledgeSources = useCallback(() => {
-    return (
-      <div className="space-y-2">
-        {blackboardState.knowledgeSources.slice(0, 8).map(source => (
-          <Card key={source.id} className="border border-gray-200">
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    {source.type.replace('_', ' ')}
-                  </Badge>
-                  <span className="text-sm">
-                    {source.id.substring(0, 8)}...
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <span>Relevance: {(source.relevance * 100).toFixed(0)}%</span>
-                  <span>•</span>
-                  <span>{source.lastAccessed.toLocaleDateString()}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }, [blackboardState.knowledgeSources]);
-
-  const status = getBlackboardStatus();
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      {/* Blackboard Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Layers className="w-5 h-5" />
-            Blackboard System Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {status.totalEntries}
-              </div>
-              <div className="text-sm text-gray-600">Total Entries</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {status.activeAgents.length}
-              </div>
-              <div className="text-sm text-gray-600">Active Agents</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {status.knowledgeSourcesCount}
-              </div>
-              <div className="text-sm text-gray-600">Knowledge Sources</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {status.queueLength}
-              </div>
-              <div className="text-sm text-gray-600">Queue Length</div>
-            </div>
+      <div className="flex items-center gap-3">
+        <Brain className="w-6 h-6 text-purple-600" />
+        <div>
+          <h2 className="text-lg font-semibold">Blackboard Architecture System</h2>
+          <p className="text-sm text-gray-600">
+            Processamento paralelo com Web Workers | 
+            {status?.knowledgeSourcesCount || 0} Knowledge Sources ativos |
+            {status?.totalEntries || 0} entradas no blackboard
+          </p>
+        </div>
+      </div>
+
+      {renderSystemStatus()}
+
+      <Tabs defaultValue="test" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="test">Teste</TabsTrigger>
+          <TabsTrigger value="sources">Knowledge Sources</TabsTrigger>
+          <TabsTrigger value="monitor">Monitor</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="test" className="mt-4">
+          {renderTestInterface()}
+        </TabsContent>
+        
+        <TabsContent value="sources" className="mt-4">
+          {renderKnowledgeSources()}
+        </TabsContent>
+        
+        <TabsContent value="monitor" className="mt-4">
+          <div className="text-center text-gray-500 py-8">
+            <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Monitor em tempo real será implementado</p>
           </div>
-          
-          {!isInitialized && (
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-              <div className="flex items-center gap-2 text-yellow-800">
-                <AlertCircle className="w-4 h-4" />
-                <span className="text-sm">Blackboard system is initializing...</span>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Processing Interface */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            Cooperative Processing
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Textarea
-              placeholder="Enter a complex task for multi-agent cooperative processing..."
-              value={queryInput}
-              onChange={(e) => setQueryInput(e.target.value)}
-              rows={3}
-              disabled={!isInitialized || isProcessing}
-            />
-            
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                {queryInput.length}/1000 characters
-              </div>
-              <Button
-                onClick={handleBlackboardProcessing}
-                disabled={!queryInput.trim() || !isInitialized || isProcessing}
-                className="flex items-center gap-2"
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="w-4 h-4" />
-                    Process with Blackboard
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Blackboard Entries */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Blackboard Entries
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {blackboardState.entries.length > 0 ? (
-            renderBlackboardEntries()
-          ) : (
-            <div className="text-center text-gray-500 py-8">
-              <Layers className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No blackboard entries yet</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Processing History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Processing History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {processingHistory.length > 0 ? (
-            renderProcessingHistory()
-          ) : (
-            <div className="text-center text-gray-500 py-8">
-              <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No processing history yet</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Knowledge Sources */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Knowledge Sources
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {blackboardState.knowledgeSources.length > 0 ? (
-            renderKnowledgeSources()
-          ) : (
-            <div className="text-center text-gray-500 py-8">
-              <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No knowledge sources loaded</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
