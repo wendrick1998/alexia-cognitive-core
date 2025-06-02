@@ -11,6 +11,10 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/main.tsx',
     '!src/vite-env.d.ts',
+    '!src/setupTests.ts',
+    '!src/tests/**/*',
+    '!src/**/*.stories.tsx',
+    '!src/workers/**/*',
   ],
   coverageThreshold: {
     global: {
@@ -20,12 +24,27 @@ module.exports = {
       statements: 70,
     },
   },
-  transform: {
-    '^.+\\.tsx?$': 'ts-jest',
-  },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{ts,tsx}',
+    '<rootDir>/src/tests/**/*.{test,spec}.{ts,tsx}',
   ],
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: {
+        jsx: 'react-jsx',
+      },
+    }],
+  },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$|@supabase|@testing-library))',
+  ],
+  testTimeout: 10000,
+  globals: {
+    'ts-jest': {
+      useESM: true,
+    },
+  },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
 };
