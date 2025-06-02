@@ -9,13 +9,15 @@ interface ChatContentProps {
   messages: Message[];
   processing: boolean;
   isNavigating?: boolean;
+  renderMessageExtras?: (message: Message) => React.ReactNode;
 }
 
 const ChatContent = memo(({ 
   currentConversation, 
   messages,
   processing,
-  isNavigating = false
+  isNavigating = false,
+  renderMessageExtras
 }: ChatContentProps) => {
   if (currentConversation) {
     return (
@@ -24,6 +26,7 @@ const ChatContent = memo(({
           messages={messages}
           loading={isNavigating}
           processing={processing}
+          renderMessageExtras={renderMessageExtras}
         />
       </div>
     );
