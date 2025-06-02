@@ -2,6 +2,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ChatInputArea from '../ChatInputArea';
+import { Conversation } from '@/hooks/useConversations';
 
 // Mock hooks
 jest.mock('@/hooks/use-mobile', () => ({
@@ -14,12 +15,17 @@ jest.mock('@/hooks/useMobileSafeArea', () => ({
 
 describe('ChatInputArea', () => {
   const mockOnSendMessage = jest.fn();
-  const mockConversation = {
+  const mockConversation: Conversation = {
     id: '1',
     title: 'Test Conversation',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     user_id: 'test-user',
+    session_id: 'test-session',
+    tags: [],
+    is_favorite: false,
+    is_archived: false,
+    message_count: 1,
   };
 
   beforeEach(() => {
