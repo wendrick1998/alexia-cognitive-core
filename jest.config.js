@@ -47,4 +47,8 @@ module.exports = {
     },
   },
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  // Add verbose output for better debugging
+  verbose: true,
+  // Ensure proper module resolution
+  resolver: undefined,
 };
