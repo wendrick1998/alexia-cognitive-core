@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
@@ -11,6 +10,7 @@ import CortexDashboard from '@/pages/CortexDashboard';
 import UnifiedDashboardPage from '@/pages/UnifiedDashboardPage';
 import PerformanceDashboard from '@/components/PerformanceDashboard';
 import TaskFrameworkDashboard from '@/components/autonomous/TaskFrameworkDashboard';
+import MultiAgentDashboard from '@/components/multiagent/MultiAgentDashboard';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -62,6 +62,14 @@ function App() {
               <AuthGuard>
                 <PremiumAppLayout>
                   <TaskFrameworkDashboard />
+                </PremiumAppLayout>
+              </AuthGuard>
+            } />
+
+            <Route path="/multiagent-dashboard" element={
+              <AuthGuard>
+                <PremiumAppLayout>
+                  <MultiAgentDashboard />
                 </PremiumAppLayout>
               </AuthGuard>
             } />
