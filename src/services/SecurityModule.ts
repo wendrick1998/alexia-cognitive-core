@@ -5,8 +5,6 @@
  * @author Alex iA Security Team
  */
 
-import { createHash, randomBytes } from 'crypto';
-
 export interface SecurityConfig {
   enableCSP: boolean;
   enableRateLimit: boolean;
@@ -66,7 +64,6 @@ class SecurityModule {
       "upgrade-insecure-requests"
     ].join('; ');
 
-    // Em ambiente de produção, seria aplicado via meta tag ou header HTTP
     if (typeof document !== 'undefined') {
       let cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
       if (!cspMeta) {
@@ -163,7 +160,10 @@ class SecurityModule {
   }
 
   public generateSecureToken(): string {
-    return randomBytes(32).toString('hex');
+    // Usar Web Crypto API do browser ao invés do módulo crypto do Node.js
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
   public createSession(userId: string): string {
@@ -194,9 +194,14 @@ class SecurityModule {
     this.sessionTokens.delete(token);
   }
 
-  public hashSensitiveData(data: string, salt?: string): string {
-    const actualSalt = salt || randomBytes(16).toString('hex');
-    return createHash('sha256').update(data + actualSalt).digest('hex');
+  public async hashSensitiveData(data: string, salt?: string): Promise<string> {
+    // Usar Web Crypto API para hash
+    const encoder = new TextEncoder();
+    const actualSalt = salt || this.generateSecureToken();
+    const dataWithSalt = data + actualSalt;
+    const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(dataWithSalt));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   private logSecurityEvent(event: Omit<SecurityEvent, 'id' | 'timestamp'>) {

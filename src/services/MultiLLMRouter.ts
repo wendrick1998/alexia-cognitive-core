@@ -1,9 +1,11 @@
-
 /**
  * @file MultiLLMRouter.ts
  * @description Sistema de roteamento inteligente entre múltiplos LLMs
  * @author Alex iA System
  */
+
+export type TaskType = 'general' | 'coding' | 'analysis' | 'creative' | 'technical';
+export type Priority = 'low' | 'medium' | 'high' | 'critical';
 
 export interface LLMProvider {
   id: string;
@@ -22,8 +24,8 @@ export interface LLMRequest {
   model?: string;
   maxTokens?: number;
   temperature?: number;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  taskType: 'general' | 'coding' | 'analysis' | 'creative' | 'technical';
+  priority: Priority;
+  taskType: TaskType;
 }
 
 export interface LLMResponse {

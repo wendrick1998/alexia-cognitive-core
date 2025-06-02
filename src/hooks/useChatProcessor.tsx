@@ -6,6 +6,7 @@ import { useMultiLLM } from '@/hooks/useMultiLLM';
 import { useSecurity } from '@/hooks/useSecurity';
 import { supabase } from '@/integrations/supabase/client';
 import { llmLogger } from '@/services/LLMLogger';
+import type { TaskType, Priority } from '@/services/MultiLLMRouter';
 
 export interface ChatResponse {
   response: string;
@@ -89,7 +90,6 @@ export function useChatProcessor() {
       }
 
       const endTime = new Date();
-      const responseTime = endTime.getTime() - startTime.getTime();
 
       // Simular busca de contexto (integração com sistema existente)
       const { data: contextData } = await supabase.functions.invoke('search-context', {
@@ -162,7 +162,7 @@ export function useChatProcessor() {
   };
 }
 
-function detectTaskType(message: string): 'general' | 'coding' | 'analysis' | 'creative' | 'technical' {
+function detectTaskType(message: string): TaskType {
   const lowerMessage = message.toLowerCase();
   
   if (lowerMessage.includes('código') || lowerMessage.includes('programar') || lowerMessage.includes('function') || lowerMessage.includes('debug')) {
@@ -184,7 +184,7 @@ function detectTaskType(message: string): 'general' | 'coding' | 'analysis' | 'c
   return 'general';
 }
 
-function detectPriority(message: string): 'low' | 'medium' | 'high' | 'critical' {
+function detectPriority(message: string): Priority {
   const lowerMessage = message.toLowerCase();
   
   if (lowerMessage.includes('urgente') || lowerMessage.includes('crítico') || lowerMessage.includes('emergência')) {
