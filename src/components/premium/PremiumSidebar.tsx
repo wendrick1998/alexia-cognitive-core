@@ -29,6 +29,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
 
 interface PremiumSidebarProps {
   isOpen: boolean;
@@ -104,6 +105,13 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
     onClose();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      action();
+    }
+  };
+
   return (
     <>
       {/* Overlay */}
@@ -114,14 +122,21 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
             : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
+        aria-hidden={!isOpen}
       />
 
-      {/* Sidebar - Agora abre pela ESQUERDA */}
-      <div className={`
-        fixed top-0 left-0 h-full w-[320px] z-50 
-        transition-transform duration-300 ease-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      {/* Sidebar */}
+      <div 
+        className={cn(
+          "fixed top-0 left-0 h-full z-50",
+          "transition-transform duration-300 ease-out",
+          "mobile-sidebar-narrow sm:w-[320px]",
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+        role="navigation"
+        aria-label="Menu principal"
+        aria-hidden={!isOpen}
+      >
         <div 
           className="h-full backdrop-blur-xl border-r border-white/10"
           style={{
@@ -131,11 +146,11 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
           }}
         >
           {/* Header */}
-          <div className="p-6 border-b border-white/10">
+          <div className="p-6 border-b border-white/10 mobile-chat-header">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
+                  <Sparkles className="w-5 h-5 text-white" aria-hidden="true" />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -147,27 +162,31 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
               
               <Button
                 onClick={onClose}
+                onKeyDown={(e) => handleKeyDown(e, onClose)}
                 variant="ghost"
                 size="sm"
-                className="p-2 hover:bg-white/10 text-white rounded-xl transition-colors"
+                aria-label="Fechar menu"
+                role="button"
+                tabIndex={0}
+                className={cn(
+                  "p-2 hover:bg-white/10 text-white rounded-xl transition-colors",
+                  "btn-accessible focus-ring-enhanced touch-target-48"
+                )}
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </Button>
             </div>
           </div>
 
-          {/* Menu Content - Agora SCROLLABLE */}
-          <ScrollArea className="flex-1 px-6 py-4 h-[calc(100vh-200px)]" style={{
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'rgba(255,255,255,0.2) transparent'
-          }}>
+          {/* Menu Content */}
+          <ScrollArea className="flex-1 px-6 py-4 h-[calc(100vh-200px)] premium-scrollbar">
             <div className="space-y-6">
               {menuSections.map((section) => (
                 <div key={section.title} className="space-y-2">
                   <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
                     {section.title}
                   </h3>
-                  <div className="space-y-1">
+                  <div className="space-y-1" role="group" aria-labelledby={`section-${section.title}`}>
                     {section.items.map((item) => {
                       const Icon = item.icon;
                       const isActive = currentSection === item.id;
@@ -176,26 +195,31 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
                         <button
                           key={item.id}
                           onClick={() => handleItemClick(item.id)}
-                          className={`
-                            w-full flex items-center space-x-3 px-4 py-3 rounded-xl 
-                            transition-all duration-200 text-left group relative overflow-hidden
-                            ${isActive 
+                          onKeyDown={(e) => handleKeyDown(e, () => handleItemClick(item.id))}
+                          aria-label={`Navegar para ${item.title}`}
+                          aria-current={isActive ? 'page' : undefined}
+                          role="button"
+                          tabIndex={0}
+                          className={cn(
+                            "w-full flex items-center space-x-3 px-4 py-3 rounded-xl",
+                            "transition-all duration-200 text-left group relative overflow-hidden",
+                            "btn-accessible focus-ring-enhanced touch-target-48",
+                            isActive 
                               ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border-l-2 border-blue-400' 
                               : 'text-white/70 hover:text-white hover:bg-white/5'
-                            }
-                          `}
+                          )}
                         >
                           {/* Hover gradient border */}
                           {!isActive && (
                             <div className="absolute left-0 top-0 bottom-0 w-0 bg-gradient-to-b from-blue-400 to-purple-400 transition-all duration-200 group-hover:w-0.5" />
                           )}
                           
-                          <Icon className="w-5 h-5 flex-shrink-0" />
-                          <span className="text-sm font-medium">{item.title}</span>
+                          <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                          <span className="text-sm font-medium mobile-text-sm">{item.title}</span>
                           
                           {/* Active indicator */}
                           {isActive && (
-                            <div className="absolute right-3 w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                            <div className="absolute right-3 w-2 h-2 bg-blue-400 rounded-full animate-pulse" aria-hidden="true" />
                           )}
                         </button>
                       );
@@ -226,9 +250,9 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
             {/* Sync Status & Logout */}
             <div className="flex items-center justify-between text-xs text-white/60">
               <div className="flex items-center space-x-2">
-                {syncStatus === 'synced' && <CheckCircle className="w-3 h-3 text-green-400" />}
-                {syncStatus === 'syncing' && <RotateCcw className="w-3 h-3 animate-spin text-blue-400" />}
-                <span>
+                {syncStatus === 'synced' && <CheckCircle className="w-3 h-3 text-green-400" aria-hidden="true" />}
+                {syncStatus === 'syncing' && <RotateCcw className="w-3 h-3 animate-spin text-blue-400" aria-hidden="true" />}
+                <span aria-live="polite">
                   {syncStatus === 'synced' && 'Sincronizado'}
                   {syncStatus === 'syncing' && 'Sincronizando...'}
                   {syncStatus === 'offline' && 'Offline'}
@@ -237,12 +261,20 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
               
               <Button
                 onClick={handleLogout}
+                onKeyDown={(e) => handleKeyDown(e, handleLogout)}
                 variant="ghost"
                 size="sm"
-                className="p-1 h-auto text-white/60 hover:text-white hover:bg-white/10 transition-colors rounded-lg"
+                aria-label="Fazer logout"
+                role="button"
+                tabIndex={0}
+                className={cn(
+                  "p-1 h-auto text-white/60 hover:text-white hover:bg-white/10",
+                  "transition-colors rounded-lg btn-accessible focus-ring-enhanced",
+                  "touch-target-48"
+                )}
                 title="Sair"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4" aria-hidden="true" />
               </Button>
             </div>
           </div>

@@ -61,32 +61,52 @@ const MobileChatInput = ({
     setIsFocused(false);
   };
 
+  const handleAttachmentClick = () => {
+    hapticFeedback('medium');
+    // TODO: Implement attachment functionality
+  };
+
+  const handleVoiceClick = () => {
+    hapticFeedback('medium');
+    // TODO: Implement voice recording
+  };
+
   return (
     <div 
       className={cn(
         "bg-gray-900/95 backdrop-blur-xl border-t border-white/10",
-        "transition-all duration-300 ease-out",
+        "transition-all duration-300 ease-out mobile-input-area",
         config.isKeyboardOpen && "shadow-2xl"
       )}
       style={inputAreaStyles}
+      role="region"
+      aria-label="Área de entrada de mensagem"
     >
       {/* Keyboard indicator bar for iOS */}
       {config.isKeyboardOpen && (
-        <div className="flex justify-center py-1">
+        <div className="flex justify-center py-1" aria-hidden="true">
           <div className="w-8 h-1 bg-white/20 rounded-full" />
         </div>
       )}
 
-      <div className="px-4 py-3">
+      <div className={cn("px-4 py-3", config.isKeyboardOpen && "mobile-compact-spacing")}>
         <div className="flex items-end gap-3">
           {/* Attachment button */}
           <Button
             variant="ghost"
             size="sm"
-            className="flex-shrink-0 text-white/60 hover:text-white hover:bg-white/10 rounded-full w-10 h-10 p-0"
+            onClick={handleAttachmentClick}
             disabled={processing}
+            aria-label="Anexar arquivo"
+            role="button"
+            tabIndex={0}
+            className={cn(
+              "flex-shrink-0 text-white/60 hover:text-white hover:bg-white/10",
+              "touch-target-48 rounded-full btn-accessible focus-ring-enhanced",
+              processing && "btn-state-disabled"
+            )}
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-5 h-5" aria-hidden="true" />
           </Button>
 
           {/* Message input */}
@@ -100,14 +120,17 @@ const MobileChatInput = ({
               onBlur={handleBlur}
               placeholder={placeholder}
               disabled={processing}
+              aria-label="Digite sua mensagem"
+              aria-describedby={message.length > 100 ? "char-counter" : undefined}
               className={cn(
                 "min-h-[44px] max-h-[120px] resize-none",
                 "bg-white/10 border border-white/20 rounded-2xl px-4 py-3",
                 "text-white placeholder:text-white/40",
                 "focus:ring-2 focus:ring-blue-400/50 focus:border-transparent",
                 "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20",
-                "transition-all duration-200",
-                isFocused && "bg-white/15 border-white/30"
+                "transition-all duration-200 focus-ring-enhanced",
+                isFocused && "bg-white/15 border-white/30",
+                processing && "opacity-50"
               )}
               style={{
                 fontSize: '16px', // Prevent iOS zoom
@@ -117,7 +140,11 @@ const MobileChatInput = ({
             
             {/* Character counter for long messages */}
             {message.length > 100 && (
-              <div className="absolute -bottom-6 right-2 text-xs text-white/40">
+              <div 
+                id="char-counter"
+                className="absolute -bottom-6 right-2 text-xs text-white/40"
+                aria-live="polite"
+              >
                 {message.length}/2000
               </div>
             )}
@@ -128,10 +155,18 @@ const MobileChatInput = ({
             <Button
               variant="ghost"
               size="sm"
-              className="flex-shrink-0 text-white/60 hover:text-white hover:bg-white/10 rounded-full w-10 h-10 p-0"
+              onClick={handleVoiceClick}
               disabled={processing}
+              aria-label="Gravar mensagem de voz"
+              role="button"
+              tabIndex={0}
+              className={cn(
+                "flex-shrink-0 text-white/60 hover:text-white hover:bg-white/10",
+                "touch-target-48 rounded-full btn-accessible focus-ring-enhanced",
+                processing && "btn-state-disabled"
+              )}
             >
-              <Mic className="w-5 h-5" />
+              <Mic className="w-5 h-5" aria-hidden="true" />
             </Button>
           )}
 
@@ -140,35 +175,62 @@ const MobileChatInput = ({
             <Button
               onClick={handleSendMessage}
               disabled={processing}
+              aria-label="Enviar mensagem"
+              role="button"
+              tabIndex={0}
               className={cn(
-                "flex-shrink-0 rounded-full w-10 h-10 p-0",
+                "flex-shrink-0 touch-target-48 rounded-full",
                 "bg-blue-500 hover:bg-blue-600 text-white",
-                "transition-all duration-200 transform",
+                "transition-all duration-200 transform btn-accessible focus-ring-enhanced",
                 "hover:scale-105 active:scale-95",
-                "shadow-lg hover:shadow-xl"
+                "shadow-lg hover:shadow-xl",
+                processing && "btn-state-loading"
               )}
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-5 h-5" aria-hidden="true" />
+              <span className="sr-only">
+                {processing ? 'Enviando mensagem...' : 'Enviar mensagem'}
+              </span>
             </Button>
           )}
         </div>
 
         {/* Quick actions row */}
         {isFocused && !config.isKeyboardOpen && (
-          <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-none">
+          <div 
+            className="flex gap-2 mt-3 overflow-x-auto scrollbar-none"
+            role="group"
+            aria-label="Ações rápidas"
+          >
             {['📝 Resumir', '🔍 Analisar', '💡 Ideia', '❓ Pergunta'].map((action) => (
               <Button
                 key={action}
                 variant="outline"
                 size="sm"
-                className="flex-shrink-0 text-xs bg-white/5 border-white/20 text-white/70 hover:bg-white/10 hover:text-white rounded-full"
                 onClick={() => onMessageChange(action.split(' ')[1] + ': ')}
+                aria-label={`Inserir ${action}`}
+                role="button"
+                tabIndex={0}
+                className={cn(
+                  "flex-shrink-0 text-xs bg-white/5 border-white/20",
+                  "text-white/70 hover:bg-white/10 hover:text-white rounded-full",
+                  "btn-accessible focus-ring-enhanced mobile-button-compact"
+                )}
               >
                 {action}
               </Button>
             ))}
           </div>
         )}
+      </div>
+
+      {/* Live region for screen readers */}
+      <div
+        className="live-region"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {processing && 'Enviando mensagem...'}
       </div>
     </div>
   );

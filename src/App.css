@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,6 +6,7 @@
 /* Importar tokens CSS */
 @import './styles/color-tokens.css';
 @import './styles/spacing-tokens.css';
+@import './styles/accessibility.css';
 
 /* Reset básico para garantir scroll nativo */
 * {
@@ -15,19 +17,35 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  /* REMOVIDO: overflow: hidden; - Isso estava bloqueando o scroll */
 }
 
 #root {
   height: 100vh;
-  /* REMOVIDO: overflow: hidden; - Permitir scroll natural */
+}
+
+/* Skip link para navegação por teclado */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+  transition: top 0.2s ease-out;
+}
+
+.skip-link:focus {
+  top: 6px;
 }
 
 /* Scroll nativo com estilo personalizado */
 .premium-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  -webkit-overflow-scrolling: touch; /* iOS scroll nativo */
+  -webkit-overflow-scrolling: touch;
 }
 
 .premium-scrollbar::-webkit-scrollbar {
@@ -56,7 +74,6 @@ html, body {
   }
 }
 
-/* CORREÇÃO: Garantir que elementos com overflow funcionem corretamente */
 .overflow-y-auto {
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
@@ -64,7 +81,6 @@ html, body {
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-/* NOVA CLASSE: Scroll container para componentes */
 .scroll-container {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -85,25 +101,12 @@ html, body {
   border-radius: 3px;
 }
 
-/* Momentum scrolling para iOS */
 .momentum-scroll {
   -webkit-overflow-scrolling: touch;
   overflow-scrolling: touch;
 }
 
-/* Estilo para links e botões acessíveis */
-.btn-accessible {
-  min-height: 44px;
-  min-width: 44px;
-  transition: all 0.2s ease;
-}
-
-.btn-accessible:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* Animações premium */
+/* Animações premium padronizadas */
 @keyframes premium-fade-in {
   from {
     opacity: 0;
@@ -127,7 +130,7 @@ html, body {
 }
 
 .animate-premium-fade-in {
-  animation: premium-fade-in 0.3s ease-out;
+  animation: premium-fade-in 0.2s ease-out;
 }
 
 .animate-premium-scale-in {
@@ -146,9 +149,9 @@ html, body {
   @apply bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 btn-accessible;
 }
 
-/* Efeitos hover premium */
+/* Efeitos hover premium padronizados */
 .hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
 .hover-lift:hover {
@@ -156,62 +159,62 @@ html, body {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* Estilos para estados vazios */
-.empty-state-icon {
-  @apply w-12 h-12 bg-white/10 rounded-full flex items-center justify-center;
-}
-
 /* Containers responsivos */
 .container-responsive {
   @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
-/* Touch targets para mobile */
+/* Responsividade específica para telas muito pequenas */
+@media (max-width: 375px) {
+  .container-responsive {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  /* Ajustes para componentes específicos */
+  .mobile-sidebar {
+    width: 280px;
+  }
+  
+  .mobile-chat-header {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  
+  .mobile-input-area {
+    padding: 8px;
+  }
+  
+  /* Reduzir espaçamento geral */
+  .mobile-compact-spacing {
+    gap: 8px;
+    padding: 8px;
+  }
+}
+
+/* Touch targets para mobile - NOVO PADRÃO 48x48px */
 .touch-target {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 48px;
+  min-width: 48px;
 }
 
-/* Garantir que modals e overlays funcionem corretamente */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 50;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(4px);
-}
-
-/* Estados de loading */
+/* Estados de loading padronizados */
 .loading-spinner {
   @apply animate-spin rounded-full border-2 border-white/20 border-t-white;
 }
 
-/* Fixes para WebKit no iOS */
-input, textarea, select {
-  -webkit-appearance: none;
-  border-radius: 0;
-}
-
-/* Garantir que elementos focáveis tenham indicação visual */
+/* Garantir que elementos focáveis tenham indicação visual melhorada */
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 3px solid #3b82f6;
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 6px rgba(59, 130, 246, 0.3);
 }
 
-/* Otimizações para performance */
-.gpu-accelerated {
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
-/* Classes utilitárias para texto */
+/* Classes utilitárias para texto acessível */
 .text-title {
   @apply text-white font-semibold;
 }
@@ -228,7 +231,7 @@ select:focus-visible,
   @apply text-white/40 text-xs;
 }
 
-/* NOVA CLASSE: Layout flexível para componentes */
+/* Layout flexível para componentes */
 .flex-scroll-layout {
   display: flex;
   flex-direction: column;
@@ -241,4 +244,39 @@ select:focus-visible,
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   min-height: 0;
+}
+
+/* ARIA live regions para screen readers */
+.live-region {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Estados de botão padronizados */
+.btn-state-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-state-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.btn-state-loading::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

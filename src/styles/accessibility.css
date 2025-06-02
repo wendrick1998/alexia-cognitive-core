@@ -1,0 +1,209 @@
+
+/* Accessibility and UX Enhancements */
+
+/* Touch Target Standards */
+.touch-target-44 {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.touch-target-48 {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Enhanced Button Accessibility */
+.btn-accessible {
+  min-height: 44px;
+  min-width: 44px;
+  transition: all 0.2s ease-out;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-accessible:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.btn-accessible:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-accessible:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.btn-accessible:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Enhanced Focus Ring */
+.focus-ring-enhanced {
+  transition: all 0.2s ease-out;
+}
+
+.focus-ring-enhanced:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+  box-shadow: 
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 0 6px rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+}
+
+/* Standard States */
+.state-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.state-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+
+.state-error {
+  border: 2px solid #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  animation: shake 0.3s ease-in-out;
+}
+
+.state-success {
+  border: 2px solid #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
+  animation: pulse-success 0.5s ease-in-out;
+}
+
+/* Animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes pulse-success {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Mobile Optimizations for <375px */
+@media (max-width: 375px) {
+  .mobile-optimized {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  .mobile-compact {
+    gap: 8px;
+  }
+  
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+  
+  .mobile-button-compact {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+  
+  /* Reduce sidebar width on very small screens */
+  .mobile-sidebar-narrow {
+    width: 280px;
+  }
+  
+  /* Compact chat input */
+  .mobile-chat-input {
+    padding: 8px;
+  }
+  
+  /* Smaller touch targets only on very small screens */
+  .mobile-touch-small {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn-accessible:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+  }
+  
+  .focus-ring-enhanced:focus-visible {
+    outline: 4px solid currentColor;
+    box-shadow: none;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .btn-accessible,
+  .focus-ring-enhanced,
+  .state-loading,
+  .state-error,
+  .state-success {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+  transition: top 0.2s ease-out;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}

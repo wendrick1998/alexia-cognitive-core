@@ -27,19 +27,32 @@ const BackButton = ({
 }: BackButtonProps) => {
   const IconComponent = icon === 'chevron' ? ChevronLeft : ArrowLeft;
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <Button
       variant={variant}
       size={size}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       disabled={disabled}
+      aria-label={showText ? text : 'Voltar'}
+      role="button"
+      tabIndex={0}
       className={cn(
         'transition-all duration-200 hover:scale-105',
+        'btn-accessible focus-ring-enhanced touch-target-48',
         'focus:ring-2 focus:ring-blue-500/20',
+        disabled && 'btn-state-disabled',
         className
       )}
     >
-      <IconComponent className="w-4 h-4" />
+      <IconComponent className="w-4 h-4" aria-hidden="true" />
       {showText && <span className="ml-1">{text}</span>}
     </Button>
   );
