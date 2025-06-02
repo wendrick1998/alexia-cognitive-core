@@ -7,10 +7,11 @@ import { Loader2 } from 'lucide-react';
 interface ChatMessagesProps {
   messages: Message[];
   processing: boolean;
+  loading?: boolean;
   renderMessageExtras?: (message: Message) => React.ReactNode;
 }
 
-const ChatMessages = ({ messages, processing, renderMessageExtras }: ChatMessagesProps) => {
+const ChatMessages = ({ messages, processing, loading = false, renderMessageExtras }: ChatMessagesProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -20,6 +21,17 @@ const ChatMessages = ({ messages, processing, renderMessageExtras }: ChatMessage
   useEffect(() => {
     scrollToBottom();
   }, [messages, processing]);
+
+  if (loading) {
+    return (
+      <div className="p-4 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-white/60">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Carregando mensagens...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4">
