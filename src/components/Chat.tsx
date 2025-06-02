@@ -14,8 +14,7 @@ const Chat = () => {
     messages,
     currentConversation,
     conversations,
-    isLoading,
-    sendMessage,
+    processing,
     createConversation,
     setCurrentConversation
   } = useConversations();
@@ -32,13 +31,14 @@ const Chat = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || processing) return;
 
     const messageContent = inputValue.trim();
     setInputValue("");
 
     try {
-      await sendMessage(messageContent);
+      // Process message logic here
+      console.log("Sending message:", messageContent);
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
     }
@@ -66,7 +66,7 @@ const Chat = () => {
       <div className="flex-shrink-0">
         <ChatHeader 
           currentConversation={currentConversation}
-          onNewChat={handleNewChat}
+          isMobile={false}
         />
       </div>
 
@@ -74,12 +74,12 @@ const Chat = () => {
       <div className="flex-1 overflow-y-auto premium-scrollbar momentum-scroll">
         <div className="h-full flex flex-col">
           {messages.length === 0 ? (
-            <ChatWelcome onNewChat={handleNewChat} />
+            <ChatWelcome />
           ) : (
             <div className="flex-1 px-4 py-6">
               <ChatMessages 
                 messages={messages} 
-                isLoading={isLoading}
+                loading={processing}
                 currentConversation={currentConversation}
               />
               <div ref={messagesEndRef} />
@@ -92,10 +92,10 @@ const Chat = () => {
       <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
         <div className="p-4">
           <ChatInput
-            value={inputValue}
-            onChange={setInputValue}
+            message={inputValue}
+            setMessage={setInputValue}
             onSend={handleSendMessage}
-            isLoading={isLoading}
+            disabled={processing}
             placeholder="Digite sua mensagem..."
           />
         </div>

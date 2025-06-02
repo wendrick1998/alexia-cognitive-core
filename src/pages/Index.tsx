@@ -11,26 +11,13 @@ import AuthGuard from "../components/auth/AuthGuard";
 import { ConnectionStatus } from "../components/ui/connection-status";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTransition } from "@/components/ui/transitions";
-import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState("dashboard");
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
 
   const handleSectionChange = (section: string, id?: string) => {
     console.log(`🔗 Navegando para seção: ${section}`, id ? `com ID: ${id}` : '');
-    
-    // Redirecionar para páginas específicas ao invés de seções
-    if (section === "preferences") {
-      navigate("/settings");
-      return;
-    }
-    
-    if (section === "security") {
-      navigate("/security");
-      return;
-    }
     
     if (section !== currentSection) {
       setCurrentSection(section);
@@ -83,6 +70,12 @@ const Index = () => {
             <ProjectsManager />
           </div>
         );
+      case "preferences":
+        return (
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            Preferências do Usuário - Em desenvolvimento
+          </div>
+        );
       case "privacy":
         return (
           <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
@@ -93,6 +86,12 @@ const Index = () => {
         return (
           <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
             Assinatura - Em desenvolvimento
+          </div>
+        );
+      case "security":
+        return (
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            Privacidade - Em desenvolvimento
           </div>
         );
       default:

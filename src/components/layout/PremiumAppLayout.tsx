@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import PremiumNavigationBar from "@/components/premium/PremiumNavigationBar";
 import DesktopSidebar from "@/components/premium/DesktopSidebar";
 import ConversationSidebar from "@/components/ConversationSidebar";
 import { PWALayout } from "@/components/layout/PWALayout";
@@ -45,22 +44,12 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
           <DesktopSidebar 
             currentSection={currentSection} 
-            onSectionChange={onSectionChange}
+            onSectionChange={(section) => onSectionChange(section)}
           />
         </div>
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* Mobile Navigation */}
-          <div className="lg:hidden">
-            <PremiumNavigationBar
-              currentSection={currentSection}
-              onSectionChange={onSectionChange}
-              onMenuClick={() => setIsSidebarOpen(true)}
-              onConversationClick={() => setIsConversationSidebarOpen(true)}
-            />
-          </div>
-
           {/* Main Content with Proper Scroll */}
           <main className="flex-1 overflow-y-auto bg-white dark:bg-gray-950 premium-scrollbar momentum-scroll">
             <div className="h-full">
@@ -79,8 +68,8 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
             <div className="absolute left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 shadow-xl">
               <DesktopSidebar 
                 currentSection={currentSection} 
-                onSectionChange={(section, id) => {
-                  onSectionChange(section, id);
+                onSectionChange={(section) => {
+                  onSectionChange(section);
                   setIsSidebarOpen(false);
                 }}
               />
@@ -91,7 +80,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         {/* Conversation Sidebar */}
         <ConversationSidebar
           isOpen={isConversationSidebarOpen}
-          onClose={() => setIsConversationSidebarOpen(false)}
+          onToggle={() => setIsConversationSidebarOpen(!isConversationSidebarOpen)}
         />
       </div>
     </PWALayout>
