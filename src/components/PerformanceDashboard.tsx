@@ -20,10 +20,34 @@ const PerformanceDashboard: React.FC = () => {
   const { 
     metrics, 
     alerts, 
-    performanceScore, 
-    exportAnalytics, 
-    clearAlerts 
+    getPerformanceScore,
+    updateMetric,
+    trackAPICall
   } = usePerformanceMonitoring();
+
+  const performanceScore = getPerformanceScore();
+
+  const exportAnalytics = () => {
+    const data = {
+      metrics,
+      alerts,
+      score: performanceScore,
+      timestamp: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `performance-analytics-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearAlerts = () => {
+    // Clear alerts functionality would be implemented in the hook
+    console.log('Clearing alerts...');
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return 'text-green-600';

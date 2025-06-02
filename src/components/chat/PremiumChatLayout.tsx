@@ -56,14 +56,8 @@ const PremiumChatLayout: React.FC<PremiumChatLayoutProps> = ({
         isMobile && !sidebarOpen && "hidden"
       )}>
         <ConversationSidebar
-          conversations={conversations}
-          currentConversation={currentConversation}
-          onConversationSelect={(conversation) => {
-            onConversationSelect(conversation);
-            if (isMobile) setSidebarOpen(false);
-          }}
-          onNewConversation={onNewConversation}
-          isCreatingNew={isCreatingNew}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
           onClose={isMobile ? () => setSidebarOpen(false) : undefined}
         />
       </div>

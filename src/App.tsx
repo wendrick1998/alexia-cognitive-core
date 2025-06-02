@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
+import { useState } from 'react';
 import AuthGuard from '@/components/auth/AuthGuard';
 import PremiumAppLayout from '@/components/layout/PremiumAppLayout';
 import Chat from '@/components/Chat';
@@ -25,6 +26,12 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const [currentSection, setCurrentSection] = useState('chat');
+
+  const handleSectionChange = (section: string) => {
+    setCurrentSection(section);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
@@ -32,7 +39,7 @@ function App() {
           <Routes>
             <Route path="/" element={
               <AuthGuard>
-                <PremiumAppLayout>
+                <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
                   <Chat />
                 </PremiumAppLayout>
               </AuthGuard>
@@ -40,7 +47,7 @@ function App() {
             
             <Route path="/dashboard" element={
               <AuthGuard>
-                <PremiumAppLayout>
+                <PremiumAppLayout currentSection="dashboard" onSectionChange={handleSectionChange}>
                   <Dashboard />
                 </PremiumAppLayout>
               </AuthGuard>
@@ -54,7 +61,7 @@ function App() {
 
             <Route path="/performance-dashboard" element={
               <AuthGuard>
-                <PremiumAppLayout>
+                <PremiumAppLayout currentSection="performance" onSectionChange={handleSectionChange}>
                   <PerformanceDashboard />
                 </PremiumAppLayout>
               </AuthGuard>
@@ -62,7 +69,7 @@ function App() {
 
             <Route path="/autonomous-dashboard" element={
               <AuthGuard>
-                <PremiumAppLayout>
+                <PremiumAppLayout currentSection="autonomous" onSectionChange={handleSectionChange}>
                   <TaskFrameworkDashboard />
                 </PremiumAppLayout>
               </AuthGuard>
@@ -70,7 +77,7 @@ function App() {
 
             <Route path="/multiagent-dashboard" element={
               <AuthGuard>
-                <PremiumAppLayout>
+                <PremiumAppLayout currentSection="multiagent" onSectionChange={handleSectionChange}>
                   <MultiAgentDashboard />
                 </PremiumAppLayout>
               </AuthGuard>
