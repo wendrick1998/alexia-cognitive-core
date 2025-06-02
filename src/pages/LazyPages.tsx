@@ -18,6 +18,3 @@ export const CortexDashboard = lazy(() => import('../components/cognitive/Cortex
 // Páginas de integração
 export const IntegrationsStatusPage = lazy(() => import('../components/integrations/IntegrationsStatusPage'));
 export const IntegrationsManagerPage = lazy(() => import('../components/integrations/IntegrationsManagerPage'));
-
-// Auth components
-export const AuthPage = lazy(() => import('../components/auth/AuthPage'));

@@ -20,6 +20,9 @@ import {
   IntegrationsManagerPage,
   SettingsScreen
 } from "./LazyPages";
+import PrivacyPage from "./PrivacyPage";
+import SubscriptionPage from "./SubscriptionPage";
+import SecurityPage from "./SecurityPage";
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState("dashboard");
@@ -114,32 +117,11 @@ const Index = () => {
           </Suspense>
         );
       case "privacy":
-        return (
-          <div className="p-6 h-full overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Configurações de Privacidade</h1>
-              <p className="text-gray-600 dark:text-gray-400">Em desenvolvimento...</p>
-            </div>
-          </div>
-        );
+        return <PrivacyPage />;
       case "subscription":
-        return (
-          <div className="p-6 h-full overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Gerenciamento de Assinatura</h1>
-              <p className="text-gray-600 dark:text-gray-400">Em desenvolvimento...</p>
-            </div>
-          </div>
-        );
+        return <SubscriptionPage />;
       case "security":
-        return (
-          <div className="p-6 h-full overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Configurações de Segurança</h1>
-              <p className="text-gray-600 dark:text-gray-400">Em desenvolvimento...</p>
-            </div>
-          </div>
-        );
+        return <SecurityPage />;
       default:
         console.log(`⚠️ Seção desconhecida: ${section}, retornando para Dashboard`);
         return (

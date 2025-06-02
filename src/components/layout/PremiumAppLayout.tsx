@@ -65,6 +65,10 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
               description: "Cmd/Ctrl + N para novo chat",
             });
             break;
+          case 'f':
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('activate-focus-mode'));
+            break;
           default:
             break;
         }
@@ -73,6 +77,8 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
       if (e.key === 'Escape') {
         if (sidebarOpen) {
           handleSidebarClose();
+        } else {
+          window.dispatchEvent(new CustomEvent('escape-pressed'));
         }
       }
     };
@@ -114,7 +120,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
       case 'security':
         return 'Segurança';
       default:
-        return 'AlexIA';
+        return 'Alex IA';
     }
   }, []);
 
@@ -148,6 +154,8 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
                 <span>Search</span>
                 <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">⌘N</kbd>
                 <span>New</span>
+                <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">⌘F</kbd>
+                <span>Focus</span>
               </div>
             )}
             <DarkModeToggle />
