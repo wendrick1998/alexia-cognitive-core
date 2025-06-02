@@ -43,9 +43,8 @@ describe('useMemories', () => {
     });
 
     expect(result.current.memories).toEqual([]);
-    expect(typeof result.current.addMemory).toBe('function');
-    expect(typeof result.current.updateMemory).toBe('function');
-    expect(typeof result.current.deleteMemory).toBe('function');
+    expect(typeof result.current.createMemory).toBe('function');
+    expect(typeof result.current.fetchMemories).toBe('function');
   });
 
   it('should handle loading state', async () => {

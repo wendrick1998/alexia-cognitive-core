@@ -86,7 +86,7 @@ export const waitFor = async (callback: () => void | Promise<void>, timeout = 10
 };
 
 // Mock hook utilities
-export const createMockHook = <T>(defaultValue: T) => {
+export const createMockHook = <T,>(defaultValue: T) => {
   let currentValue = defaultValue;
   
   return {
