@@ -30,20 +30,12 @@ export function useLLMMetrics() {
     userId: user?.id || 'anonymous'
   });
 
-  const fetchModelMetrics = async (
-    startDate?: Date,
-    endDate?: Date,
-    filters?: {
-      provider?: string;
-      taskType?: string;
-      userId?: string;
-    }
-  ) => {
+  const fetchModelMetrics = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const data = await logger.getMetricsByModel(startDate, endDate, filters);
+      const data = await logger.getMetricsByModel();
       setMetrics(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao buscar métricas');
@@ -68,16 +60,12 @@ export function useLLMMetrics() {
     }
   };
 
-  const fetchCostMetrics = async (
-    groupBy: 'day' | 'week' | 'month' = 'day',
-    startDate?: Date,
-    endDate?: Date
-  ) => {
+  const fetchCostMetrics = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const data = await logger.getCostMetrics(groupBy, startDate, endDate);
+      const data = await logger.getCostMetrics();
       setCostMetrics(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao buscar métricas de custo');

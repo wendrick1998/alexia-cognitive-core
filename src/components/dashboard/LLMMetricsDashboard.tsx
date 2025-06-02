@@ -23,9 +23,7 @@ import {
   Activity, 
   DollarSign, 
   Clock, 
-  Zap, 
   RefreshCw,
-  TrendingUp,
   AlertTriangle
 } from 'lucide-react';
 
@@ -40,8 +38,6 @@ const LLMMetricsDashboard = () => {
     error, 
     refreshAllMetrics 
   } = useLLMMetrics();
-  
-  const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('day');
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -166,183 +162,60 @@ const LLMMetricsDashboard = () => {
         </Card>
       </div>
 
-      {/* Tabs para diferentes visualizações */}
-      <Tabs defaultValue="performance" className="w-full">
-        <TabsList>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="costs">Custos</TabsTrigger>
-          <TabsTrigger value="fallbacks">Fallbacks</TabsTrigger>
-          <TabsTrigger value="models">Modelos</TabsTrigger>
-        </TabsList>
+      {/* Charts */}
+      {modelPerformanceData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance por Modelo</CardTitle>
+            <CardDescription>Taxa de sucesso por modelo LLM</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={modelPerformanceData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="successRate" fill="#8884d8" name="Taxa de Sucesso (%)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
-        <TabsContent value="performance" className="space-y-4">
-          <Card>
+      {/* Models List */}
+      <div className="grid gap-4">
+        {metrics.map((metric) => (
+          <Card key={metric.modelName}>
             <CardHeader>
-              <CardTitle>Performance por Modelo</CardTitle>
-              <CardDescription>Taxa de sucesso e tempo de resposta médio</CardDescription>
+              <CardTitle className="flex items-center justify-between">
+                {metric.modelName}
+                <Badge variant="outline">{metric.provider}</Badge>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={modelPerformanceData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="successRate" fill="#8884d8" name="Taxa de Sucesso (%)" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Chamadas</p>
+                  <p className="font-semibold">{metric.totalCalls}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Taxa de Sucesso</p>
+                  <p className="font-semibold">{formatPercentage(metric.successRate)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Tempo Médio</p>
+                  <p className="font-semibold">{formatTime(metric.avgResponseTime)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Custo Total</p>
+                  <p className="font-semibold">{formatCurrency(metric.totalCost)}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Tempo de Resposta</CardTitle>
-              <CardDescription>Tempo médio de resposta por modelo</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={modelPerformanceData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => formatTime(value as number)} />
-                  <Line type="monotone" dataKey="avgResponseTime" stroke="#82ca9d" name="Tempo Médio" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="costs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribuição de Custos por Modelo</CardTitle>
-              <CardDescription>Custo total por modelo LLM</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={costByModelData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: ${formatCurrency(value)}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {costByModelData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="fallbacks" className="space-y-4">
-          {fallbackMetrics && (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Estatísticas de Fallback</CardTitle>
-                  <CardDescription>Análise detalhada dos fallbacks do sistema</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-semibold mb-2">Total de Fallbacks</h4>
-                      <p className="text-2xl font-bold text-orange-500">
-                        {fallbackMetrics.totalFallbacks}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">Impacto no Tempo de Resposta</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Com fallback: {formatTime(fallbackMetrics.avgResponseTimeWithFallback)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Sem fallback: {formatTime(fallbackMetrics.avgResponseTimeWithoutFallback)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Razões de Fallback</CardTitle>
-                  <CardDescription>Distribuição das causas de fallback</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {Object.entries(fallbackMetrics.fallbacksByReason).map(([reason, count]) => (
-                      <div key={reason} className="flex items-center justify-between">
-                        <span className="capitalize">{reason.replace('_', ' ')}</span>
-                        <Badge variant="outline">{count}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </TabsContent>
-
-        <TabsContent value="models" className="space-y-4">
-          <div className="grid gap-4">
-            {metrics.map((metric) => (
-              <Card key={metric.modelName}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    {metric.modelName}
-                    <Badge variant="outline">{metric.provider}</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Chamadas</p>
-                      <p className="font-semibold">{metric.totalCalls}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Taxa de Sucesso</p>
-                      <p className="font-semibold">{formatPercentage(metric.successRate)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Tempo Médio</p>
-                      <p className="font-semibold">{formatTime(metric.avgResponseTime)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Custo Total</p>
-                      <p className="font-semibold">{formatCurrency(metric.totalCost)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Taxa de Cache</p>
-                      <p className="font-semibold">{formatPercentage(metric.cacheHitRate)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Taxa de Fallback</p>
-                      <p className="font-semibold">{formatPercentage(metric.fallbackRate)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Tokens Usados</p>
-                      <p className="font-semibold">{metric.totalTokensUsed.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">P95 Tempo</p>
-                      <p className="font-semibold">{formatTime(metric.p95ResponseTime)}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+        ))}
+      </div>
     </div>
   );
 };
