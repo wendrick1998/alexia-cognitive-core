@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -190,13 +191,13 @@ export function useBM25Search() {
               return match ? match[0] : term;
             });
 
-          // Safely extract numeric values from details with explicit typing
-          const termFrequency: number = Object.values(details).reduce((sum: number, d: any) => {
+          // Safely extract numeric values from details with proper typing
+          const termFrequency = Object.values(details).reduce<number>((sum: number, d: any) => {
             const tf = typeof d.tf === 'number' ? d.tf : 0;
             return sum + tf;
           }, 0);
 
-          const inverseDocumentFrequency: number = Object.values(details).reduce((sum: number, d: any) => {
+          const inverseDocumentFrequency = Object.values(details).reduce<number>((sum: number, d: any) => {
             const idf = typeof d.idf === 'number' ? d.idf : 0;
             return sum + idf;
           }, 0);
