@@ -261,6 +261,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cognitive_connections_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "memory_confidence_score"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_connections_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "memory_inconsistencies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cognitive_connections_target_node_id_fkey"
             columns: ["target_node_id"]
             isOneToOne: false
@@ -272,6 +286,20 @@ export type Database = {
             columns: ["target_node_id"]
             isOneToOne: false
             referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_connections_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "memory_confidence_score"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_connections_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "memory_inconsistencies"
             referencedColumns: ["id"]
           },
         ]
@@ -344,8 +372,10 @@ export type Database = {
           embedding_relational: string | null
           embedding_semantic: string | null
           id: string
+          is_sensitive: boolean | null
           last_accessed_at: string | null
           last_consolidation_at: string | null
+          last_validated_at: string | null
           memory_type: string | null
           metadata: Json | null
           node_type: Database["public"]["Enums"]["cognitive_node_type"]
@@ -359,6 +389,8 @@ export type Database = {
           title: string | null
           updated_at: string | null
           user_id: string
+          validation_confidence: number | null
+          validation_status: string | null
         }
         Insert: {
           access_count?: number | null
@@ -376,8 +408,10 @@ export type Database = {
           embedding_relational?: string | null
           embedding_semantic?: string | null
           id?: string
+          is_sensitive?: boolean | null
           last_accessed_at?: string | null
           last_consolidation_at?: string | null
+          last_validated_at?: string | null
           memory_type?: string | null
           metadata?: Json | null
           node_type: Database["public"]["Enums"]["cognitive_node_type"]
@@ -391,6 +425,8 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           user_id: string
+          validation_confidence?: number | null
+          validation_status?: string | null
         }
         Update: {
           access_count?: number | null
@@ -408,8 +444,10 @@ export type Database = {
           embedding_relational?: string | null
           embedding_semantic?: string | null
           id?: string
+          is_sensitive?: boolean | null
           last_accessed_at?: string | null
           last_consolidation_at?: string | null
+          last_validated_at?: string | null
           memory_type?: string | null
           metadata?: Json | null
           node_type?: Database["public"]["Enums"]["cognitive_node_type"]
@@ -423,6 +461,8 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           user_id?: string
+          validation_confidence?: number | null
+          validation_status?: string | null
         }
         Relationships: [
           {
@@ -444,6 +484,20 @@ export type Database = {
             columns: ["parent_node_id"]
             isOneToOne: false
             referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_nodes_parent_node_id_fkey"
+            columns: ["parent_node_id"]
+            isOneToOne: false
+            referencedRelation: "memory_confidence_score"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_nodes_parent_node_id_fkey"
+            columns: ["parent_node_id"]
+            isOneToOne: false
+            referencedRelation: "memory_inconsistencies"
             referencedColumns: ["id"]
           },
           {
@@ -676,6 +730,20 @@ export type Database = {
             columns: ["response_stored_in"]
             isOneToOne: false
             referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cortex_decision_logs_response_stored_in_fkey"
+            columns: ["response_stored_in"]
+            isOneToOne: false
+            referencedRelation: "memory_confidence_score"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cortex_decision_logs_response_stored_in_fkey"
+            columns: ["response_stored_in"]
+            isOneToOne: false
+            referencedRelation: "memory_inconsistencies"
             referencedColumns: ["id"]
           },
         ]
@@ -1576,6 +1644,82 @@ export type Database = {
             referencedRelation: "cognitive_nodes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "memory_feedback_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memory_confidence_score"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_feedback_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memory_inconsistencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_validation_logs: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          memory_id: string
+          validated_by: string | null
+          validation_result: string
+          validation_type: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          memory_id: string
+          validated_by?: string | null
+          validation_result: string
+          validation_type: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          memory_id?: string
+          validated_by?: string | null
+          validation_result?: string
+          validation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_validation_logs_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "active_neural_network"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_validation_logs_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_validation_logs_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memory_confidence_score"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_validation_logs_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memory_inconsistencies"
+            referencedColumns: ["id"]
+          },
         ]
       }
       memory_versions: {
@@ -1616,6 +1760,20 @@ export type Database = {
             columns: ["memory_id"]
             isOneToOne: false
             referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_versions_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memory_confidence_score"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_versions_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "memory_inconsistencies"
             referencedColumns: ["id"]
           },
         ]
@@ -1803,6 +1961,20 @@ export type Database = {
             columns: ["cognitive_node_id"]
             isOneToOne: false
             referencedRelation: "cognitive_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_context_references_cognitive_node_id_fkey"
+            columns: ["cognitive_node_id"]
+            isOneToOne: false
+            referencedRelation: "memory_confidence_score"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_context_references_cognitive_node_id_fkey"
+            columns: ["cognitive_node_id"]
+            isOneToOne: false
+            referencedRelation: "memory_inconsistencies"
             referencedColumns: ["id"]
           },
           {
@@ -2144,6 +2316,35 @@ export type Database = {
         }
         Relationships: []
       }
+      memory_confidence_score: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          feedback_confidence: number | null
+          feedback_count: number | null
+          global_confidence_score: number | null
+          id: string | null
+          is_sensitive: boolean | null
+          relevance_score: number | null
+          title: string | null
+          updated_at: string | null
+          validation_confidence: number | null
+        }
+        Relationships: []
+      }
+      memory_inconsistencies: {
+        Row: {
+          content_similarity_score: number | null
+          current_content: string | null
+          id: string | null
+          title: string | null
+          updated_at: string | null
+          version_content: string | null
+          version_created_at: string | null
+          version_number: number | null
+        }
+        Relationships: []
+      }
       project_status_dashboard: {
         Row: {
           blocked_tasks: number | null
@@ -2278,6 +2479,25 @@ export type Database = {
         }
         Returns: number
       }
+      get_context_thread: {
+        Args: {
+          p_project_id?: string
+          p_conversation_id?: string
+          p_user_id?: string
+          p_limit?: number
+        }
+        Returns: {
+          node_id: string
+          content: string
+          title: string
+          node_type: Database["public"]["Enums"]["cognitive_node_type"]
+          created_at: string
+          relevance_score: number
+          is_sensitive: boolean
+          global_confidence: number
+          context_position: number
+        }[]
+      }
       get_memory_feedback_summary: {
         Args: { memory_id_param: string }
         Returns: {
@@ -2336,6 +2556,10 @@ export type Database = {
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
+      }
+      mark_memory_sensitive: {
+        Args: { p_memory_id: string; p_is_sensitive?: boolean }
+        Returns: boolean
       }
       match_document_sections: {
         Args: {
@@ -2443,6 +2667,10 @@ export type Database = {
           max_depth?: number
         }
         Returns: undefined
+      }
+      validate_memory_consistency: {
+        Args: { p_memory_id: string }
+        Returns: Json
       }
       vector_avg: {
         Args: { "": number[] }

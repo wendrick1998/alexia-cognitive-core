@@ -1,158 +1,170 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useMemoryFeedback } from '@/hooks/useMemoryFeedback';
-import { useMemories } from '@/hooks/useMemories';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-export interface ValidationStats {
-  totalMemories: number;
-  confirmedMemories: number;
-  probableMemories: number;
-  uncertainMemories: number;
-  rejectedMemories: number;
-  validationProgress: number;
-  confidenceScore: number;
+export interface MemoryValidation {
+  memory_id: string;
+  status: 'validated' | 'error';
+  version_count: number;
+  inconsistency_count: number;
+  global_confidence: number;
+  is_sensitive: boolean;
+  validation_status: 'reliable' | 'unreliable' | 'needs_review';
+  recommendations: string[];
 }
 
-export interface MemoryWithValidation {
+export interface MemoryInconsistency {
   id: string;
-  content: string;
-  type: string;
+  current_content: string;
+  version_number: number;
+  version_content: string;
+  title: string;
+  updated_at: string;
+  version_created_at: string;
+  content_similarity_score: number;
+}
+
+export interface ValidationLog {
+  id: string;
+  memory_id: string;
+  validation_type: string;
+  validation_result: string;
+  confidence_score: number;
+  details: any;
   created_at: string;
-  feedbackSummary: Array<{ confidence_level: string; count: number }>;
-  dominantConfidence: string;
-  needsValidation: boolean;
 }
 
 export function useMemoryValidation() {
   const { user } = useAuth();
-  const { memories, loading: memoriesLoading, fetchMemories } = useMemories();
-  const { getFeedbackSummary } = useMemoryFeedback();
-  
-  const [validationStats, setValidationStats] = useState<ValidationStats>({
-    totalMemories: 0,
-    confirmedMemories: 0,
-    probableMemories: 0,
-    uncertainMemories: 0,
-    rejectedMemories: 0,
-    validationProgress: 0,
-    confidenceScore: 0
-  });
-
-  const [memoriesWithValidation, setMemoriesWithValidation] = useState<MemoryWithValidation[]>([]);
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const loadMemoriesWithValidation = useCallback(async () => {
-    if (!user || memoriesLoading) return;
+  const validateMemoryConsistency = useCallback(async (memoryId: string): Promise<MemoryValidation | null> => {
+    if (!user || !memoryId) return null;
 
     setLoading(true);
     try {
-      const memoriesWithFeedback: MemoryWithValidation[] = [];
-      
-      for (const memory of memories) {
-        const feedbackSummary = await getFeedbackSummary(memory.id);
-        
-        // Determinar confiança dominante
-        let dominantConfidence = 'sem_feedback';
-        let maxCount = 0;
-        
-        feedbackSummary.forEach(feedback => {
-          if (feedback.count > maxCount) {
-            maxCount = feedback.count;
-            dominantConfidence = feedback.confidence_level;
-          }
-        });
+      const { data, error } = await supabase.rpc('validate_memory_consistency', {
+        p_memory_id: memoryId
+      });
 
-        memoriesWithFeedback.push({
-          id: memory.id,
-          content: memory.content,
-          type: memory.type,
-          created_at: memory.created_at,
-          feedbackSummary,
-          dominantConfidence,
-          needsValidation: feedbackSummary.length === 0 || dominantConfidence === 'incerto'
-        });
-      }
+      if (error) throw error;
 
-      setMemoriesWithValidation(memoriesWithFeedback);
-      
-      // Calcular estatísticas
-      const stats = calculateValidationStats(memoriesWithFeedback);
-      setValidationStats(stats);
-      
+      toast({
+        title: "Validação Concluída",
+        description: `Memória validada com status: ${data.validation_status}`,
+      });
+
+      return data as MemoryValidation;
     } catch (error) {
-      console.error('Erro ao carregar memórias com validação:', error);
+      console.error('Erro ao validar consistência:', error);
+      toast({
+        title: "Erro na Validação",
+        description: "Não foi possível validar a consistência da memória",
+        variant: "destructive",
+      });
+      return null;
     } finally {
       setLoading(false);
     }
-  }, [user, memories, memoriesLoading, getFeedbackSummary]);
+  }, [user, toast]);
 
-  const calculateValidationStats = useCallback((memoriesData: MemoryWithValidation[]): ValidationStats => {
-    const total = memoriesData.length;
-    let confirmed = 0;
-    let probable = 0;
-    let uncertain = 0;
-    let rejected = 0;
-    let hasValidation = 0;
+  const getMemoryInconsistencies = useCallback(async (): Promise<MemoryInconsistency[]> => {
+    if (!user) return [];
 
-    memoriesData.forEach(memory => {
-      if (memory.feedbackSummary.length > 0) {
-        hasValidation++;
-        switch (memory.dominantConfidence) {
-          case 'confirmado':
-            confirmed++;
-            break;
-          case 'provavel':
-            probable++;
-            break;
-          case 'incerto':
-            uncertain++;
-            break;
-          case 'rejeitado':
-            rejected++;
-            break;
-        }
-      }
-    });
+    try {
+      const { data, error } = await supabase
+        .from('memory_inconsistencies')
+        .select('*')
+        .order('content_similarity_score', { ascending: true });
 
-    const validationProgress = total > 0 ? (hasValidation / total) * 100 : 0;
-    
-    // Score de confiança baseado na distribuição de feedback
-    const confidenceScore = total > 0 
-      ? ((confirmed * 1.0 + probable * 0.7 + uncertain * 0.3) / total) * 100
-      : 0;
-
-    return {
-      totalMemories: total,
-      confirmedMemories: confirmed,
-      probableMemories: probable,
-      uncertainMemories: uncertain,
-      rejectedMemories: rejected,
-      validationProgress: Math.round(validationProgress),
-      confidenceScore: Math.round(confidenceScore)
-    };
-  }, []);
-
-  const getMemoriesNeedingValidation = useCallback(() => {
-    return memoriesWithValidation.filter(memory => memory.needsValidation);
-  }, [memoriesWithValidation]);
-
-  const getMemoriesByConfidence = useCallback((confidence: string) => {
-    return memoriesWithValidation.filter(memory => memory.dominantConfidence === confidence);
-  }, [memoriesWithValidation]);
-
-  useEffect(() => {
-    if (memories.length > 0) {
-      loadMemoriesWithValidation();
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Erro ao buscar inconsistências:', error);
+      return [];
     }
-  }, [memories, loadMemoriesWithValidation]);
+  }, [user]);
+
+  const getValidationLogs = useCallback(async (memoryId?: string): Promise<ValidationLog[]> => {
+    if (!user) return [];
+
+    try {
+      let query = supabase
+        .from('memory_validation_logs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (memoryId) {
+        query = query.eq('memory_id', memoryId);
+      }
+
+      const { data, error } = await query.limit(100);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Erro ao buscar logs de validação:', error);
+      return [];
+    }
+  }, [user]);
+
+  const markMemorySensitive = useCallback(async (memoryId: string, isSensitive: boolean = true): Promise<boolean> => {
+    if (!user || !memoryId) return false;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('mark_memory_sensitive', {
+        p_memory_id: memoryId,
+        p_is_sensitive: isSensitive
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: isSensitive ? "Memória Marcada como Sensível" : "Memória Desmarcada como Sensível",
+        description: `Status de sensibilidade atualizado com sucesso`,
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Erro ao marcar sensibilidade:', error);
+      toast({
+        title: "Erro ao Atualizar",
+        description: "Não foi possível atualizar o status de sensibilidade",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+
+  const getMemoryConfidenceScores = useCallback(async (): Promise<any[]> => {
+    if (!user) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('memory_confidence_score')
+        .select('*')
+        .order('global_confidence_score', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Erro ao buscar scores de confiança:', error);
+      return [];
+    }
+  }, [user]);
 
   return {
     loading,
-    validationStats,
-    memoriesWithValidation,
-    getMemoriesNeedingValidation,
-    getMemoriesByConfidence,
-    loadMemoriesWithValidation
+    validateMemoryConsistency,
+    getMemoryInconsistencies,
+    getValidationLogs,
+    markMemorySensitive,
+    getMemoryConfidenceScores
   };
 }
