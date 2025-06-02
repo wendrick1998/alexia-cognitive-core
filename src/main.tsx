@@ -5,10 +5,10 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
 import "./index.css";
 
-// Performance monitoring
+// Performance monitoring otimizado
 if ('performance' in window) {
   window.addEventListener('load', () => {
-    // Log Core Web Vitals
+    // Log Core Web Vitals de forma mais eficiente
     const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     console.log('⚡ Performance Metrics:', {
       loadTime: navigation.loadEventEnd - navigation.loadEventStart,
@@ -19,25 +19,45 @@ if ('performance' in window) {
   });
 }
 
-// Error tracking
+// Error tracking otimizado
 window.addEventListener('error', (event) => {
-  console.error('🐛 Global Error:', {
-    message: event.message,
-    filename: event.filename,
-    lineno: event.lineno,
-    colno: event.colno,
-    stack: event.error?.stack
-  });
+  // Só log de erros críticos para reduzir noise
+  if (!event.message.includes('Script error') && !event.message.includes('Loading CSS chunk')) {
+    console.error('🐛 Critical Error:', {
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      stack: event.error?.stack
+    });
+  }
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('🚫 Unhandled Promise Rejection:', event.reason);
+  // Filtrar erros de rede/carregamento não críticos
+  if (!event.reason?.message?.includes('Loading chunk')) {
+    console.error('🚫 Unhandled Promise Rejection:', event.reason);
+  }
 });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
+// Otimização de inicialização
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+
+// Remover StrictMode em produção para melhor performance
+const isProduction = import.meta.env.PROD;
+
+const AppWrapper = () => (
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
 );
+
+if (isProduction) {
+  root.render(<AppWrapper />);
+} else {
+  root.render(
+    <React.StrictMode>
+      <AppWrapper />
+    </React.StrictMode>
+  );
+}

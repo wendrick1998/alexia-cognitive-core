@@ -1,79 +1,163 @@
 
-import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from "@/hooks/use-toast";
-import PremiumAppLayout from '@/components/layout/PremiumAppLayout';
-import Dashboard from '@/components/dashboard/Dashboard';
-import Chat from '@/components/Chat';
-import SemanticSearch from '@/components/SemanticSearch';
-import MemoryManager from '@/components/MemoryManager';
-import DocumentsManager from '@/components/DocumentsManager';
-import ProjectsManager from '@/components/ProjectsManager';
-import SettingsScreen from '@/components/settings/SettingsScreen';
-import CognitiveGraphPage from '@/components/cognitive/CognitiveGraphPage';
-import InsightsPage from '@/components/cognitive/InsightsPage';
-import CortexDashboard from '@/components/cognitive/CortexDashboard';
-import IntegrationsStatusPage from '@/components/integrations/IntegrationsStatusPage';
-import IntegrationsManagerPage from '@/components/integrations/IntegrationsManagerPage';
+import { useState, Suspense } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import PremiumAppLayout from "@/components/layout/PremiumAppLayout";
+import AuthGuard from "@/components/auth/AuthGuard";
+import { ConnectionStatus } from "@/components/ui/connection-status";
+import { PageTransition } from "@/components/ui/transitions";
+import { PageLoader } from "@/components/ui/page-loader";
+import { 
+  Dashboard, 
+  Chat, 
+  SemanticSearch, 
+  MemoryManager, 
+  DocumentsManager, 
+  ProjectsManager,
+  CognitiveGraphPage,
+  InsightsPage,
+  CortexDashboard,
+  IntegrationsStatusPage,
+  IntegrationsManagerPage,
+  SettingsScreen
+} from "./LazyPages";
 
 const Index = () => {
-  const [activeSection, setActiveSection] = useState("dashboard");
-  const { user, loading } = useAuth();
-  const { toast } = useToast();
+  const [currentSection, setCurrentSection] = useState("dashboard");
+  const { isAuthenticated } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-black to-gray-900">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  const handleSectionChange = (section: string, id?: string) => {
+    console.log(`🔗 Navegando para seção: ${section}`, id ? `com ID: ${id}` : '');
+    
+    if (section !== currentSection) {
+      setCurrentSection(section);
+      
+      if (id) {
+        console.log(`Navegando para ${section} com ID: ${id}`);
+      }
+    }
+  };
 
-  if (!user) {
-    return null;
-  }
-
-  const renderContent = () => {
-    switch (activeSection) {
+  const renderContent = (section: string) => {
+    console.log(`🎨 Renderizando conteúdo para seção: ${section}`);
+    
+    switch (section) {
       case "dashboard":
-        return <Dashboard />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Dashboard..." />}>
+            <Dashboard />
+          </Suspense>
+        );
       case "chat":
-        return <Chat />;
-      case "search":
-        return <SemanticSearch />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Chat..." />}>
+            <Chat />
+          </Suspense>
+        );
       case "memory":
-        return <MemoryManager />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Memórias..." />}>
+            <MemoryManager />
+          </Suspense>
+        );
       case "documents":
-        return <DocumentsManager />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Documentos..." />}>
+            <DocumentsManager />
+          </Suspense>
+        );
+      case "search":
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Busca..." />}>
+            <SemanticSearch />
+          </Suspense>
+        );
       case "actions":
-        return <ProjectsManager />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Projetos..." />}>
+            <ProjectsManager />
+          </Suspense>
+        );
       case "cognitive-graph":
-        return <CognitiveGraphPage />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Rede Cognitiva..." />}>
+            <CognitiveGraphPage />
+          </Suspense>
+        );
       case "insights":
-        return <InsightsPage />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Insights..." />}>
+            <InsightsPage />
+          </Suspense>
+        );
       case "cortex-dashboard":
-        return <CortexDashboard />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Córtex..." />}>
+            <CortexDashboard />
+          </Suspense>
+        );
       case "integrations-status":
-        return <IntegrationsStatusPage />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Integrações..." />}>
+            <IntegrationsStatusPage />
+          </Suspense>
+        );
       case "integrations-manager":
-        return <IntegrationsManagerPage />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Gerenciador..." />}>
+            <IntegrationsManagerPage />
+          </Suspense>
+        );
       case "preferences":
-        return <SettingsScreen isOpen={true} onClose={() => setActiveSection("dashboard")} />;
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Configurações..." />}>
+            <SettingsScreen isOpen={true} onClose={() => setCurrentSection("dashboard")} />
+          </Suspense>
+        );
       case "privacy":
-        return <div className="p-6"><h1 className="text-2xl text-white">Configurações de Privacidade</h1><p className="text-white/60">Em desenvolvimento...</p></div>;
+        return (
+          <div className="p-6">
+            <h1 className="text-2xl text-white">Configurações de Privacidade</h1>
+            <p className="text-white/60">Em desenvolvimento...</p>
+          </div>
+        );
       case "subscription":
-        return <div className="p-6"><h1 className="text-2xl text-white">Gerenciamento de Assinatura</h1><p className="text-white/60">Em desenvolvimento...</p></div>;
+        return (
+          <div className="p-6">
+            <h1 className="text-2xl text-white">Gerenciamento de Assinatura</h1>
+            <p className="text-white/60">Em desenvolvimento...</p>
+          </div>
+        );
       case "security":
-        return <div className="p-6"><h1 className="text-2xl text-white">Configurações de Segurança</h1><p className="text-white/60">Em desenvolvimento...</p></div>;
+        return (
+          <div className="p-6">
+            <h1 className="text-2xl text-white">Configurações de Segurança</h1>
+            <p className="text-white/60">Em desenvolvimento...</p>
+          </div>
+        );
       default:
-        return <Dashboard />;
+        console.log(`⚠️ Seção desconhecida: ${section}, retornando para Dashboard`);
+        return (
+          <Suspense fallback={<PageLoader text="Carregando Dashboard..." />}>
+            <Dashboard />
+          </Suspense>
+        );
     }
   };
 
   return (
-    <PremiumAppLayout currentSection={activeSection} onSectionChange={setActiveSection}>
-      {renderContent()}
-    </PremiumAppLayout>
+    <AuthGuard>
+      <div className="min-h-screen bg-white dark:bg-gray-950">
+        <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
+          <div className="relative h-full overflow-hidden">
+            <PageTransition>
+              {renderContent(currentSection)}
+            </PageTransition>
+          </div>
+        </PremiumAppLayout>
+        
+        <ConnectionStatus />
+      </div>
+    </AuthGuard>
   );
 };
 
