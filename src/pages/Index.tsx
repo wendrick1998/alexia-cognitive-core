@@ -1,35 +1,36 @@
 
-import { useState, Suspense } from "react";
+import { useState } from "react";
+import PremiumAppLayout from "../components/layout/PremiumAppLayout";
+import Chat from "../components/Chat";
+import Dashboard from "../components/dashboard/Dashboard";
+import ProjectsManager from "../components/ProjectsManager";
+import MemoryManager from "../components/MemoryManager";
+import DocumentsManager from "../components/DocumentsManager";
+import SemanticSearch from "../components/SemanticSearch";
+import AuthGuard from "../components/auth/AuthGuard";
+import { ConnectionStatus } from "../components/ui/connection-status";
 import { useAuth } from "@/hooks/useAuth";
-import PremiumAppLayout from "@/components/layout/PremiumAppLayout";
-import AuthGuard from "@/components/auth/AuthGuard";
-import { ConnectionStatus } from "@/components/ui/connection-status";
 import { PageTransition } from "@/components/ui/transitions";
-import { PageLoader } from "@/components/ui/page-loader";
-import Chat from "@/components/Chat";
-import { 
-  Dashboard, 
-  SemanticSearch, 
-  MemoryManager, 
-  DocumentsManager, 
-  ProjectsManager,
-  CognitiveGraphPage,
-  InsightsPage,
-  CortexDashboard,
-  IntegrationsStatusPage,
-  IntegrationsManagerPage,
-  SettingsScreen
-} from "./LazyPages";
-import PrivacyPage from "./PrivacyPage";
-import SubscriptionPage from "./SubscriptionPage";
-import SecurityPage from "./SecurityPage";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [currentSection, setCurrentSection] = useState("dashboard");
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const handleSectionChange = (section: string, id?: string) => {
     console.log(`🔗 Navegando para seção: ${section}`, id ? `com ID: ${id}` : '');
+    
+    // Redirecionar para páginas específicas ao invés de seções
+    if (section === "preferences") {
+      navigate("/settings");
+      return;
+    }
+    
+    if (section === "security") {
+      navigate("/security");
+      return;
+    }
     
     if (section !== currentSection) {
       setCurrentSection(section);
@@ -45,94 +46,32 @@ const Index = () => {
     
     switch (section) {
       case "dashboard":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Dashboard..." />}>
-            <Dashboard />
-          </Suspense>
-        );
+        return <Dashboard />;
       case "chat":
         return <Chat />;
       case "memory":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Memórias..." />}>
-            <MemoryManager />
-          </Suspense>
-        );
+        return <MemoryManager />;
       case "documents":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Documentos..." />}>
-            <DocumentsManager />
-          </Suspense>
-        );
+        return <DocumentsManager />;
       case "search":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Busca..." />}>
-            <SemanticSearch />
-          </Suspense>
-        );
+        return <SemanticSearch />;
       case "actions":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Projetos..." />}>
-            <ProjectsManager />
-          </Suspense>
-        );
-      case "cognitive-graph":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Rede Cognitiva..." />}>
-            <CognitiveGraphPage />
-          </Suspense>
-        );
-      case "insights":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Insights..." />}>
-            <InsightsPage />
-          </Suspense>
-        );
-      case "cortex-dashboard":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Córtex..." />}>
-            <CortexDashboard />
-          </Suspense>
-        );
-      case "integrations-status":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Integrações..." />}>
-            <IntegrationsStatusPage />
-          </Suspense>
-        );
-      case "integrations-manager":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Gerenciador..." />}>
-            <IntegrationsManagerPage />
-          </Suspense>
-        );
-      case "preferences":
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Configurações..." />}>
-            <SettingsScreen isOpen={true} onClose={() => setCurrentSection("dashboard")} />
-          </Suspense>
-        );
+        return <ProjectsManager />;
       case "privacy":
-        return <PrivacyPage />;
+        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Configurações de IA - Em desenvolvimento</div>;
       case "subscription":
-        return <SubscriptionPage />;
-      case "security":
-        return <SecurityPage />;
+        return <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">Assinatura - Em desenvolvimento</div>;
       default:
         console.log(`⚠️ Seção desconhecida: ${section}, retornando para Dashboard`);
-        return (
-          <Suspense fallback={<PageLoader text="Carregando Dashboard..." />}>
-            <Dashboard />
-          </Suspense>
-        );
+        return <Dashboard />;
     }
   };
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-white dark:bg-gray-950 w-full">
+      <div className="min-h-screen bg-white dark:bg-gray-950">
         <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
-          <div className="relative h-full w-full">
+          <div className="relative h-full overflow-hidden">
             <PageTransition>
               {renderContent(currentSection)}
             </PageTransition>

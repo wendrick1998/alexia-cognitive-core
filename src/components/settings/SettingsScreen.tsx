@@ -1,326 +1,452 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
-import { X, Camera, User, Bot, Palette, Bell, Shield, ChevronRight, Upload } from "lucide-react";
-import { useDarkMode } from "@/hooks/useDarkMode";
-import { useAuth } from "@/hooks/useAuth";
-import DarkModeToggle from "@/components/premium/DarkModeToggle";
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Slider } from '@/components/ui/slider';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  User, 
+  Settings, 
+  Palette, 
+  Bell, 
+  Shield, 
+  Save,
+  Moon,
+  Sun,
+  Monitor,
+  Globe,
+  Volume2
+} from 'lucide-react';
 
-interface SettingsScreenProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-const AI_MODELS = [
-  { id: 'auto', name: 'Auto', description: 'Escolha inteligente' },
-  { id: 'gpt-4', name: 'GPT-4', description: 'Raciocínio avançado' },
-  { id: 'claude', name: 'Claude', description: 'Criativo e analítico' },
-  { id: 'deepseek', name: 'DeepSeek', description: 'Programação expert' },
-  { id: 'groq', name: 'Groq', description: 'Ultra rápido' },
-];
-
-const ACCENT_COLORS = [
-  { name: 'Blue', value: '#3B82F6' },
-  { name: 'Purple', value: '#8B5CF6' },
-  { name: 'Green', value: '#10B981' },
-  { name: 'Orange', value: '#F59E0B' },
-  { name: 'Pink', value: '#EC4899' },
-  { name: 'Red', value: '#EF4444' },
-];
-
-const SettingsScreen = ({ isOpen, onClose }: SettingsScreenProps) => {
-  const { user } = useAuth();
-  const { theme, setTheme } = useDarkMode();
+const SettingsScreen = () => {
+  const { toast } = useToast();
   
-  // Settings state
-  const [selectedModel, setSelectedModel] = useState('auto');
-  const [autoRouting, setAutoRouting] = useState(true);
-  const [fontSize, setFontSize] = useState([16]);
-  const [density, setDensity] = useState('normal');
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [sounds, setSounds] = useState(true);
-  const [doNotDisturb, setDoNotDisturb] = useState(false);
-  const [pauseLearning, setPauseLearning] = useState(false);
-  const [selectedAccentColor, setSelectedAccentColor] = useState('#3B82F6');
+  const [settings, setSettings] = useState({
+    // Perfil
+    name: 'Alex IA User',
+    email: 'user@alexia.dev',
+    language: 'pt-BR',
+    timezone: 'America/Sao_Paulo',
+    
+    // Aparência
+    theme: 'system',
+    fontSize: 16,
+    compactMode: false,
+    animations: true,
+    
+    // Notificações
+    emailNotifications: true,
+    pushNotifications: true,
+    soundEnabled: true,
+    notificationVolume: 70,
+    
+    // IA
+    aiResponseStyle: 'balanced',
+    autoSave: true,
+    contextMemory: true,
+    voiceInput: false,
+    
+    // Privacidade
+    dataCollection: true,
+    analytics: false,
+    crashReports: true
+  });
 
-  if (!isOpen) return null;
+  const handleSave = () => {
+    toast({
+      title: "Configurações salvas",
+      description: "Suas preferências foram atualizadas com sucesso.",
+    });
+  };
+
+  const handleReset = () => {
+    toast({
+      title: "Configurações redefinidas",
+      description: "Todas as configurações foram restauradas para os valores padrão.",
+    });
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="w-full max-w-2xl h-[90vh] bg-white dark:bg-[#1A1A1A] rounded-3xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Configurações</h1>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="text-white hover:bg-white/20 rounded-full"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
+    <div className="h-full overflow-y-auto premium-scrollbar p-6 space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Configurações
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Personalize sua experiência com o Alex IA
+        </p>
+      </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6 overflow-y-auto h-[calc(100%-100px)]">
-          
-          {/* Profile Section */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                Perfil
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span className="hidden sm:inline">Perfil</span>
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            <span className="hidden sm:inline">Aparência</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">Notificações</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">IA</span>
+          </TabsTrigger>
+          <TabsTrigger value="privacy" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Privacidade</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Informações Pessoais
               </CardTitle>
+              <CardDescription>
+                Configure suas informações básicas
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Avatar className="w-16 h-16">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl">
-                      {user?.email?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <Button
-                    size="sm"
-                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-500 hover:bg-blue-600 p-0"
-                  >
-                    <Camera className="w-3 h-3" />
-                  </Button>
-                </div>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    defaultValue={user?.email?.split('@')[0] || 'Usuário'}
-                    className="text-lg font-semibold bg-transparent border-none outline-none text-gray-900 dark:text-white"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome completo</Label>
+                  <Input
+                    id="name"
+                    value={settings.name}
+                    onChange={(e) => setSettings({ ...settings, name: e.target.value })}
                   />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
-                  <Badge variant="secondary" className="mt-1">Plano Gratuito</Badge>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* AI & Models Section */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={settings.email}
+                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                  />
                 </div>
-                IA & Modelos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Modelo Padrão</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {AI_MODELS.find(m => m.id === selectedModel)?.name}
-                  </p>
-                </div>
-                <select 
-                  value={selectedModel} 
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="bg-gray-100 dark:bg-gray-800 border-0 rounded-xl px-3 py-2 text-sm"
-                >
-                  {AI_MODELS.map(model => (
-                    <option key={model.id} value={model.id}>{model.name}</option>
-                  ))}
-                </select>
               </div>
               
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Roteamento Automático</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Escolha inteligente de modelo</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="language">Idioma</Label>
+                  <Select value={settings.language} onValueChange={(value) => setSettings({ ...settings, language: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
+                      <SelectItem value="en-US">English (US)</SelectItem>
+                      <SelectItem value="es-ES">Español</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Switch 
-                  checked={autoRouting} 
-                  onCheckedChange={setAutoRouting}
-                  className="data-[state=checked]:bg-blue-500"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="timezone">Fuso horário</Label>
+                  <Select value={settings.timezone} onValueChange={(value) => setSettings({ ...settings, timezone: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="America/Sao_Paulo">São Paulo (GMT-3)</SelectItem>
+                      <SelectItem value="America/New_York">New York (GMT-5)</SelectItem>
+                      <SelectItem value="Europe/London">London (GMT+0)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Appearance Section */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                  <Palette className="w-4 h-4 text-green-600 dark:text-green-400" />
-                </div>
-                Aparência
+        <TabsContent value="appearance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Personalização Visual
               </CardTitle>
+              <CardDescription>
+                Ajuste a aparência da interface
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Tema</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{theme}</p>
-                </div>
-                <DarkModeToggle />
-              </div>
-
-              <div className="space-y-2">
-                <p className="font-medium">Cor de Destaque</p>
-                <div className="flex gap-2">
-                  {ACCENT_COLORS.map(color => (
-                    <button
-                      key={color.name}
-                      onClick={() => setSelectedAccentColor(color.value)}
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        selectedAccentColor === color.value ? 'border-gray-400' : 'border-transparent'
-                      }`}
-                      style={{ backgroundColor: color.value }}
-                    />
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <Label>Tema</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { value: 'light', label: 'Claro', icon: Sun },
+                    { value: 'dark', label: 'Escuro', icon: Moon },
+                    { value: 'system', label: 'Sistema', icon: Monitor }
+                  ].map((theme) => (
+                    <Button
+                      key={theme.value}
+                      variant={settings.theme === theme.value ? "default" : "outline"}
+                      className="h-auto p-4 flex flex-col gap-2"
+                      onClick={() => setSettings({ ...settings, theme: theme.value })}
+                    >
+                      <theme.icon className="h-5 w-5" />
+                      <span>{theme.label}</span>
+                    </Button>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium">Tamanho da Fonte</p>
-                  <span className="text-sm text-gray-500">{fontSize[0]}px</span>
-                </div>
+              <div className="space-y-4">
+                <Label>Tamanho da fonte: {settings.fontSize}px</Label>
                 <Slider
-                  value={fontSize}
-                  onValueChange={setFontSize}
-                  max={24}
+                  value={[settings.fontSize]}
+                  onValueChange={(value) => setSettings({ ...settings, fontSize: value[0] })}
                   min={12}
+                  max={24}
                   step={1}
                   className="w-full"
                 />
               </div>
 
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Modo compacto</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Reduzir espaçamentos para mais conteúdo
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.compactMode}
+                  onCheckedChange={(checked) => setSettings({ ...settings, compactMode: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Animações</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Ativar transições e efeitos visuais
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.animations}
+                  onCheckedChange={(checked) => setSettings({ ...settings, animations: checked })}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Preferências de Notificação
+              </CardTitle>
+              <CardDescription>
+                Configure como e quando receber notificações
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Notificações por email</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Receber atualizações importantes por email
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.emailNotifications}
+                  onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Notificações push</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Alertas instantâneos no navegador
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.pushNotifications}
+                  onCheckedChange={(checked) => setSettings({ ...settings, pushNotifications: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Sons de notificação</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Reproduzir sons para alertas
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.soundEnabled}
+                  onCheckedChange={(checked) => setSettings({ ...settings, soundEnabled: checked })}
+                />
+              </div>
+
+              {settings.soundEnabled && (
+                <div className="space-y-4">
+                  <Label className="flex items-center gap-2">
+                    <Volume2 className="h-4 w-4" />
+                    Volume: {settings.notificationVolume}%
+                  </Label>
+                  <Slider
+                    value={[settings.notificationVolume]}
+                    onValueChange={(value) => setSettings({ ...settings, notificationVolume: value[0] })}
+                    min={0}
+                    max={100}
+                    step={5}
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Configurações de IA
+              </CardTitle>
+              <CardDescription>
+                Personalize o comportamento da inteligência artificial
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div className="space-y-2">
-                <p className="font-medium">Densidade</p>
-                <div className="flex gap-2">
-                  {['compact', 'normal', 'comfort'].map(d => (
-                    <button
-                      key={d}
-                      onClick={() => setDensity(d)}
-                      className={`px-3 py-1 rounded-full text-sm capitalize ${
-                        density === d 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
+                <Label>Estilo de resposta</Label>
+                <Select value={settings.aiResponseStyle} onValueChange={(value) => setSettings({ ...settings, aiResponseStyle: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="concise">Conciso</SelectItem>
+                    <SelectItem value="balanced">Equilibrado</SelectItem>
+                    <SelectItem value="detailed">Detalhado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Salvamento automático</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Salvar conversas automaticamente
+                  </p>
                 </div>
+                <Switch
+                  checked={settings.autoSave}
+                  onCheckedChange={(checked) => setSettings({ ...settings, autoSave: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Memória contextual</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    IA lembrará do contexto das conversas
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.contextMemory}
+                  onCheckedChange={(checked) => setSettings({ ...settings, contextMemory: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Entrada por voz</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Usar reconhecimento de voz para input
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.voiceInput}
+                  onCheckedChange={(checked) => setSettings({ ...settings, voiceInput: checked })}
+                />
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Notifications Section */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
-                  <Bell className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                </div>
-                Notificações
+        <TabsContent value="privacy" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Privacidade e Dados
               </CardTitle>
+              <CardDescription>
+                Controle como seus dados são utilizados
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Push Notifications</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Receber notificações</p>
+                <div className="space-y-0.5">
+                  <Label>Coleta de dados de uso</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Ajudar a melhorar o produto com dados anônimos
+                  </p>
                 </div>
-                <Switch 
-                  checked={pushNotifications} 
-                  onCheckedChange={setPushNotifications}
-                  className="data-[state=checked]:bg-blue-500"
+                <Switch
+                  checked={settings.dataCollection}
+                  onCheckedChange={(checked) => setSettings({ ...settings, dataCollection: checked })}
                 />
               </div>
 
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Sons</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Efeitos sonoros</p>
+                <div className="space-y-0.5">
+                  <Label>Analytics</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Permitir análise de uso para melhorias
+                  </p>
                 </div>
-                <Switch 
-                  checked={sounds} 
-                  onCheckedChange={setSounds}
-                  className="data-[state=checked]:bg-blue-500"
+                <Switch
+                  checked={settings.analytics}
+                  onCheckedChange={(checked) => setSettings({ ...settings, analytics: checked })}
                 />
               </div>
 
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Não Perturbe</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">22:00 - 08:00</p>
+                <div className="space-y-0.5">
+                  <Label>Relatórios de erro</Label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Enviar relatórios automáticos de erro
+                  </p>
                 </div>
-                <Switch 
-                  checked={doNotDisturb} 
-                  onCheckedChange={setDoNotDisturb}
-                  className="data-[state=checked]:bg-blue-500"
+                <Switch
+                  checked={settings.crashReports}
+                  onCheckedChange={(checked) => setSettings({ ...settings, crashReports: checked })}
                 />
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+      </Tabs>
 
-          {/* Privacy Section */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-red-600 dark:text-red-400" />
-                </div>
-                Privacidade & Dados
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <button className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <div className="text-left">
-                  <p className="font-medium">Exportar Dados</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Download dos seus dados</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </button>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Pausar Aprendizado</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">IA não aprende com conversas</p>
-                </div>
-                <Switch 
-                  checked={pauseLearning} 
-                  onCheckedChange={setPauseLearning}
-                  className="data-[state=checked]:bg-blue-500"
-                />
-              </div>
-
-              <button className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <div className="text-left">
-                  <p className="font-medium text-red-600 dark:text-red-400">Limpar Memórias</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Remove todas as memórias</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </button>
-
-              <button className="w-full flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-                <div className="text-left">
-                  <p className="font-medium text-red-600 dark:text-red-400">Deletar Conta</p>
-                  <p className="text-sm text-red-400">Ação irreversível</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-red-400" />
-              </button>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <Button onClick={handleSave} className="flex items-center gap-2">
+          <Save className="h-4 w-4" />
+          Salvar Configurações
+        </Button>
+        <Button variant="outline" onClick={handleReset}>
+          Restaurar Padrões
+        </Button>
       </div>
     </div>
   );
