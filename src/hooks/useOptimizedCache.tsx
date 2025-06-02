@@ -135,23 +135,6 @@ export function useOptimizedCache<T = any>(config: Partial<CacheConfig> = {}) {
     }
   }, [defaultConfig.maxSize, updateMetrics]);
 
-  const compress = useCallback((data: T): string => {
-    if (!defaultConfig.enableCompression) {
-      return JSON.stringify(data);
-    }
-
-    // Simple compression using JSON with repetition removal
-    const jsonString = JSON.stringify(data);
-    
-    // For now, just return the JSON string
-    // In a real implementation, you might use a compression library
-    return jsonString;
-  }, [defaultConfig.enableCompression]);
-
-  const decompress = useCallback((compressedData: string): T => {
-    return JSON.parse(compressedData);
-  }, []);
-
   const set = useCallback((
     key: string, 
     data: T, 
