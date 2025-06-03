@@ -9,10 +9,13 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
 
 // Log para verificar se App.tsx está sendo executado
-console.log('🎯 App.tsx carregando - versão corrigida');
+console.log('🎯 App.tsx carregando - diagnóstico progressivo INICIADO');
 
-// Lazy load da página principal
-const IndexPage = lazy(() => import('@/pages/Index'));
+// Lazy load apenas do Dashboard para teste inicial
+const Dashboard = lazy(() => {
+  console.log('📊 Lazy loading Dashboard...');
+  return import('@/components/dashboard/Dashboard');
+});
 
 // QueryClient otimizado
 const queryClient = new QueryClient({
@@ -29,8 +32,10 @@ const queryClient = new QueryClient({
   },
 });
 
+console.log('⚙️ QueryClient criado com sucesso');
+
 function App() {
-  console.log('🎯 App component renderizando - versão corrigida');
+  console.log('🎯 App component renderizando - FASE 1: Apenas Dashboard');
   
   return (
     <ErrorBoundary>
@@ -41,11 +46,12 @@ function App() {
               <div className="min-h-screen bg-background text-foreground">
                 <Suspense fallback={
                   <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-                    <SmartLoadingSpinner size="lg" message="Carregando Alex iA..." />
+                    <SmartLoadingSpinner size="lg" message="Carregando Dashboard..." />
                   </div>
                 }>
                   <Routes>
-                    <Route path="/*" element={<IndexPage />} />
+                    {/* FASE 1: Apenas Dashboard sem guards */}
+                    <Route path="/*" element={<Dashboard />} />
                   </Routes>
                 </Suspense>
               </div>
@@ -58,4 +64,5 @@ function App() {
   );
 }
 
+console.log('📤 App.tsx configurado para FASE 1 - exportando');
 export default App;

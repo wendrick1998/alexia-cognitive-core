@@ -5,7 +5,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Log crítico para verificar se main.tsx está executando
-console.log('🚀 MAIN.TSX EXECUTANDO - Entrada do app');
+console.log('🚀 MAIN.TSX EXECUTANDO - Reativando árvore de componentes');
 
 // Get root element with error handling
 const rootElement = document.getElementById("root");
@@ -16,45 +16,20 @@ if (!rootElement) {
 
 console.log('✅ Root element encontrado:', rootElement);
 
-// Teste direto sem providers para diagnóstico
-const TestApp = () => {
-  console.log('🧪 TestApp renderizando diretamente');
-  return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#00ff00',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: 'black',
-      fontSize: '24px',
-      fontWeight: 'bold',
-      textAlign: 'center',
-      padding: '20px'
-    }}>
-      <div>
-        <h1>🟢 MAIN.TSX FUNCIONANDO!</h1>
-        <p>Renderização direta sem providers</p>
-        <p>Timestamp: {new Date().toLocaleTimeString()}</p>
-      </div>
-    </div>
-  );
-};
-
 try {
   console.log('🔄 Tentando criar root React...');
   const root = ReactDOM.createRoot(rootElement);
   
-  console.log('🔄 Tentando renderizar TestApp...');
+  console.log('🔄 Tentando renderizar App normal...');
   root.render(
     <React.StrictMode>
-      <TestApp />
+      <App />
     </React.StrictMode>
   );
   
-  console.log('✅ Renderização iniciada com sucesso!');
+  console.log('✅ Renderização do App iniciada com sucesso!');
 } catch (error) {
-  console.error('❌ ERRO NA RENDERIZAÇÃO:', error);
+  console.error('❌ ERRO NA RENDERIZAÇÃO DO APP:', error);
   
   // Fallback direto no DOM
   rootElement.innerHTML = `

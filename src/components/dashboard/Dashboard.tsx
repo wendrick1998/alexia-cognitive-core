@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,9 +24,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  // LOG CRÍTICO: Verificar se Dashboard está renderizando
+  console.log('📊 DASHBOARD RENDERIZADO - FASE 1 confirmada!');
+
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+
+  console.log('📊 Dashboard: hooks inicializados com sucesso');
 
   // Stats de exemplo (em produção viriam de uma API)
   const stats = {
@@ -127,15 +131,17 @@ const Dashboard = () => {
     }
   };
 
+  console.log('📊 Dashboard: preparando render do JSX');
+
   return (
     <div className="h-full overflow-y-auto dashboard-scroll-container premium-scrollbar p-6 space-y-6">
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Dashboard
+          Dashboard - FASE 1 ATIVA
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Visão geral das suas atividades e estatísticas
+          Diagnóstico progressivo: Dashboard renderizando normalmente ✅
         </p>
       </div>
 
@@ -332,4 +338,5 @@ const Dashboard = () => {
   );
 };
 
+console.log('📊 Dashboard: componente definido e pronto para export');
 export default Dashboard;
