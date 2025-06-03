@@ -40,59 +40,57 @@ export const showNotification = ({
 }: NotificationToastProps) => {
   const Icon = icons[type];
   
-  toast.custom(
-    (t) => (
-      <AnimatePresence>
-        {t.visible && (
-          <motion.div
-            initial={{ opacity: 0, x: 100, scale: 0.8 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 100, scale: 0.8 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className={cn(
-              'max-w-sm w-full p-4 rounded-lg shadow-lg backdrop-blur-xl border',
-              'bg-gray-900/90 border-gray-700/50 text-white',
-              colors[type]
-            )}
-          >
-            <div className="flex items-start gap-3">
-              <div className={cn('flex-shrink-0 p-1 rounded-full', colors[type])}>
-                <Icon className="w-4 h-4" />
-              </div>
-              
-              <div className="flex-1 space-y-1">
-                <h4 className="font-semibold text-sm">{title}</h4>
-                {description && (
-                  <p className="text-sm text-gray-300">{description}</p>
-                )}
-                
-                {action && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={action.onClick}
-                    className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2"
-                  >
-                    {action.label}
-                  </motion.button>
-                )}
-              </div>
-              
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => toast.dismiss(t.id)}
-                className="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </motion.button>
-            </div>
-          </motion.div>
+  const toastId = toast.custom(
+    () => (
+      <motion.div
+        initial={{ opacity: 0, x: 100, scale: 0.8 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: 100, scale: 0.8 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        className={cn(
+          'max-w-sm w-full p-4 rounded-lg shadow-lg backdrop-blur-xl border',
+          'bg-gray-900/90 border-gray-700/50 text-white',
+          colors[type]
         )}
-      </AnimatePresence>
+      >
+        <div className="flex items-start gap-3">
+          <div className={cn('flex-shrink-0 p-1 rounded-full', colors[type])}>
+            <Icon className="w-4 h-4" />
+          </div>
+          
+          <div className="flex-1 space-y-1">
+            <h4 className="font-semibold text-sm">{title}</h4>
+            {description && (
+              <p className="text-sm text-gray-300">{description}</p>
+            )}
+            
+            {action && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={action.onClick}
+                className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2"
+              >
+                {action.label}
+              </motion.button>
+            )}
+          </div>
+          
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => toast.dismiss(toastId)}
+            className="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </motion.button>
+        </div>
+      </motion.div>
     ),
     { duration }
   );
+
+  return toastId;
 };
 
 export default showNotification;
