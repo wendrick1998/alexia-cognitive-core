@@ -8,42 +8,11 @@ import { ThemeProvider } from 'next-themes';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
 
-// Debug: Log para verificar se App.tsx está sendo executado
-console.log('🚀 App.tsx carregando - versão de teste');
+// Log para verificar se App.tsx está sendo executado
+console.log('🎯 App.tsx carregando - versão corrigida');
 
-// TESTE SIMPLES - Componente direto para debug
-const TestComponent = () => {
-  console.log('🧪 TestComponent renderizando');
-  return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#ef4444', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      color: 'white',
-      fontSize: '24px',
-      textAlign: 'center',
-      padding: '20px'
-    }}>
-      <div>
-        <h1>🧪 TESTE SIMPLES FUNCIONANDO!</h1>
-        <p style={{ fontSize: '16px', marginTop: '20px' }}>
-          Se você vê esta mensagem, o React está funcionando.
-        </p>
-        <p style={{ fontSize: '14px', marginTop: '10px' }}>
-          Caminho: {window.location.pathname}
-        </p>
-        <p style={{ fontSize: '14px', marginTop: '10px' }}>
-          UserAgent: {navigator.userAgent.includes('Safari') ? 'Safari' : 'Outro'}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-// Lazy load da página principal - TEMPORARIAMENTE DESABILITADO
-// const IndexPage = lazy(() => import('@/pages/Index'));
+// Lazy load da página principal
+const IndexPage = lazy(() => import('@/pages/Index'));
 
 // QueryClient otimizado
 const queryClient = new QueryClient({
@@ -61,7 +30,7 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  console.log('🎯 App component renderizando - MODO TESTE');
+  console.log('🎯 App component renderizando - versão corrigida');
   
   return (
     <ErrorBoundary>
@@ -70,10 +39,15 @@ function App() {
           <TooltipProvider>
             <Router>
               <div className="min-h-screen bg-background text-foreground">
-                {/* TESTE SIMPLES - SEM SUSPENSE */}
-                <Routes>
-                  <Route path="/*" element={<TestComponent />} />
-                </Routes>
+                <Suspense fallback={
+                  <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+                    <SmartLoadingSpinner size="large" message="Carregando Alex iA..." />
+                  </div>
+                }>
+                  <Routes>
+                    <Route path="/*" element={<IndexPage />} />
+                  </Routes>
+                </Suspense>
               </div>
             </Router>
             <Toaster />
