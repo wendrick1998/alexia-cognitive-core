@@ -41,7 +41,7 @@ function App() {
               <div className="min-h-screen bg-background text-foreground">
                 <Suspense fallback={
                   <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-                    <SmartLoadingSpinner size="large" message="Carregando Alex iA..." />
+                    <SmartLoadingSpinner size="lg" message="Carregando Alex iA..." />
                   </div>
                 }>
                   <Routes>
