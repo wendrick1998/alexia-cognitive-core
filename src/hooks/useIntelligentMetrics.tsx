@@ -33,18 +33,18 @@ export function useIntelligentMetrics() {
 
     try {
       // Simular análise de métricas inteligentes
-      const cacheEfficiency = cache.metrics.hitRate;
-      const systemLoad = cache.metrics.totalSize / (50 * 1024 * 1024); // Assumindo 50MB como máximo
+      const cacheEfficiency = cache.stats.hitRate;
+      const systemLoad = cache.stats.totalSize / (50 * 1024 * 1024); // Assumindo 50MB como máximo
       
       // Calcular score de performance baseado em múltiplos fatores
       const performanceScore = (
         cacheEfficiency * 0.4 +
         (1 - Math.min(systemLoad, 1)) * 0.3 +
-        (cache.metrics.averageAccessTime < 10 ? 0.3 : 0.15)
+        0.3 // Simplified for missing averageAccessTime
       );
 
       // Simular detecção de padrões
-      const patternCount = Math.max(15, Math.floor(cache.metrics.entryCount * 0.15));
+      const patternCount = Math.max(15, Math.floor(cache.stats.entryCount * 0.15));
       
       // Simular detecção de anomalias
       const anomalyCount = Math.floor(Math.random() * 5);
@@ -66,7 +66,7 @@ export function useIntelligentMetrics() {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [cache.metrics]);
+  }, [cache.stats]);
 
   // Executar análise periodicamente
   useEffect(() => {
@@ -126,7 +126,7 @@ export function useIntelligentMetrics() {
     const data = {
       timestamp: new Date().toISOString(),
       metrics,
-      cacheMetrics: cache.metrics,
+      cacheMetrics: cache.stats,
       insights: generateInsights()
     };
 
@@ -137,7 +137,7 @@ export function useIntelligentMetrics() {
     a.download = `intelligent-metrics-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [metrics, cache.metrics, generateInsights]);
+  }, [metrics, cache.stats, generateInsights]);
 
   // Função para resetar métricas
   const resetMetrics = useCallback(() => {
@@ -159,6 +159,6 @@ export function useIntelligentMetrics() {
     generateInsights,
     exportMetrics,
     resetMetrics,
-    cacheMetrics: cache.metrics
+    cacheMetrics: cache.stats
   };
 }

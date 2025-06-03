@@ -1,5 +1,5 @@
 
-import { useOptimizedCache } from '@/hooks/useOptimizedCache';
+import { CacheStats } from '@/hooks/useOptimizedCache';
 
 export interface CachedResponse {
   response: string;
@@ -18,8 +18,17 @@ export interface CacheAnalytics {
   memoryUsage: number;
 }
 
+interface CacheHook {
+  set: (key: string, data: any, ttl?: number) => Promise<void>;
+  get: (key: string) => any;
+  remove: (key: string) => boolean;
+  clear: () => void;
+  getStats: () => CacheStats;
+  stats: CacheStats;
+}
+
 class CacheOptimizationService {
-  private cache: ReturnType<typeof useOptimizedCache>;
+  private cache?: CacheHook;
   private analytics: CacheAnalytics;
 
   constructor() {
@@ -32,7 +41,7 @@ class CacheOptimizationService {
     };
   }
 
-  initializeCache(cache: ReturnType<typeof useOptimizedCache>) {
+  initializeCache(cache: CacheHook) {
     this.cache = cache;
   }
 
@@ -86,7 +95,7 @@ class CacheOptimizationService {
     const key = this.generateCacheKey(message, conversationId);
     const startTime = performance.now();
     
-    const cached = this.cache.get<CachedResponse>(key);
+    const cached = this.cache.get(key);
     
     this.analytics.totalRequests++;
     
@@ -96,7 +105,7 @@ class CacheOptimizationService {
       this.updateAverageResponseTime(responseTime);
       
       console.log('✅ Cache hit for message:', message.substring(0, 50));
-      return cached;
+      return cached as CachedResponse;
     } else {
       this.analytics.cacheMisses++;
       console.log('❌ Cache miss for message:', message.substring(0, 50));
@@ -115,51 +124,31 @@ class CacheOptimizationService {
 
     const key = this.generateCacheKey(message, conversationId);
     
-    // Add timestamp for analytics
-    const enrichedResponse: CachedResponse = {
-      ...response,
-      timestamp: Date.now()
-    };
-
-    this.cache.set(key, enrichedResponse, ttl);
-    
-    console.log('💾 Response cached for message:', message.substring(0, 50));
-  }
-
-  // Get similar cached responses (fuzzy matching)
-  async getSimilarResponses(
-    message: string,
-    similarityThreshold: number = 0.7
-  ): Promise<CachedResponse[]> {
-    if (!this.cache) return [];
-
-    // This is a simplified similarity check
-    // In a real implementation, you'd use embedding similarity
-    const messageWords = message.toLowerCase().split(' ');
-    const similar: CachedResponse[] = [];
-
-    // This would be replaced with proper semantic search
-    console.log('🔍 Searching for similar cached responses...');
-    
-    return similar;
+    try {
+      await this.cache.set(key, response, ttl);
+      console.log('💾 Cached response for:', message.substring(0, 50));
+    } catch (error) {
+      console.error('❌ Error caching response:', error);
+    }
   }
 
   // Update average response time
   private updateAverageResponseTime(newTime: number): void {
-    const totalTime = this.analytics.averageResponseTime * this.analytics.totalRequests;
-    this.analytics.averageResponseTime = (totalTime + newTime) / (this.analytics.totalRequests + 1);
+    const totalRequests = this.analytics.cacheHits + this.analytics.cacheMisses;
+    this.analytics.averageResponseTime = 
+      (this.analytics.averageResponseTime * (totalRequests - 1) + newTime) / totalRequests;
   }
 
   // Get cache analytics
-  getAnalytics(): CacheAnalytics & { cacheStats: any } {
-    return {
-      ...this.analytics,
-      cacheStats: this.cache?.getStats() || null
-    };
+  getAnalytics(): CacheAnalytics {
+    if (this.cache) {
+      this.analytics.memoryUsage = this.cache.stats.memoryUsage;
+    }
+    return { ...this.analytics };
   }
 
-  // Clear cache analytics
-  resetAnalytics(): void {
+  // Clear all analytics
+  clearAnalytics(): void {
     this.analytics = {
       totalRequests: 0,
       cacheHits: 0,
@@ -169,43 +158,33 @@ class CacheOptimizationService {
     };
   }
 
-  // Preload common responses
-  async preloadCommonResponses(): Promise<void> {
-    const commonQueries = [
-      'Olá',
-      'Como você pode me ajudar?',
-      'Qual é a sua função?',
-      'Explique isso',
-      'Pode me dar um exemplo?'
-    ];
-
-    console.log('🔄 Preloading common responses...');
-    
-    // In a real implementation, these would be actual cached responses
-    commonQueries.forEach(query => {
-      const key = this.generateCacheKey(query);
-      // Preload logic would go here
-    });
+  // Get cache hit rate
+  getHitRate(): number {
+    const total = this.analytics.cacheHits + this.analytics.cacheMisses;
+    return total > 0 ? this.analytics.cacheHits / total : 0;
   }
 
-  // Cache maintenance
-  async performMaintenance(): Promise<void> {
+  // Optimize cache based on usage patterns
+  async optimizeCache(): Promise<void> {
     if (!this.cache) return;
 
-    console.log('🧹 Performing cache maintenance...');
-    
-    // Update memory usage
-    const stats = this.cache.getStats();
-    this.analytics.memoryUsage = stats.totalSize;
-    
-    // Additional maintenance tasks could include:
-    // - Removing old entries
-    // - Optimizing frequently accessed items
-    // - Preloading predicted content
+    try {
+      // Get current cache stats
+      const stats = this.cache.getStats();
+      
+      // Log optimization metrics
+      console.log('🔧 Cache optimization completed:', {
+        hitRate: this.getHitRate(),
+        totalRequests: this.analytics.totalRequests,
+        memoryUsage: stats.memoryUsage
+      });
+      
+    } catch (error) {
+      console.error('❌ Error optimizing cache:', error);
+    }
   }
 }
 
-// Singleton instance
+// Export singleton instance
 export const cacheOptimizationService = new CacheOptimizationService();
-
 export default CacheOptimizationService;

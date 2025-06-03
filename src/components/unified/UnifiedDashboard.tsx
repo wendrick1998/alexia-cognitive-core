@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +43,6 @@ const UnifiedDashboard = () => {
     networkLatency: 12
   });
 
-  // Simular dados em tempo real
   useEffect(() => {
     const interval = setInterval(() => {
       setRealTimeData(prev => ({
@@ -343,54 +341,6 @@ const UnifiedDashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="performance" className="space-y-6">
-            {/* Performance Detalhada */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white text-lg">Latência API</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-400 mb-2">
-                      {realTimeData.responseTime.toFixed(0)}ms
-                    </div>
-                    <Progress value={(500 - realTimeData.responseTime) / 5} className="mb-2" />
-                    <div className="text-white/60 text-sm">Target: &lt; 200ms</div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white text-lg">Throughput</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-400 mb-2">2.4k</div>
-                    <div className="text-white/60 text-sm mb-2">req/min</div>
-                    <Progress value={85} className="mb-2" />
-                    <div className="text-white/60 text-sm">Capacidade: 85%</div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white text-lg">Disponibilidade</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-400 mb-2">99.8%</div>
-                    <div className="text-white/60 text-sm mb-2">Uptime</div>
-                    <Progress value={99.8} className="mb-2" />
-                    <div className="text-white/60 text-sm">SLA: 99.5%</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
           <TabsContent value="cache" className="space-y-6">
             {/* Cache e Memória */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -406,28 +356,28 @@ const UnifiedDashboard = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-white/80">Taxa de Acerto</span>
                       <span className="text-white font-semibold">
-                        {(cache.metrics.hitRate * 100).toFixed(1)}%
+                        {(cache.stats.hitRate * 100).toFixed(1)}%
                       </span>
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-white/80">Total de Entradas</span>
                       <span className="text-white font-semibold">
-                        {cache.metrics.entryCount}
+                        {cache.stats.entryCount}
                       </span>
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-white/80">Tamanho Total</span>
                       <span className="text-white font-semibold">
-                        {(cache.metrics.totalSize / 1024 / 1024).toFixed(1)} MB
+                        {(cache.stats.totalSize / 1024 / 1024).toFixed(1)} MB
                       </span>
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <span className="text-white/80">Tempo Médio de Acesso</span>
+                      <span className="text-white/80">Uso de Memória</span>
                       <span className="text-white font-semibold">
-                        {cache.metrics.averageAccessTime.toFixed(2)}ms
+                        {cache.stats.memoryUsage.toFixed(1)} MB
                       </span>
                     </div>
                   </div>
