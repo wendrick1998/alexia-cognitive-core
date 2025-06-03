@@ -1,6 +1,6 @@
 
 /**
- * @description Autenticação otimizada para PWA/Safari
+ * @description Autenticação otimizada para PWA/Safari - VERSÃO SIMPLIFICADA
  * @created_by Security Team - Alex iA
  */
 
@@ -13,7 +13,6 @@ interface PWAAuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  initializing: boolean;
   error: string | null;
   isAuthenticated: boolean;
 }
@@ -23,30 +22,20 @@ export function usePWAAuth() {
     user: null,
     session: null,
     loading: true,
-    initializing: true,
     error: null,
     isAuthenticated: false
   });
 
   const { toast } = useToast();
-  const initializedRef = useRef(false);
   const initTimeoutRef = useRef<number>();
+  const mountedRef = useRef(true);
 
   console.log('🔐 usePWAAuth: estado atual', {
     user: !!state.user,
     loading: state.loading,
-    initializing: state.initializing,
     isAuthenticated: state.isAuthenticated,
     error: !!state.error
   });
-
-  // Função para verificar se estamos em Safari/PWA
-  const isSafariOrPWA = useCallback(() => {
-    const userAgent = navigator.userAgent;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
-    return isSafari || isStandalone;
-  }, []);
 
   // Storage seguro com fallbacks para Safari
   const secureStorage = useCallback(() => ({
@@ -84,7 +73,7 @@ export function usePWAAuth() {
   const signIn = useCallback(async (email: string, password: string) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      console.log('🔐 Iniciando login PWA...', { email, safari: isSafariOrPWA() });
+      console.log('🔐 Iniciando login PWA...', { email });
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -107,7 +96,6 @@ export function usePWAAuth() {
           user: data.user,
           session: data.session,
           loading: false,
-          initializing: false,
           error: null,
           isAuthenticated: true
         });
@@ -127,7 +115,7 @@ export function usePWAAuth() {
       setState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return { error: errorMessage };
     }
-  }, [isSafariOrPWA, toast]);
+  }, [toast]);
 
   // Logout otimizado
   const signOut = useCallback(async () => {
@@ -142,7 +130,6 @@ export function usePWAAuth() {
         user: null,
         session: null,
         loading: false,
-        initializing: false,
         error: null,
         isAuthenticated: false
       });
@@ -201,18 +188,13 @@ export function usePWAAuth() {
   }, []);
 
   const refreshSession = useCallback(async () => {
-    if (initializedRef.current) {
-      console.log('🔄 refreshSession já foi chamado, ignorando...');
-      return;
-    }
-    
     try {
       console.log('🔄 Tentando renovar sessão...');
       const { data, error } = await supabase.auth.refreshSession();
       
       if (error) {
         console.error('❌ Erro ao renovar sessão:', error);
-        setState(prev => ({ ...prev, loading: false, initializing: false, error: null }));
+        setState(prev => ({ ...prev, loading: false, error: null }));
         return;
       }
 
@@ -222,42 +204,36 @@ export function usePWAAuth() {
           user: data.user,
           session: data.session,
           loading: false,
-          initializing: false,
           error: null,
           isAuthenticated: true
         });
       } else {
-        setState(prev => ({ ...prev, loading: false, initializing: false }));
+        setState(prev => ({ ...prev, loading: false }));
       }
     } catch (err) {
       console.error('❌ Erro inesperado ao renovar sessão:', err);
-      setState(prev => ({ ...prev, loading: false, initializing: false }));
+      setState(prev => ({ ...prev, loading: false }));
     }
   }, []);
 
-  // Inicialização com timeout forçado para Safari
+  // Inicialização SIMPLIFICADA
   useEffect(() => {
-    if (initializedRef.current) {
-      console.log('🔐 usePWAAuth: já inicializado, ignorando...');
-      return;
-    }
-    
     let mounted = true;
-    initializedRef.current = true;
+    mountedRef.current = true;
 
-    console.log('🔐 usePWAAuth: iniciando inicialização...');
+    console.log('🔐 usePWAAuth: iniciando inicialização SIMPLIFICADA...');
 
-    // Timeout de segurança - força saída do loading após 5 segundos
+    // Timeout de segurança - força saída do loading após 3 segundos
     initTimeoutRef.current = window.setTimeout(() => {
       if (mounted) {
         console.log('⏰ usePWAAuth: Timeout de inicialização atingido - forçando saída do loading');
-        setState(prev => ({ ...prev, loading: false, initializing: false }));
+        setState(prev => ({ ...prev, loading: false }));
       }
-    }, 5000);
+    }, 3000);
 
     const initializeAuth = async () => {
       try {
-        console.log('🔄 Inicializando autenticação PWA...', { safari: isSafariOrPWA() });
+        console.log('🔄 Verificando sessão existente...');
 
         const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -268,7 +244,6 @@ export function usePWAAuth() {
               user: null,
               session: null,
               loading: false,
-              initializing: false,
               error: null,
               isAuthenticated: false
             });
@@ -282,7 +257,6 @@ export function usePWAAuth() {
             user: session.user,
             session,
             loading: false,
-            initializing: false,
             error: null,
             isAuthenticated: true
           });
@@ -293,7 +267,6 @@ export function usePWAAuth() {
               user: null,
               session: null,
               loading: false,
-              initializing: false,
               error: null,
               isAuthenticated: false
             });
@@ -306,7 +279,6 @@ export function usePWAAuth() {
             user: null,
             session: null,
             loading: false,
-            initializing: false,
             error: null,
             isAuthenticated: false
           });
@@ -317,7 +289,7 @@ export function usePWAAuth() {
     // Listener otimizado para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (!mounted) return;
+        if (!mountedRef.current) return;
 
         console.log('🔄 Auth state change PWA:', event, session?.user?.email);
 
@@ -331,7 +303,6 @@ export function usePWAAuth() {
             user: session.user,
             session,
             loading: false,
-            initializing: false,
             error: null,
             isAuthenticated: true
           });
@@ -340,15 +311,13 @@ export function usePWAAuth() {
             user: null,
             session: null,
             loading: false,
-            initializing: false,
             error: null,
             isAuthenticated: false
           });
         } else {
-          // Para outros eventos, apenas atualizar o estado de inicialização
+          // Para outros eventos, apenas parar o loading
           setState(prev => ({ 
             ...prev, 
-            initializing: false,
             loading: false 
           }));
         }
@@ -359,11 +328,11 @@ export function usePWAAuth() {
 
     return () => {
       mounted = false;
+      mountedRef.current = false;
       subscription.unsubscribe();
       if (initTimeoutRef.current) {
         clearTimeout(initTimeoutRef.current);
       }
-      initializedRef.current = false;
     };
   }, []); // Array vazio garante execução única
 
