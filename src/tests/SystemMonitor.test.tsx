@@ -4,7 +4,8 @@
  * @created_by Fase 3 - Polimento Técnico & Resiliência
  */
 
-import { systemMonitor, SystemMonitor } from '@/services/SystemMonitor';
+import { systemMonitor } from '@/services/SystemMonitor';
+import type { SystemMetrics, Alert } from '@/services/SystemMonitor';
 
 // Mock do performance API
 Object.defineProperty(global, 'performance', {
