@@ -6,10 +6,10 @@
 
 import React, { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Input, InputProps } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-interface EnhancedInputProps extends InputProps {
+interface EnhancedInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   icon?: React.ReactNode;
   floating?: boolean;

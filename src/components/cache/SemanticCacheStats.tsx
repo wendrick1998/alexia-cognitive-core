@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, Zap, Database, Clock, TrendingUp } from 'lucide-react';
-import SemanticCache from '@/services/SemanticCache';
+import { SemanticCache } from '@/services/SemanticCache';
 import { useAuth } from '@/hooks/useAuth';
 
 interface CacheStats {
@@ -53,7 +52,7 @@ export function SemanticCacheStats() {
     setIsLoading(true);
     try {
       const cache = new SemanticCache({ userId: user.id });
-      const deletedCount = await cache.cleanupExpiredCache();
+      const deletedCount = await cache.cleanupOldEntries();
       
       toast({
         title: "Cache limpo",
