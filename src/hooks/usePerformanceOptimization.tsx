@@ -1,4 +1,3 @@
-
 /**
  * @description Hook para otimizações de performance
  * @created_by Performance Optimization Sprint
@@ -20,6 +19,7 @@ interface PerformanceMetrics {
   avgResponseTime: number;
   totalQueries: number;
   cacheHitRate: number;
+  memoryPressure: 'low' | 'medium' | 'high';
 }
 
 export function usePerformanceOptimization(config: Partial<PerformanceConfig> = {}) {
@@ -36,7 +36,8 @@ export function usePerformanceOptimization(config: Partial<PerformanceConfig> = 
     cacheMisses: 0,
     avgResponseTime: 0,
     totalQueries: 0,
-    cacheHitRate: 0
+    cacheHitRate: 0,
+    memoryPressure: 'low'
   });
 
   const performanceRef = useRef<{
@@ -48,6 +49,23 @@ export function usePerformanceOptimization(config: Partial<PerformanceConfig> = 
     cacheMisses: 0,
     avgResponseTime: 0,
   });
+
+  // Calculate memory pressure based on usage
+  const calculateMemoryPressure = useCallback((): 'low' | 'medium' | 'high' => {
+    if (typeof performance !== 'undefined' && 'memory' in performance) {
+      const memory = (performance as any).memory;
+      const usedMB = memory.usedJSHeapSize / (1024 * 1024);
+      const totalMB = memory.totalJSHeapSize / (1024 * 1024);
+      
+      const usageRatio = usedMB / totalMB;
+      
+      if (usageRatio > 0.8) return 'high';
+      if (usageRatio > 0.5) return 'medium';
+      return 'low';
+    }
+    
+    return 'low';
+  }, []);
 
   // Medir performance de componentes
   const measureComponentRender = useCallback((componentName: string) => {
@@ -147,6 +165,7 @@ export function usePerformanceOptimization(config: Partial<PerformanceConfig> = 
   const getPerformanceStats = useCallback(() => {
     const totalQueries = performanceRef.current.cacheHits + performanceRef.current.cacheMisses;
     const cacheHitRate = totalQueries > 0 ? (performanceRef.current.cacheHits / totalQueries) * 100 : 0;
+    const memoryPressure = calculateMemoryPressure();
 
     const newMetrics = {
       cacheHits: performanceRef.current.cacheHits,
@@ -154,11 +173,12 @@ export function usePerformanceOptimization(config: Partial<PerformanceConfig> = 
       cacheHitRate: Math.round(cacheHitRate),
       totalQueries,
       avgResponseTime: performanceRef.current.avgResponseTime,
+      memoryPressure,
     };
 
     setMetrics(newMetrics);
     return newMetrics;
-  }, []);
+  }, [calculateMemoryPressure]);
 
   // Limpeza periódica do cache
   useEffect(() => {
