@@ -47,7 +47,7 @@ export function LazyComponentLoader({
 }
 
 // Higher-order component para lazy loading
-export function withLazyLoading<P extends Record<string, any>>(
+export function withLazyLoading<P extends object>(
   Component: ComponentType<P>,
   loadingType?: 'general' | 'chat' | 'cognitive' | 'database'
 ) {
