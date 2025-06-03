@@ -7,19 +7,20 @@ import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from 'next-themes';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Log para verificar se App.tsx está sendo executado
-console.log('🎯 App.tsx carregando - FASE 2 ISOLAMENTO DO CHAT');
+console.log('🎯 APP.TSX EXECUTANDO - FASE 3: ATIVANDO AUTHGUARD');
 
-// Lazy load apenas Chat para diagnóstico isolado
+// Lazy load dos componentes principais
+const Dashboard = lazy(() => {
+  console.log('📊 Lazy loading Dashboard...');
+  return import('@/components/dashboard/Dashboard');
+});
+
 const Chat = lazy(() => {
-  console.log('💬 Lazy loading Chat - tentando importar...');
-  try {
-    return import('@/components/Chat');
-  } catch (error) {
-    console.error('❌ ERRO no lazy loading do Chat:', error);
-    throw error;
-  }
+  console.log('💬 Lazy loading Chat...');
+  return import('@/components/Chat');
 });
 
 // QueryClient otimizado
@@ -37,10 +38,10 @@ const queryClient = new QueryClient({
   },
 });
 
-console.log('⚙️ QueryClient criado com sucesso - FASE 2 ISOLAMENTO');
+console.log('⚙️ QueryClient criado com sucesso - FASE 3');
 
 function App() {
-  console.log('🎯 App component renderizando - FASE 2: APENAS CHAT ISOLADO');
+  console.log('🎯 App component renderizando - FASE 3: DASHBOARD + CHAT COM AUTHGUARD');
   
   return (
     <ErrorBoundary>
@@ -51,15 +52,17 @@ function App() {
               <div className="min-h-screen bg-background text-foreground">
                 <Suspense fallback={
                   <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-                    <SmartLoadingSpinner size="lg" message="Carregando Chat isolado para diagnóstico..." />
+                    <SmartLoadingSpinner size="lg" message="Carregando aplicação..." />
                   </div>
                 }>
-                  <Routes>
-                    {/* FASE 2: Apenas Chat isolado para diagnóstico */}
-                    <Route path="/" element={<Chat />} />
-                    <Route path="/chat" element={<Chat />} />
-                    <Route path="*" element={<Chat />} />
-                  </Routes>
+                  {/* FASE 3: AuthGuard protegendo Dashboard e Chat */}
+                  <AuthGuard>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/chat" element={<Chat />} />
+                      <Route path="*" element={<Dashboard />} />
+                    </Routes>
+                  </AuthGuard>
                 </Suspense>
               </div>
             </Router>
@@ -71,5 +74,5 @@ function App() {
   );
 }
 
-console.log('📤 App.tsx configurado para FASE 2 ISOLAMENTO - exportando');
+console.log('📤 App.tsx configurado para FASE 3 COM AUTHGUARD - exportando');
 export default App;
