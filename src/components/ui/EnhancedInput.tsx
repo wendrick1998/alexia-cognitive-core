@@ -1,164 +1,97 @@
 
-import { motion } from 'framer-motion';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import * as React from 'react';
+/**
+ * @description Input component otimizado com melhor acessibilidade
+ * @created_by Performance Optimization Sprint
+ */
 
-interface EnhancedInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+import React, { forwardRef } from 'react';
+import { cn } from '@/lib/utils';
+import { Input, InputProps } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+interface EnhancedInputProps extends InputProps {
   label?: string;
-  error?: string;
-  hint?: string;
   icon?: React.ReactNode;
   floating?: boolean;
+  'aria-label'?: string;
 }
 
-const EnhancedInput = ({
-  label,
-  error,
-  hint,
-  icon,
-  floating = false,
-  className,
-  ...props
-}: EnhancedInputProps) => {
-  const [isFocused, setIsFocused] = useState(false);
-  const [hasValue, setHasValue] = useState(!!props.value || !!props.defaultValue);
+const EnhancedInput = forwardRef<HTMLInputElement, EnhancedInputProps>(
+  ({ className, label, icon, floating = false, 'aria-label': ariaLabel, ...props }, ref) => {
+    const id = props.id || `input-${Math.random().toString(36).substr(2, 9)}`;
 
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    setIsFocused(true);
-    props.onFocus?.(e);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    setIsFocused(false);
-    props.onBlur?.(e);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHasValue(!!e.target.value);
-    props.onChange?.(e);
-  };
-
-  if (floating) {
-    return (
-      <div className="relative">
+    if (floating) {
+      return (
         <div className="relative">
           {icon && (
             <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10">
               {icon}
             </div>
           )}
-          
           <Input
+            ref={ref}
+            id={id}
             className={cn(
-              'peer placeholder-transparent transition-all duration-200',
+              'peer placeholder-transparent',
+              'focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2',
+              'transition-all duration-200 ease-in-out',
               icon && 'pl-10',
-              error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
               className
             )}
-            placeholder={label || props.placeholder}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onChange={handleChange}
+            placeholder={label || ' '}
+            aria-label={ariaLabel || label}
             {...props}
           />
-          
           {label && (
-            <motion.label
+            <Label
+              htmlFor={id}
               className={cn(
-                'absolute left-3 text-gray-500 transition-all duration-200 pointer-events-none',
-                icon && 'left-10',
+                'absolute left-3 transition-all duration-200 ease-in-out',
+                'text-gray-400 pointer-events-none',
                 'peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base',
-                'peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-xs peer-focus:text-blue-500',
-                (isFocused || hasValue) && 'top-2 -translate-y-0 text-xs text-blue-500'
+                'peer-focus:top-2 peer-focus:text-xs peer-focus:text-blue-400',
+                'top-2 text-xs',
+                icon && 'peer-placeholder-shown:left-10 peer-focus:left-3'
               )}
-              animate={{
-                y: isFocused || hasValue ? -8 : 0,
-                scale: isFocused || hasValue ? 0.85 : 1,
-                color: isFocused ? '#3b82f6' : '#6b7280'
-              }}
-              transition={{ duration: 0.2 }}
             >
               {label}
-            </motion.label>
+            </Label>
           )}
         </div>
-        
-        {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-sm text-red-500 mt-1"
-          >
-            {error}
-          </motion.p>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {label && (
+          <Label htmlFor={id} className="text-sm font-medium text-white/90">
+            {label}
+          </Label>
         )}
-        
-        {hint && !error && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-sm text-gray-500 mt-1"
-          >
-            {hint}
-          </motion.p>
-        )}
+        <div className="relative">
+          {icon && (
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              {icon}
+            </div>
+          )}
+          <Input
+            ref={ref}
+            id={id}
+            className={cn(
+              'focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2',
+              'transition-all duration-200 ease-in-out',
+              icon && 'pl-10',
+              className
+            )}
+            aria-label={ariaLabel || label}
+            {...props}
+          />
+        </div>
       </div>
     );
   }
+);
 
-  return (
-    <div className="space-y-2">
-      {label && (
-        <Label className="text-sm font-medium">
-          {label}
-        </Label>
-      )}
-      
-      <div className="relative">
-        {icon && (
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-            {icon}
-          </div>
-        )}
-        
-        <Input
-          className={cn(
-            'transition-all duration-200',
-            icon && 'pl-10',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
-            className
-          )}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          onChange={handleChange}
-          {...props}
-        />
-      </div>
-      
-      {error && (
-        <motion.p
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-red-500"
-        >
-          {error}
-        </motion.p>
-      )}
-      
-      {hint && !error && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-sm text-gray-500"
-        >
-          {hint}
-        </motion.p>
-      )}
-    </div>
-  );
-};
+EnhancedInput.displayName = 'EnhancedInput';
 
 export default EnhancedInput;

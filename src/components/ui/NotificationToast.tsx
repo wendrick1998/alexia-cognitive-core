@@ -1,13 +1,16 @@
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
-import { CheckCircle, AlertCircle, Info, X, Zap } from 'lucide-react';
-import { cn } from '@/lib/utils';
+/**
+ * @description Sistema de notificações otimizado
+ * @created_by Performance Optimization Sprint
+ */
 
-interface NotificationToastProps {
+import { toast } from 'sonner';
+import { CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
+
+export interface NotificationOptions {
   title: string;
   description?: string;
-  type?: 'success' | 'error' | 'warning' | 'info' | 'ai';
+  type?: 'success' | 'error' | 'warning' | 'info';
   duration?: number;
   action?: {
     label: string;
@@ -15,82 +18,57 @@ interface NotificationToastProps {
   };
 }
 
-const icons = {
-  success: CheckCircle,
-  error: AlertCircle,
-  warning: AlertCircle,
-  info: Info,
-  ai: Zap,
-};
-
-const colors = {
-  success: 'text-green-500 bg-green-500/10 border-green-500/20',
-  error: 'text-red-500 bg-red-500/10 border-red-500/20',
-  warning: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
-  info: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-  ai: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
+const getIcon = (type: string) => {
+  switch (type) {
+    case 'success':
+      return <CheckCircle className="w-5 h-5 text-green-500" />;
+    case 'error':
+      return <XCircle className="w-5 h-5 text-red-500" />;
+    case 'warning':
+      return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+    case 'info':
+      return <Info className="w-5 h-5 text-blue-500" />;
+    default:
+      return <Info className="w-5 h-5 text-gray-500" />;
+  }
 };
 
 export const showNotification = ({
   title,
   description,
   type = 'info',
-  duration = 5000,
-  action,
-}: NotificationToastProps) => {
-  const Icon = icons[type];
-  
-  const toastId = toast.custom(
-    () => (
-      <motion.div
-        initial={{ opacity: 0, x: 100, scale: 0.8 }}
-        animate={{ opacity: 1, x: 0, scale: 1 }}
-        exit={{ opacity: 0, x: 100, scale: 0.8 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        className={cn(
-          'max-w-sm w-full p-4 rounded-lg shadow-lg backdrop-blur-xl border',
-          'bg-gray-900/90 border-gray-700/50 text-white',
-          colors[type]
-        )}
-      >
-        <div className="flex items-start gap-3">
-          <div className={cn('flex-shrink-0 p-1 rounded-full', colors[type])}>
-            <Icon className="w-4 h-4" />
-          </div>
-          
-          <div className="flex-1 space-y-1">
-            <h4 className="font-semibold text-sm">{title}</h4>
-            {description && (
-              <p className="text-sm text-gray-300">{description}</p>
-            )}
-            
-            {action && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={action.onClick}
-                className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2"
-              >
-                {action.label}
-              </motion.button>
-            )}
-          </div>
-          
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => toast.dismiss(toastId)}
-            className="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </motion.button>
-        </div>
-      </motion.div>
-    ),
-    { duration }
-  );
+  duration = 4000,
+  action
+}: NotificationOptions) => {
+  const icon = getIcon(type);
 
-  return toastId;
+  toast(title, {
+    description,
+    duration,
+    icon,
+    action: action ? {
+      label: action.label,
+      onClick: action.onClick,
+    } : undefined,
+    className: 'bg-gray-900/95 backdrop-blur-sm border-gray-700/50',
+    style: {
+      background: 'rgba(17, 24, 39, 0.95)',
+      backdropFilter: 'blur(8px)',
+      border: '1px solid rgba(75, 85, 99, 0.5)',
+      color: 'white',
+    },
+  });
 };
 
-export default showNotification;
+// Atalhos para tipos específicos
+export const showSuccess = (title: string, description?: string) => 
+  showNotification({ title, description, type: 'success' });
+
+export const showError = (title: string, description?: string) => 
+  showNotification({ title, description, type: 'error' });
+
+export const showWarning = (title: string, description?: string) => 
+  showNotification({ title, description, type: 'warning' });
+
+export const showInfo = (title: string, description?: string) => 
+  showNotification({ title, description, type: 'info' });
