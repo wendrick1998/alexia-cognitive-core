@@ -1,120 +1,50 @@
 
 /**
- * @description Loading spinner inteligente com contexto
- * @created_by Fase 2 - Otimização UX
+ * @description Spinner de carregamento inteligente com tipos específicos
+ * @created_by Fase 3 - Polimento Técnico & Resiliência
  */
 
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Brain, Zap, Database, MessageSquare } from 'lucide-react';
+import { Loader2, Brain, Database, MessageSquare, Activity } from 'lucide-react';
 
 interface SmartLoadingSpinnerProps {
-  type?: 'chat' | 'cognitive' | 'database' | 'general';
+  type?: 'general' | 'chat' | 'cognitive' | 'database';
   message?: string;
-  progress?: number;
-  className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
-
-const getIconAndColor = (type: string) => {
-  switch (type) {
-    case 'chat':
-      return { icon: MessageSquare, color: 'text-blue-400', bg: 'bg-blue-500/20' };
-    case 'cognitive':
-      return { icon: Brain, color: 'text-purple-400', bg: 'bg-purple-500/20' };
-    case 'database':
-      return { icon: Database, color: 'text-green-400', bg: 'bg-green-500/20' };
-    default:
-      return { icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
-  }
-};
-
-const getContextualMessage = (type: string) => {
-  switch (type) {
-    case 'chat':
-      return 'Processando sua mensagem...';
-    case 'cognitive':
-      return 'Analisando conexões cognitivas...';
-    case 'database':
-      return 'Consultando base de conhecimento...';
-    default:
-      return 'Carregando...';
-  }
-};
 
 export function SmartLoadingSpinner({ 
   type = 'general', 
-  message, 
-  progress,
-  className = '' 
+  message = 'Carregando...',
+  size = 'md'
 }: SmartLoadingSpinnerProps) {
-  const { icon: Icon, color, bg } = getIconAndColor(type);
-  const displayMessage = message || getContextualMessage(type);
+  const sizeClasses = {
+    sm: 'w-4 h-4',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8'
+  };
+
+  const getIcon = () => {
+    switch (type) {
+      case 'chat':
+        return <MessageSquare className={`${sizeClasses[size]} animate-pulse`} />;
+      case 'cognitive':
+        return <Brain className={`${sizeClasses[size]} animate-pulse`} />;
+      case 'database':
+        return <Database className={`${sizeClasses[size]} animate-pulse`} />;
+      default:
+        return <Loader2 className={`${sizeClasses[size]} animate-spin`} />;
+    }
+  };
 
   return (
-    <div className={`flex items-center justify-center p-6 ${className}`}>
-      <div className="text-center space-y-4">
-        {/* Spinner animado */}
-        <div className="relative">
-          <motion.div
-            className={`w-16 h-16 rounded-full border-4 border-transparent ${bg}`}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className={`absolute top-0 w-16 h-16 rounded-full border-4 border-t-transparent ${color.replace('text-', 'border-')}`}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Icon className={`w-6 h-6 ${color}`} />
-          </div>
-        </div>
-
-        {/* Progresso (se fornecido) */}
-        {progress !== undefined && (
-          <div className="w-48 bg-gray-700 rounded-full h-2">
-            <motion.div
-              className={`h-2 rounded-full ${color.replace('text-', 'bg-')}`}
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
-        )}
-
-        {/* Mensagem contextual */}
-        <div className="space-y-2">
-          <motion.p
-            className="text-white font-medium"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            {displayMessage}
-          </motion.p>
-          
-          {progress !== undefined && (
-            <p className="text-white/60 text-sm">
-              {Math.round(progress)}% concluído
-            </p>
-          )}
-        </div>
-
-        {/* Pontos animados */}
-        <div className="flex justify-center space-x-1">
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              className={`w-2 h-2 rounded-full ${color.replace('text-', 'bg-')}`}
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                delay: i * 0.2
-              }}
-            />
-          ))}
-        </div>
+    <div className="flex flex-col items-center gap-2">
+      <div className="text-blue-600">
+        {getIcon()}
       </div>
+      {message && (
+        <p className="text-sm text-gray-600 text-center">{message}</p>
+      )}
     </div>
   );
 }

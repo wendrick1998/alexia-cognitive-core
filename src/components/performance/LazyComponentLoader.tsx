@@ -56,7 +56,7 @@ export function withLazyLoading<P extends Record<string, any>>(
   return function WrappedComponent(props: P) {
     return (
       <LazyComponentLoader loadingType={loadingType}>
-        <LazyComponent {...props} />
+        <LazyComponent {...(props as any)} />
       </LazyComponentLoader>
     );
   };
@@ -72,7 +72,7 @@ export function createLazyImport<T extends ComponentType<any>>(
   return function LazyWrapper(props: React.ComponentProps<T>) {
     return (
       <LazyComponentLoader loadingType={loadingType}>
-        <LazyComponent {...props} />
+        <LazyComponent {...(props as any)} />
       </LazyComponentLoader>
     );
   };

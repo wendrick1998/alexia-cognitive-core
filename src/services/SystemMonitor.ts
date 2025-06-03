@@ -173,7 +173,7 @@ class SystemMonitor {
 
     // Verificar latência de rede
     if (this.metrics.network.latency > 2000) {
-      this.createAlert('warning', 'Latência alta', `Latência de rede: ${this.metrics.network.latency.toFixed(0)}ms`);
+      this.createAlert('medium', 'Latência alta', `Latência de rede: ${this.metrics.network.latency.toFixed(0)}ms`);
     }
 
     // Verificar qualidade da conexão
