@@ -13,6 +13,7 @@ interface PWAAuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  initializing: boolean;
   error: string | null;
   isAuthenticated: boolean;
 }
@@ -22,6 +23,7 @@ export function usePWAAuth() {
     user: null,
     session: null,
     loading: true,
+    initializing: true,
     error: null,
     isAuthenticated: false
   });
@@ -29,6 +31,14 @@ export function usePWAAuth() {
   const { toast } = useToast();
   const initializedRef = useRef(false);
   const initTimeoutRef = useRef<number>();
+
+  console.log('🔐 usePWAAuth: estado atual', {
+    user: !!state.user,
+    loading: state.loading,
+    initializing: state.initializing,
+    isAuthenticated: state.isAuthenticated,
+    error: !!state.error
+  });
 
   // Função para verificar se estamos em Safari/PWA
   const isSafariOrPWA = useCallback(() => {
@@ -97,6 +107,7 @@ export function usePWAAuth() {
           user: data.user,
           session: data.session,
           loading: false,
+          initializing: false,
           error: null,
           isAuthenticated: true
         });
@@ -131,6 +142,7 @@ export function usePWAAuth() {
         user: null,
         session: null,
         loading: false,
+        initializing: false,
         error: null,
         isAuthenticated: false
       });
@@ -200,7 +212,7 @@ export function usePWAAuth() {
       
       if (error) {
         console.error('❌ Erro ao renovar sessão:', error);
-        setState(prev => ({ ...prev, loading: false, error: null }));
+        setState(prev => ({ ...prev, loading: false, initializing: false, error: null }));
         return;
       }
 
@@ -210,32 +222,38 @@ export function usePWAAuth() {
           user: data.user,
           session: data.session,
           loading: false,
+          initializing: false,
           error: null,
           isAuthenticated: true
         });
       } else {
-        setState(prev => ({ ...prev, loading: false }));
+        setState(prev => ({ ...prev, loading: false, initializing: false }));
       }
     } catch (err) {
       console.error('❌ Erro inesperado ao renovar sessão:', err);
-      setState(prev => ({ ...prev, loading: false }));
+      setState(prev => ({ ...prev, loading: false, initializing: false }));
     }
   }, []);
 
   // Inicialização com timeout forçado para Safari
   useEffect(() => {
-    if (initializedRef.current) return;
+    if (initializedRef.current) {
+      console.log('🔐 usePWAAuth: já inicializado, ignorando...');
+      return;
+    }
     
     let mounted = true;
     initializedRef.current = true;
 
-    // Timeout de segurança - força saída do loading após 8 segundos
+    console.log('🔐 usePWAAuth: iniciando inicialização...');
+
+    // Timeout de segurança - força saída do loading após 5 segundos
     initTimeoutRef.current = window.setTimeout(() => {
       if (mounted) {
-        console.log('⏰ Timeout de inicialização atingido - forçando saída do loading');
-        setState(prev => ({ ...prev, loading: false }));
+        console.log('⏰ usePWAAuth: Timeout de inicialização atingido - forçando saída do loading');
+        setState(prev => ({ ...prev, loading: false, initializing: false }));
       }
-    }, 8000);
+    }, 5000);
 
     const initializeAuth = async () => {
       try {
@@ -250,6 +268,7 @@ export function usePWAAuth() {
               user: null,
               session: null,
               loading: false,
+              initializing: false,
               error: null,
               isAuthenticated: false
             });
@@ -263,6 +282,7 @@ export function usePWAAuth() {
             user: session.user,
             session,
             loading: false,
+            initializing: false,
             error: null,
             isAuthenticated: true
           });
@@ -273,6 +293,7 @@ export function usePWAAuth() {
               user: null,
               session: null,
               loading: false,
+              initializing: false,
               error: null,
               isAuthenticated: false
             });
@@ -285,6 +306,7 @@ export function usePWAAuth() {
             user: null,
             session: null,
             loading: false,
+            initializing: false,
             error: null,
             isAuthenticated: false
           });
@@ -309,6 +331,7 @@ export function usePWAAuth() {
             user: session.user,
             session,
             loading: false,
+            initializing: false,
             error: null,
             isAuthenticated: true
           });
@@ -317,9 +340,17 @@ export function usePWAAuth() {
             user: null,
             session: null,
             loading: false,
+            initializing: false,
             error: null,
             isAuthenticated: false
           });
+        } else {
+          // Para outros eventos, apenas atualizar o estado de inicialização
+          setState(prev => ({ 
+            ...prev, 
+            initializing: false,
+            loading: false 
+          }));
         }
       }
     );
