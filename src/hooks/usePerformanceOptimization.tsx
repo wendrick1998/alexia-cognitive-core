@@ -14,6 +14,13 @@ interface PerformanceSettings {
   autoCleanupInterval: number;
 }
 
+interface PerformanceMetrics {
+  memoryPressure: 'low' | 'medium' | 'high';
+  responseTime: number;
+  cacheEfficiency: number;
+  resourceUsage: number;
+}
+
 const DEFAULT_SETTINGS: PerformanceSettings = {
   enableAutoOptimization: true,
   memoryThreshold: 85,
@@ -25,6 +32,12 @@ export function usePerformanceOptimization(customSettings?: Partial<PerformanceS
   const settings = { ...DEFAULT_SETTINGS, ...customSettings };
   const { metrics, getHealthScore } = useSystemMonitor();
   const [optimizationLevel, setOptimizationLevel] = useState<'none' | 'light' | 'aggressive'>('none');
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics>({
+    memoryPressure: 'low',
+    responseTime: 0,
+    cacheEfficiency: 0,
+    resourceUsage: 0
+  });
   const cleanupTimerRef = useRef<number>();
 
   // Calcular nível de otimização baseado nas métricas
@@ -87,6 +100,17 @@ export function usePerformanceOptimization(customSettings?: Partial<PerformanceS
     }
   }, [performCleanup]);
 
+  // Atualizar métricas de performance
+  const updatePerformanceMetrics = useCallback(() => {
+    setPerformanceMetrics({
+      memoryPressure: metrics.memory.percentage > 80 ? 'high' : 
+                     metrics.memory.percentage > 60 ? 'medium' : 'low',
+      responseTime: metrics.network.latency,
+      cacheEfficiency: Math.min(100, (1000 / Math.max(metrics.network.latency, 100)) * 100),
+      resourceUsage: metrics.memory.percentage
+    });
+  }, [metrics]);
+
   // Efeito para monitoramento contínuo
   useEffect(() => {
     if (!settings.enableAutoOptimization) return;
@@ -99,7 +123,9 @@ export function usePerformanceOptimization(customSettings?: Partial<PerformanceS
       
       console.log(`🎯 Performance: Nível de otimização alterado para ${newLevel}`);
     }
-  }, [metrics, optimizationLevel, calculateOptimizationLevel, applyOptimizations, settings.enableAutoOptimization]);
+
+    updatePerformanceMetrics();
+  }, [metrics, optimizationLevel, calculateOptimizationLevel, applyOptimizations, settings.enableAutoOptimization, updatePerformanceMetrics]);
 
   // Limpeza automática periódica
   useEffect(() => {
@@ -147,7 +173,8 @@ export function usePerformanceOptimization(customSettings?: Partial<PerformanceS
     optimizationLevel,
     forceOptimization,
     getPerformanceInsights,
-    isOptimizing: optimizationLevel !== 'none'
+    isOptimizing: optimizationLevel !== 'none',
+    metrics: performanceMetrics
   };
 }
 

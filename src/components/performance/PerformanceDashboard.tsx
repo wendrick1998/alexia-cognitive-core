@@ -73,7 +73,12 @@ export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ clas
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <PerformanceOptimizer />
+              <PerformanceOptimizer>
+                <div className="space-y-4">
+                  <CacheMonitor />
+                  <SemanticCacheStats />
+                </div>
+              </PerformanceOptimizer>
             </motion.div>
           </TabsContent>
         </Tabs>
