@@ -10,6 +10,7 @@ interface EnhancedButtonProps extends ButtonProps {
   icon?: React.ReactNode;
   gradient?: boolean;
   pulse?: boolean;
+  'aria-label': string;
 }
 
 const EnhancedButton = ({
@@ -21,6 +22,7 @@ const EnhancedButton = ({
   pulse = false,
   className,
   disabled,
+  'aria-label': ariaLabel,
   ...props
 }: EnhancedButtonProps) => {
   const isDisabled = disabled || loading;
@@ -33,12 +35,15 @@ const EnhancedButton = ({
     >
       <Button
         className={cn(
-          'relative overflow-hidden transition-all duration-300',
+          'relative overflow-hidden min-h-[48px] min-w-[48px]',
+          'transition-all duration-200 ease-in-out',
+          'focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2',
           gradient && 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700',
           pulse && 'animate-pulse',
           className
         )}
         disabled={isDisabled}
+        aria-label={ariaLabel}
         {...props}
       >
         {/* Background animation */}

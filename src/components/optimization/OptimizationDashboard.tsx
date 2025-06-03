@@ -40,19 +40,19 @@ const OptimizationDashboard: React.FC = () => {
 
       <Tabs defaultValue="pwa" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pwa" className="flex items-center gap-2">
+          <TabsTrigger value="pwa" className="flex items-center gap-2" aria-label="Configurações PWA">
             <Smartphone className="h-4 w-4" />
             PWA
           </TabsTrigger>
-          <TabsTrigger value="serviceworker" className="flex items-center gap-2">
+          <TabsTrigger value="serviceworker" className="flex items-center gap-2" aria-label="Gerenciar Service Worker">
             <Wifi className="h-4 w-4" />
             Service Worker
           </TabsTrigger>
-          <TabsTrigger value="compression" className="flex items-center gap-2">
+          <TabsTrigger value="compression" className="flex items-center gap-2" aria-label="Configurações de compressão">
             <Zap className="h-4 w-4" />
             Compressão
           </TabsTrigger>
-          <TabsTrigger value="lazy" className="flex items-center gap-2">
+          <TabsTrigger value="lazy" className="flex items-center gap-2" aria-label="Configurações de lazy loading">
             <Settings className="h-4 w-4" />
             Lazy Loading
           </TabsTrigger>
@@ -155,7 +155,11 @@ const OptimizationDashboard: React.FC = () => {
               {/* PWA Actions */}
               <div className="space-y-2">
                 {capabilities.canInstall && (
-                  <Button onClick={installPWA} className="w-full">
+                  <Button 
+                    onClick={installPWA} 
+                    className="w-full transition-all duration-200 hover:scale-105"
+                    aria-label="Instalar aplicativo PWA"
+                  >
                     <Download className="w-4 h-4 mr-2" />
                     Instalar como App
                   </Button>
@@ -163,14 +167,24 @@ const OptimizationDashboard: React.FC = () => {
                 
                 <div className="grid grid-cols-2 gap-2">
                   {!capabilities.hasNotificationPermission && (
-                    <Button onClick={requestNotificationPermission} variant="outline">
+                    <Button 
+                      onClick={requestNotificationPermission} 
+                      variant="outline"
+                      className="transition-all duration-200 hover:bg-gray-50"
+                      aria-label="Solicitar permissão para notificações"
+                    >
                       <Bell className="w-4 h-4 mr-2" />
                       Ativar Notificações
                     </Button>
                   )}
                   
                   {capabilities.hasNotificationPermission && (
-                    <Button onClick={sendTestNotification} variant="outline">
+                    <Button 
+                      onClick={sendTestNotification} 
+                      variant="outline"
+                      className="transition-all duration-200 hover:bg-gray-50"
+                      aria-label="Enviar notificação de teste"
+                    >
                       <Bell className="w-4 h-4 mr-2" />
                       Testar Notificação
                     </Button>
@@ -179,6 +193,8 @@ const OptimizationDashboard: React.FC = () => {
                   <Button 
                     onClick={capabilities.isLowBattery ? disableBatterySaving : enableBatterySaving}
                     variant="outline"
+                    className="transition-all duration-200 hover:bg-gray-50"
+                    aria-label={capabilities.isLowBattery ? 'Desativar modo economia de bateria' : 'Ativar modo economia de bateria'}
                   >
                     <Battery className="w-4 h-4 mr-2" />
                     {capabilities.isLowBattery ? 'Desativar Economia' : 'Ativar Economia'}

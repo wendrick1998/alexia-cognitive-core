@@ -1,67 +1,66 @@
 
-/**
- * @modified_by Manus AI
- * @date 1 de junho de 2025
- * @description Sistema de espaçamentos padronizados para consistência visual
- * Implementa tokens CSS com múltiplos de 4px para uso em todo o projeto
- */
+/* Spacing tokens for consistent design system */
 
-/* Tokens de espaçamento - múltiplos de 4px */
 :root {
-  /* Espaçamento base: 4px */
-  --space-1: 0.25rem;  /* 4px */
-  --space-2: 0.5rem;   /* 8px */
-  --space-3: 0.75rem;  /* 12px */
-  --space-4: 1rem;     /* 16px */
-  --space-5: 1.25rem;  /* 20px */
-  --space-6: 1.5rem;   /* 24px */
-  --space-8: 2rem;     /* 32px */
-  --space-10: 2.5rem;  /* 40px */
-  --space-12: 3rem;    /* 48px */
-  --space-16: 4rem;    /* 64px */
-  --space-20: 5rem;    /* 80px */
-  --space-24: 6rem;    /* 96px */
-  --space-32: 8rem;    /* 128px */
+  /* Base spacing unit */
+  --space-unit: 4px;
   
-  /* Tokens de tamanho para componentes interativos */
-  --touch-target-min: 2.75rem;  /* 44px - mínimo para alvos de toque */
-  --icon-size-sm: 1rem;         /* 16px */
-  --icon-size-md: 1.25rem;      /* 20px */
-  --icon-size-lg: 1.5rem;       /* 24px */
+  /* Spacing scale */
+  --space-0: 0;
+  --space-1: calc(var(--space-unit) * 1); /* 4px */
+  --space-2: calc(var(--space-unit) * 2); /* 8px */
+  --space-3: calc(var(--space-unit) * 3); /* 12px */
+  --space-4: calc(var(--space-unit) * 4); /* 16px */
+  --space-5: calc(var(--space-unit) * 5); /* 20px */
+  --space-6: calc(var(--space-unit) * 6); /* 24px */
+  --space-8: calc(var(--space-unit) * 8); /* 32px */
+  --space-10: calc(var(--space-unit) * 10); /* 40px */
+  --space-12: calc(var(--space-unit) * 12); /* 48px */
+  --space-16: calc(var(--space-unit) * 16); /* 64px */
+  --space-20: calc(var(--space-unit) * 20); /* 80px */
+  --space-24: calc(var(--space-unit) * 24); /* 96px */
   
-  /* Tokens de borda */
-  --radius-sm: 0.125rem;        /* 2px */
-  --radius-md: 0.25rem;         /* 4px */
-  --radius-lg: 0.5rem;          /* 8px */
-  --radius-xl: 0.75rem;         /* 12px */
-  --radius-2xl: 1rem;           /* 16px */
-  --radius-full: 9999px;        /* Circular */
+  /* Touch target sizes */
+  --touch-target-min: 48px;
+  --touch-target-comfortable: 56px;
+  --touch-target-large: 64px;
   
-  /* Tokens de transição */
-  --transition-fast: 150ms;
-  --transition-normal: 250ms;
-  --transition-slow: 350ms;
-  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Component specific spacing */
+  --button-padding-x: var(--space-4);
+  --button-padding-y: var(--space-3);
+  --card-padding: var(--space-6);
+  --input-padding: var(--space-3);
+  
+  /* Mobile adjustments */
+  --mobile-padding: var(--space-2);
+  --mobile-margin: var(--space-1);
 }
 
-/* Classes utilitárias para alvos de toque */
-.touch-target {
-  min-width: var(--touch-target-min);
-  min-height: var(--touch-target-min);
-}
+/* Spacing utility classes */
+.spacing-xs { gap: var(--space-1); }
+.spacing-sm { gap: var(--space-2); }
+.spacing-md { gap: var(--space-4); }
+.spacing-lg { gap: var(--space-6); }
+.spacing-xl { gap: var(--space-8); }
 
-/* Classe para scroll com momentum em iOS */
-.momentum-scroll {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
+.padding-xs { padding: var(--space-1); }
+.padding-sm { padding: var(--space-2); }
+.padding-md { padding: var(--space-4); }
+.padding-lg { padding: var(--space-6); }
+.padding-xl { padding: var(--space-8); }
 
-/* Foco acessível */
-.focus-ring {
-  outline: none;
-  transition: box-shadow var(--transition-fast) var(--transition-timing);
-}
+.margin-xs { margin: var(--space-1); }
+.margin-sm { margin: var(--space-2); }
+.margin-md { margin: var(--space-4); }
+.margin-lg { margin: var(--space-6); }
+.margin-xl { margin: var(--space-8); }
 
-.focus-ring:focus-visible {
-  box-shadow: 0 0 0 2px var(--color-background-primary), 0 0 0 4px var(--color-primary-500);
+/* Mobile-first responsive spacing */
+@media (max-width: 375px) {
+  :root {
+    --button-padding-x: var(--space-3);
+    --button-padding-y: var(--space-2);
+    --card-padding: var(--space-3);
+    --input-padding: var(--space-2);
+  }
 }

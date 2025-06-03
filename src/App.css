@@ -7,6 +7,7 @@
 @import './styles/color-tokens.css';
 @import './styles/spacing-tokens.css';
 @import './styles/accessibility.css';
+@import './styles/mobile-optimizations.css';
 
 /* Reset básico para garantir scroll nativo */
 * {
@@ -66,77 +67,6 @@ html, body {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Scroll para iOS - garantir comportamento nativo */
-@supports (-webkit-overflow-scrolling: touch) {
-  .ios-scroll {
-    -webkit-overflow-scrolling: touch;
-    overflow-y: auto;
-  }
-}
-
-.overflow-y-auto {
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-}
-
-.scroll-container {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-}
-
-.scroll-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.scroll-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scroll-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-
-.momentum-scroll {
-  -webkit-overflow-scrolling: touch;
-  overflow-scrolling: touch;
-}
-
-/* Animações premium padronizadas */
-@keyframes premium-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes premium-scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-premium-fade-in {
-  animation: premium-fade-in 0.2s ease-out;
-}
-
-.animate-premium-scale-in {
-  animation: premium-scale-in 0.2s ease-out;
-}
-
 /* Gradientes personalizados */
 .gradient-text {
   background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
@@ -146,11 +76,12 @@ html, body {
 }
 
 .btn-primary {
-  @apply bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105;
-  min-height: 44px;
-  min-width: 44px;
+  @apply bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl;
+  min-height: 48px;
+  min-width: 48px;
   position: relative;
   overflow: hidden;
+  transition: background-color 200ms ease-in-out, transform 200ms ease-in-out, box-shadow 200ms ease-in-out;
 }
 
 .btn-primary:focus-visible {
@@ -175,7 +106,7 @@ html, body {
 
 /* Efeitos hover premium padronizados */
 .hover-lift {
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  transition: transform 200ms ease-in-out, box-shadow 200ms ease-in-out;
 }
 
 .hover-lift:hover {
@@ -216,7 +147,7 @@ html, body {
   }
 }
 
-/* Touch targets para mobile - NOVO PADRÃO 48x48px */
+/* Touch targets para mobile - PADRÃO 48x48px */
 .touch-target {
   min-height: 48px;
   min-width: 48px;
@@ -303,4 +234,32 @@ select:focus-visible,
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Animações padronizadas com duração otimizada */
+.animate-fade-in {
+  animation: fadeIn 200ms ease-in-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 200ms ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 200ms ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

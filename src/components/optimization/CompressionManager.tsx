@@ -224,7 +224,8 @@ const CompressionManager: React.FC = () => {
           <Button 
             onClick={simulateCompression} 
             disabled={isCompressing}
-            className="w-full"
+            className="w-full transition-all duration-200 hover:scale-105"
+            aria-label="Executar processo de compressão"
           >
             {isCompressing ? (
               <>
@@ -243,7 +244,8 @@ const CompressionManager: React.FC = () => {
             <Button 
               onClick={clearCompressionCache} 
               variant="outline" 
-              className="w-full"
+              className="w-full transition-all duration-200 hover:bg-gray-50"
+              aria-label="Limpar estatísticas de compressão"
             >
               <Settings className="w-4 h-4 mr-2" />
               Limpar Estatísticas

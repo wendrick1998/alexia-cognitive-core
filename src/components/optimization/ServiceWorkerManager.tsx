@@ -217,7 +217,11 @@ const ServiceWorkerManager: React.FC = () => {
         {/* Actions */}
         <div className="space-y-2">
           {!status.isRegistered ? (
-            <Button onClick={registerServiceWorker} className="w-full">
+            <Button 
+              onClick={registerServiceWorker} 
+              className="w-full transition-all duration-200 hover:scale-105"
+              aria-label="Ativar cache offline"
+            >
               <Download className="w-4 h-4 mr-2" />
               Ativar Cache Offline
             </Button>
@@ -227,6 +231,8 @@ const ServiceWorkerManager: React.FC = () => {
                 onClick={updateServiceWorker} 
                 variant="outline"
                 disabled={status.isUpdating}
+                className="transition-all duration-200 hover:bg-gray-50"
+                aria-label="Atualizar service worker"
               >
                 {status.isUpdating ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -236,7 +242,12 @@ const ServiceWorkerManager: React.FC = () => {
                 Atualizar
               </Button>
               
-              <Button onClick={clearCache} variant="outline">
+              <Button 
+                onClick={clearCache} 
+                variant="outline"
+                className="transition-all duration-200 hover:bg-gray-50"
+                aria-label="Limpar cache do aplicativo"
+              >
                 <Settings className="w-4 h-4 mr-2" />
                 Limpar Cache
               </Button>
