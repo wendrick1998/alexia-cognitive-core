@@ -4,7 +4,7 @@
  * @created_by Security Team - Alex iA
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,12 +17,6 @@ interface PWAAuthState {
   isAuthenticated: boolean;
 }
 
-interface SecureStorage {
-  setItem: (key: string, value: string) => void;
-  getItem: (key: string) => string | null;
-  removeItem: (key: string) => void;
-}
-
 export function usePWAAuth() {
   const [state, setState] = useState<PWAAuthState>({
     user: null,
@@ -33,32 +27,36 @@ export function usePWAAuth() {
   });
 
   const { toast } = useToast();
+  const initializedRef = useRef(false);
+  const initTimeoutRef = useRef<number>();
 
   // Função para verificar se estamos em Safari/PWA
   const isSafariOrPWA = useCallback(() => {
     const userAgent = navigator.userAgent;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    return /Safari/.test(userAgent) || isStandalone;
+    const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+    return isSafari || isStandalone;
   }, []);
 
-  // Armazenamento seguro para Safari/PWA
-  const secureStorage = useCallback((): SecureStorage => ({
+  // Storage seguro com fallbacks para Safari
+  const secureStorage = useCallback(() => ({
     setItem: (key: string, value: string) => {
       try {
-        if (isSafariOrPWA()) {
-          // Para Safari/PWA, usar sessionStorage como fallback
-          sessionStorage.setItem(key, value);
-        }
         localStorage.setItem(key, value);
       } catch (error) {
-        console.warn('Storage failed, using memory storage:', error);
+        console.warn('localStorage falhou, usando sessionStorage:', error);
+        try {
+          sessionStorage.setItem(key, value);
+        } catch (err) {
+          console.warn('Todo storage falhou:', err);
+        }
       }
     },
     getItem: (key: string) => {
       try {
         return localStorage.getItem(key) || sessionStorage.getItem(key);
       } catch (error) {
-        console.warn('Storage read failed:', error);
+        console.warn('Storage read falhou:', error);
         return null;
       }
     },
@@ -67,17 +65,16 @@ export function usePWAAuth() {
         localStorage.removeItem(key);
         sessionStorage.removeItem(key);
       } catch (error) {
-        console.warn('Storage removal failed:', error);
+        console.warn('Storage removal falhou:', error);
       }
     }
-  }), [isSafariOrPWA]);
+  }), []);
 
-  // Login simplificado para PWA
+  // Login otimizado
   const signIn = useCallback(async (email: string, password: string) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-
-      console.log('🔐 Iniciando login PWA...', { email });
+      console.log('🔐 Iniciando login PWA...', { email, safari: isSafariOrPWA() });
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -86,22 +83,15 @@ export function usePWAAuth() {
 
       if (error) {
         console.error('❌ Erro no login:', error);
-        setState(prev => ({ 
-          ...prev, 
-          loading: false, 
-          error: error.message.includes('Invalid login credentials')
-            ? 'Email ou senha incorretos'
-            : 'Erro no login. Tente novamente.'
-        }));
-        return { error: error.message };
+        const errorMessage = error.message.includes('Invalid login credentials')
+          ? 'Email ou senha incorretos'
+          : 'Erro no login. Tente novamente.';
+        setState(prev => ({ ...prev, loading: false, error: errorMessage }));
+        return { error: errorMessage };
       }
 
       if (data.session && data.user) {
         console.log('✅ Login PWA bem-sucedido:', data.user.email);
-        
-        // Armazenar sessão de forma segura
-        const storage = secureStorage();
-        storage.setItem('supabase.auth.token', JSON.stringify(data.session));
         
         setState({
           user: data.user,
@@ -126,9 +116,9 @@ export function usePWAAuth() {
       setState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return { error: errorMessage };
     }
-  }, [secureStorage, toast]);
+  }, [isSafariOrPWA, toast]);
 
-  // Logout simplificado
+  // Logout otimizado
   const signOut = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, loading: true }));
@@ -154,15 +144,15 @@ export function usePWAAuth() {
     }
   }, [secureStorage]);
 
-  // Cadastro simplificado
+  // Cadastro otimizado
   const signUp = useCallback(async (email: string, password: string) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
 
-      // Validação básica
       if (password.length < 6) {
-        setState(prev => ({ ...prev, loading: false, error: 'Senha deve ter pelo menos 6 caracteres' }));
-        return { error: 'Senha deve ter pelo menos 6 caracteres' };
+        const errorMsg = 'Senha deve ter pelo menos 6 caracteres';
+        setState(prev => ({ ...prev, loading: false, error: errorMsg }));
+        return { error: errorMsg };
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -194,24 +184,28 @@ export function usePWAAuth() {
     }
   }, []);
 
-  // Limpar erro
   const clearError = useCallback(() => {
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
-  // Função para refresh da sessão (compatibilidade com AuthGuard)
   const refreshSession = useCallback(async () => {
+    if (initializedRef.current) {
+      console.log('🔄 refreshSession já foi chamado, ignorando...');
+      return;
+    }
+    
     try {
-      setState(prev => ({ ...prev, loading: true }));
+      console.log('🔄 Tentando renovar sessão...');
       const { data, error } = await supabase.auth.refreshSession();
       
       if (error) {
         console.error('❌ Erro ao renovar sessão:', error);
-        setState(prev => ({ ...prev, loading: false, error: 'Erro ao renovar sessão' }));
+        setState(prev => ({ ...prev, loading: false, error: null }));
         return;
       }
 
       if (data.session && data.user) {
+        console.log('✅ Sessão renovada com sucesso');
         setState({
           user: data.user,
           session: data.session,
@@ -219,6 +213,8 @@ export function usePWAAuth() {
           error: null,
           isAuthenticated: true
         });
+      } else {
+        setState(prev => ({ ...prev, loading: false }));
       }
     } catch (err) {
       console.error('❌ Erro inesperado ao renovar sessão:', err);
@@ -226,15 +222,25 @@ export function usePWAAuth() {
     }
   }, []);
 
-  // Inicialização da autenticação
+  // Inicialização com timeout forçado para Safari
   useEffect(() => {
+    if (initializedRef.current) return;
+    
     let mounted = true;
+    initializedRef.current = true;
+
+    // Timeout de segurança - força saída do loading após 8 segundos
+    initTimeoutRef.current = window.setTimeout(() => {
+      if (mounted) {
+        console.log('⏰ Timeout de inicialização atingido - forçando saída do loading');
+        setState(prev => ({ ...prev, loading: false }));
+      }
+    }, 8000);
 
     const initializeAuth = async () => {
       try {
-        console.log('🔄 Inicializando autenticação PWA...');
+        console.log('🔄 Inicializando autenticação PWA...', { safari: isSafariOrPWA() });
 
-        // Verificar sessão existente
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -286,12 +292,17 @@ export function usePWAAuth() {
       }
     };
 
-    // Listener para mudanças de autenticação
+    // Listener otimizado para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
 
         console.log('🔄 Auth state change PWA:', event, session?.user?.email);
+
+        // Limpar timeout se recebemos um evento de auth
+        if (initTimeoutRef.current) {
+          clearTimeout(initTimeoutRef.current);
+        }
 
         if (event === 'SIGNED_IN' && session) {
           setState({
@@ -318,8 +329,12 @@ export function usePWAAuth() {
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+      }
+      initializedRef.current = false;
     };
-  }, []);
+  }, []); // Array vazio garante execução única
 
   return {
     ...state,
