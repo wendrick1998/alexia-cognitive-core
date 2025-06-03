@@ -9,17 +9,17 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
 
 // Log para verificar se App.tsx está sendo executado
-console.log('🎯 App.tsx carregando - diagnóstico progressivo FASE 2 INICIADO');
+console.log('🎯 App.tsx carregando - FASE 2 ISOLAMENTO DO CHAT');
 
-// Lazy load Dashboard e Chat para teste progressivo
-const Dashboard = lazy(() => {
-  console.log('📊 Lazy loading Dashboard...');
-  return import('@/components/dashboard/Dashboard');
-});
-
+// Lazy load apenas Chat para diagnóstico isolado
 const Chat = lazy(() => {
-  console.log('💬 Lazy loading Chat...');
-  return import('@/components/Chat');
+  console.log('💬 Lazy loading Chat - tentando importar...');
+  try {
+    return import('@/components/Chat');
+  } catch (error) {
+    console.error('❌ ERRO no lazy loading do Chat:', error);
+    throw error;
+  }
 });
 
 // QueryClient otimizado
@@ -37,10 +37,10 @@ const queryClient = new QueryClient({
   },
 });
 
-console.log('⚙️ QueryClient criado com sucesso');
+console.log('⚙️ QueryClient criado com sucesso - FASE 2 ISOLAMENTO');
 
 function App() {
-  console.log('🎯 App component renderizando - FASE 2: Dashboard + Chat');
+  console.log('🎯 App component renderizando - FASE 2: APENAS CHAT ISOLADO');
   
   return (
     <ErrorBoundary>
@@ -51,14 +51,14 @@ function App() {
               <div className="min-h-screen bg-background text-foreground">
                 <Suspense fallback={
                   <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-                    <SmartLoadingSpinner size="lg" message="Carregando componentes FASE 2..." />
+                    <SmartLoadingSpinner size="lg" message="Carregando Chat isolado para diagnóstico..." />
                   </div>
                 }>
                   <Routes>
-                    {/* FASE 2: Dashboard e Chat sem guards */}
-                    <Route path="/" element={<Dashboard />} />
+                    {/* FASE 2: Apenas Chat isolado para diagnóstico */}
+                    <Route path="/" element={<Chat />} />
                     <Route path="/chat" element={<Chat />} />
-                    <Route path="*" element={<Dashboard />} />
+                    <Route path="*" element={<Chat />} />
                   </Routes>
                 </Suspense>
               </div>
@@ -71,5 +71,5 @@ function App() {
   );
 }
 
-console.log('📤 App.tsx configurado para FASE 2 - exportando');
+console.log('📤 App.tsx configurado para FASE 2 ISOLAMENTO - exportando');
 export default App;
