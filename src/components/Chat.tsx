@@ -1,9 +1,8 @@
 
 /**
- * @modified_by Manus AI - FASE 1: Integração Completa de Memória Cognitiva
- * @date 2 de junho de 2025
- * @description Integração completa do sistema de memória cognitiva com chat
- * Inclui recuperação automática de contexto, indicadores de confiança e validação em tempo real
+ * @modified_by Manus AI - FASE 2: Diagnóstico Progressivo
+ * @date 3 de junho de 2025
+ * @description Chat com log de diagnóstico para identificar problemas de renderização
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -20,10 +19,15 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import ResponseSource from './ResponseSource';
 
 const Chat = () => {
+  // LOG CRÍTICO: Verificar se Chat está renderizando
+  console.log('💬 CHAT RENDERIZADO - FASE 2 confirmada!');
+
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  console.log('💬 Chat: hooks inicializados - verificando dependências...');
   
   const {
     conversations,
@@ -39,10 +43,12 @@ const Chat = () => {
   const { processing, processMessage } = useChatProcessor();
   const { isActive: isFocusModeActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
   
-  // NOVA INTEGRAÇÃO: Sistema Cognitivo Completo
+  // Sistema Cognitivo
   const cognitiveMemory = useCognitiveMemoryIntegration();
 
-  // Map para armazenar dados de memória por mensagem - agora melhorado
+  console.log('💬 Chat: todos os hooks carregados com sucesso');
+
+  // Map para armazenar dados de memória por mensagem
   const [cognitiveDataMap, setCognitiveDataMap] = useState<Map<string, any>>(new Map());
 
   // Função para scroll suave até a última mensagem
@@ -60,7 +66,7 @@ const Chat = () => {
   }, [messages.length]);
 
   const handleNewConversation = async () => {
-    console.log('🔥 Criando nova conversa com sistema cognitivo...');
+    console.log('🔥 Criando nova conversa...');
     const newConversation = await createAndNavigateToNewConversation();
     if (newConversation) {
       toast({
@@ -71,7 +77,7 @@ const Chat = () => {
   };
 
   const handleConversationSelect = async (conversation: any) => {
-    console.log(`🧭 Selecionando conversa com contexto cognitivo: ${conversation.id}`);
+    console.log(`🧭 Selecionando conversa: ${conversation.id}`);
     await navigateToConversation(conversation);
   };
 
@@ -106,24 +112,16 @@ const Chat = () => {
     scrollToBottom();
 
     try {
-      console.log('🧠 FASE 1: Processamento Cognitivo Integrado Iniciado');
+      console.log('🧠 Processamento Cognitivo Integrado Iniciado');
 
-      // 1. NOVO: Processar mensagem com sistema cognitivo COMPLETO
+      // Processar mensagem com sistema cognitivo
       const cognitiveResult = await cognitiveMemory.processMessageWithCognition(
         message,
         conversationId,
         currentConversation?.project_id
       );
 
-      console.log('🔍 Resultado do processamento cognitivo:', {
-        memoryUsed: cognitiveResult.memoryData?.context_used,
-        contextsFound: cognitiveResult.memoryData?.contexts_found,
-        confidenceScore: cognitiveResult.memoryData?.confidence_score,
-        validationStatus: cognitiveResult.memoryData?.validation_status,
-        cognitiveNodes: cognitiveResult.cognitiveNodes.length
-      });
-
-      // 2. Processar mensagem com LLM (mantém compatibilidade)
+      // Processar mensagem com LLM
       const response = await processMessage(message, conversationId);
       
       if (response) {
@@ -141,12 +139,11 @@ const Chat = () => {
             originalModel: response.metadata?.originalModel || '',
             currentModel: response.model || '',
             responseTime: response.metadata?.responseTime || 0,
-            // NOVO: Dados cognitivos
             cognitiveData: cognitiveResult
           }
         };
 
-        // 3. NOVO: Processar resposta da IA com sistema cognitivo
+        // Processar resposta da IA com sistema cognitivo
         await cognitiveMemory.processAIResponseWithCognition(
           response.response,
           message,
@@ -155,7 +152,7 @@ const Chat = () => {
           cognitiveResult.memoryData
         );
 
-        // 4. Armazenar dados cognitivos completos para a UI
+        // Armazenar dados cognitivos para a UI
         if (cognitiveResult.memoryData) {
           setCognitiveDataMap(prev => new Map(prev.set(aiMessageId, {
             memoryData: cognitiveResult.memoryData,
@@ -169,25 +166,16 @@ const Chat = () => {
         await updateConversationTimestamp(conversationId);
         scrollToBottom();
 
-        // Mostrar toast com informações cognitivas
-        const memoryInfo = cognitiveResult.memoryData;
-        if (memoryInfo?.context_used) {
-          toast({
-            title: "Resposta com Memória Cognitiva",
-            description: `${memoryInfo.contexts_found} contexto(s) | ${Math.round(memoryInfo.confidence_score * 100)}% confiança | Status: ${memoryInfo.validation_status}`,
-          });
-        } else {
-          toast({
-            title: "Resposta gerada",
-            description: "Nova informação adicionada à memória cognitiva",
-          });
-        }
+        toast({
+          title: "Mensagem enviada",
+          description: "IA respondeu com contexto cognitivo",
+        });
       }
     } catch (error) {
-      console.error('❌ Erro no processamento cognitivo completo:', error);
+      console.error('❌ Erro no processamento:', error);
       toast({
         title: "Erro",
-        description: "Falha no sistema cognitivo integrado",
+        description: "Falha ao enviar mensagem",
         variant: "destructive",
       });
     }
@@ -251,7 +239,7 @@ const Chat = () => {
     );
   };
 
-  console.log('🗨️ Chat FASE 1 renderizado com sistema cognitivo completo:', {
+  console.log('💬 Chat FASE 2 renderizado:', {
     conversations: conversations.length,
     currentConversation: currentConversation?.id,
     messages: messages.length,
@@ -282,16 +270,7 @@ const Chat = () => {
 
         {isMobile && (
           <FloatingActionButton 
-            onAction={(action) => {
-              switch (action) {
-                case 'new-chat':
-                  handleNewConversation();
-                  break;
-                case 'focus-mode':
-                  activateFocusMode();
-                  break;
-              }
-            }}
+            onAction={handleFloatingAction}
             currentSection="chat"
             hasActiveChat={!!currentConversation}
             hasDocument={false}
@@ -310,4 +289,5 @@ const Chat = () => {
   );
 };
 
+console.log('💬 Chat: componente definido e pronto para export');
 export default Chat;
