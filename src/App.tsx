@@ -8,9 +8,10 @@ import { ThemeProvider } from 'next-themes';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
 import AuthGuard from '@/components/auth/AuthGuard';
+import AuthPage from '@/components/auth/AuthPage';
 
 // Log para verificar se App.tsx está sendo executado
-console.log('🎯 APP.TSX EXECUTANDO - FASE 3: ATIVANDO AUTHGUARD');
+console.log('🎯 APP.TSX EXECUTANDO - FASE 3: ATIVANDO AUTHGUARD COM ROTA /AUTH');
 
 // Lazy load dos componentes principais
 const Dashboard = lazy(() => {
@@ -41,7 +42,7 @@ const queryClient = new QueryClient({
 console.log('⚙️ QueryClient criado com sucesso - FASE 3');
 
 function App() {
-  console.log('🎯 App component renderizando - FASE 3: DASHBOARD + CHAT COM AUTHGUARD');
+  console.log('🎯 App component renderizando - FASE 3: ROTAS COM AUTHGUARD + /AUTH');
   
   return (
     <ErrorBoundary>
@@ -55,14 +56,21 @@ function App() {
                     <SmartLoadingSpinner size="lg" message="Carregando aplicação..." />
                   </div>
                 }>
-                  {/* FASE 3: AuthGuard protegendo Dashboard e Chat */}
-                  <AuthGuard>
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/chat" element={<Chat />} />
-                      <Route path="*" element={<Dashboard />} />
-                    </Routes>
-                  </AuthGuard>
+                  <Routes>
+                    {/* ROTA PÚBLICA - LOGIN/CADASTRO */}
+                    <Route path="/auth" element={<AuthPage />} />
+                    
+                    {/* ROTAS PROTEGIDAS - DENTRO DO AUTHGUARD */}
+                    <Route path="/*" element={
+                      <AuthGuard>
+                        <Routes>
+                          <Route path="/" element={<Dashboard />} />
+                          <Route path="/chat" element={<Chat />} />
+                          <Route path="*" element={<Dashboard />} />
+                        </Routes>
+                      </AuthGuard>
+                    } />
+                  </Routes>
                 </Suspense>
               </div>
             </Router>
@@ -74,5 +82,5 @@ function App() {
   );
 }
 
-console.log('📤 App.tsx configurado para FASE 3 COM AUTHGUARD - exportando');
+console.log('📤 App.tsx configurado para FASE 3 COM AUTHGUARD E ROTA /AUTH - exportando');
 export default App;
