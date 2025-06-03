@@ -1,118 +1,107 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/toaster';
-import { Toaster as SonnerToaster } from 'sonner';
 import { useState } from 'react';
-import AuthGuard from '@/components/auth/AuthGuard';
-import PWAAuthPage from '@/components/auth/PWAAuthPage';
-import PremiumAppLayout from '@/components/layout/PremiumAppLayout';
-import Chat from '@/components/Chat';
-import Dashboard from '@/components/dashboard/Dashboard';
-import CortexDashboard from '@/pages/CortexDashboard';
-import UnifiedDashboardPage from '@/pages/UnifiedDashboardPage';
-import PerformanceDashboard from '@/components/PerformanceDashboard';
-import TaskFrameworkDashboard from '@/components/autonomous/TaskFrameworkDashboard';
-import MultiAgentDashboard from '@/components/multiagent/MultiAgentDashboard';
-import AdaptiveLearningDashboardPage from '@/pages/AdaptiveLearningDashboardPage';
-import './App.css';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Suspense, lazy } from 'react';
+import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
+import { BundleAnalyzer } from '@/components/performance/BundleAnalyzer';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+// Lazy imports para reduzir bundle inicial
+const AppLayout = lazy(() => import('@/components/AppLayout'));
+const Chat = lazy(() => import('@/components/Chat'));
+const Documents = lazy(() => import('@/components/Documents'));
+const MemoryManager = lazy(() => import('@/components/MemoryManager'));
+const SemanticSearch = lazy(() => import('@/components/SemanticSearch'));
+const ProjectsManager = lazy(() => import('@/components/ProjectsManager'));
 
 function App() {
   const [currentSection, setCurrentSection] = useState('chat');
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        cacheTime: 10 * 60 * 1000, // 10 minutes
+      },
+    },
+  }));
 
   const handleSectionChange = (section: string) => {
     setCurrentSection(section);
   };
 
+  const renderSection = () => {
+    const LoadingFallback = ({ type }: { type: 'chat' | 'cognitive' | 'database' | 'general' }) => (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <SmartLoadingSpinner type={type} message="Carregando..." />
+      </div>
+    );
+
+    switch (currentSection) {
+      case 'chat':
+        return (
+          <Suspense fallback={<LoadingFallback type="chat" />}>
+            <Chat />
+          </Suspense>
+        );
+      case 'documents':
+        return (
+          <Suspense fallback={<LoadingFallback type="database" />}>
+            <Documents />
+          </Suspense>
+        );
+      case 'memory':
+        return (
+          <Suspense fallback={<LoadingFallback type="cognitive" />}>
+            <MemoryManager />
+          </Suspense>
+        );
+      case 'search':
+        return (
+          <Suspense fallback={<LoadingFallback type="general" />}>
+            <SemanticSearch />
+          </Suspense>
+        );
+      case 'actions':
+        return (
+          <Suspense fallback={<LoadingFallback type="general" />}>
+            <ProjectsManager />
+          </Suspense>
+        );
+      default:
+        return (
+          <Suspense fallback={<LoadingFallback type="chat" />}>
+            <Chat />
+          </Suspense>
+        );
+    }
+  };
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="App">
-          <Routes>
-            {/* Auth route */}
-            <Route path="/auth" element={<PWAAuthPage />} />
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <div className="min-h-screen bg-gray-900 text-white">
+            <Suspense fallback={
+              <div className="min-h-screen flex items-center justify-center">
+                <SmartLoadingSpinner type="general" message="Iniciando Alex iA..." />
+              </div>
+            }>
+              <AppLayout 
+                currentSection={currentSection} 
+                onSectionChange={handleSectionChange}
+              >
+                {renderSection()}
+              </AppLayout>
+            </Suspense>
             
-            <Route path="/" element={
-              <AuthGuard>
-                <PremiumAppLayout currentSection={currentSection} onSectionChange={handleSectionChange}>
-                  <Chat />
-                </PremiumAppLayout>
-              </AuthGuard>
-            } />
-            
-            <Route path="/dashboard" element={
-              <AuthGuard>
-                <PremiumAppLayout currentSection="dashboard" onSectionChange={handleSectionChange}>
-                  <Dashboard />
-                </PremiumAppLayout>
-              </AuthGuard>
-            } />
-
-            <Route path="/unified-dashboard" element={
-              <AuthGuard>
-                <UnifiedDashboardPage />
-              </AuthGuard>
-            } />
-
-            <Route path="/performance-dashboard" element={
-              <AuthGuard>
-                <PremiumAppLayout currentSection="performance" onSectionChange={handleSectionChange}>
-                  <PerformanceDashboard />
-                </PremiumAppLayout>
-              </AuthGuard>
-            } />
-
-            <Route path="/autonomous-dashboard" element={
-              <AuthGuard>
-                <PremiumAppLayout currentSection="autonomous" onSectionChange={handleSectionChange}>
-                  <TaskFrameworkDashboard />
-                </PremiumAppLayout>
-              </AuthGuard>
-            } />
-
-            <Route path="/multiagent-dashboard" element={
-              <AuthGuard>
-                <PremiumAppLayout currentSection="multiagent" onSectionChange={handleSectionChange}>
-                  <MultiAgentDashboard />
-                </PremiumAppLayout>
-              </AuthGuard>
-            } />
-
-            <Route path="/adaptive-learning-dashboard" element={
-              <AuthGuard>
-                <AdaptiveLearningDashboardPage />
-              </AuthGuard>
-            } />
-            
-            <Route path="/cortex" element={<CortexDashboard />} />
-            
-            {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          
-          <Toaster />
-          <SonnerToaster 
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: 'rgba(15, 23, 42, 0.95)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: 'white',
-              },
-            }}
-          />
-        </div>
-      </Router>
-    </QueryClientProvider>
+            <Toaster />
+            <BundleAnalyzer />
+          </div>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
