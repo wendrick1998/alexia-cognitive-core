@@ -1,9 +1,11 @@
 
 import { motion } from 'framer-motion';
-import { Card, CardProps } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import * as React from 'react';
 
-interface ResponsiveCardProps extends CardProps {
+interface ResponsiveCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
   hover?: boolean;
   gradient?: boolean;
   glassEffect?: boolean;

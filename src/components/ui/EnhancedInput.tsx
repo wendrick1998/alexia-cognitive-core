@@ -1,11 +1,12 @@
 
 import { motion } from 'framer-motion';
-import { Input, InputProps } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import * as React from 'react';
 
-interface EnhancedInputProps extends InputProps {
+interface EnhancedInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   hint?: string;
