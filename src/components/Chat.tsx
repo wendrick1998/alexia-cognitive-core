@@ -1,68 +1,50 @@
 
 /**
- * @modified_by Manus AI - FASE 2: Diagnóstico Detalhado do Chat
+ * @modified_by Manus AI - FASE 2: Diagnóstico Detalhado do Chat - CORRIGIDO
  * @date 3 de junho de 2025
- * @description Chat com logs detalhados para identificar ponto de quebra
+ * @description Chat com logs detalhados para identificar ponto de quebra - imports corrigidos
  */
 
 // LOG CRÍTICO: Verificar se o arquivo Chat.tsx está sendo carregado
 console.log('💬 CHAT.TSX CARREGANDO - início da importação');
 
-try {
-  console.log('💬 Importando React hooks...');
-  import { useState, useEffect, useRef } from 'react';
-  console.log('✅ React hooks importados');
-} catch (error) {
-  console.error('❌ ERRO ao importar React hooks:', error);
-}
+import { useState, useEffect, useRef } from 'react';
+console.log('✅ React hooks importados');
 
-let useAuth, useToast, useConversations, useChatProcessor, useFocusMode, useCognitiveMemoryIntegration;
-let PremiumChatLayout, FocusMode, FloatingActionButton, useIsMobile, ResponseSource;
+// Imports dos hooks personalizados
+import { useAuth } from '@/hooks/useAuth';
+console.log('✅ useAuth importado');
 
-try {
-  console.log('💬 Importando hooks personalizados...');
-  ({ useAuth } = require('@/hooks/useAuth'));
-  console.log('✅ useAuth importado');
-  
-  ({ useToast } = require("@/hooks/use-toast"));
-  console.log('✅ useToast importado');
-  
-  ({ useConversations } = require('@/hooks/useConversations'));
-  console.log('✅ useConversations importado');
-  
-  ({ useChatProcessor } = require('@/hooks/useChatProcessor'));
-  console.log('✅ useChatProcessor importado');
-  
-  ({ useFocusMode } = require('@/hooks/useFocusMode'));
-  console.log('✅ useFocusMode importado');
-  
-  ({ useCognitiveMemoryIntegration } = require('@/hooks/useCognitiveMemoryIntegration'));
-  console.log('✅ useCognitiveMemoryIntegration importado');
-  
-} catch (error) {
-  console.error('❌ ERRO ao importar hooks personalizados:', error);
-}
+import { useToast } from "@/hooks/use-toast";
+console.log('✅ useToast importado');
 
-try {
-  console.log('💬 Importando componentes...');
-  PremiumChatLayout = require('./chat/PremiumChatLayout').default;
-  console.log('✅ PremiumChatLayout importado');
-  
-  FocusMode = require('./focus/FocusMode').default;
-  console.log('✅ FocusMode importado');
-  
-  FloatingActionButton = require('./chat/FloatingActionButton').default;
-  console.log('✅ FloatingActionButton importado');
-  
-  ({ useIsMobile } = require('@/hooks/use-mobile'));
-  console.log('✅ useIsMobile importado');
-  
-  ResponseSource = require('./ResponseSource').default;
-  console.log('✅ ResponseSource importado');
-  
-} catch (error) {
-  console.error('❌ ERRO ao importar componentes:', error);
-}
+import { useConversations } from '@/hooks/useConversations';
+console.log('✅ useConversations importado');
+
+import { useChatProcessor } from '@/hooks/useChatProcessor';
+console.log('✅ useChatProcessor importado');
+
+import { useFocusMode } from '@/hooks/useFocusMode';
+console.log('✅ useFocusMode importado');
+
+import { useCognitiveMemoryIntegration } from '@/hooks/useCognitiveMemoryIntegration';
+console.log('✅ useCognitiveMemoryIntegration importado');
+
+// Imports dos componentes
+import PremiumChatLayout from './chat/PremiumChatLayout';
+console.log('✅ PremiumChatLayout importado');
+
+import FocusMode from './focus/FocusMode';
+console.log('✅ FocusMode importado');
+
+import FloatingActionButton from './chat/FloatingActionButton';
+console.log('✅ FloatingActionButton importado');
+
+import { useIsMobile } from '@/hooks/use-mobile';
+console.log('✅ useIsMobile importado');
+
+import ResponseSource from './ResponseSource';
+console.log('✅ ResponseSource importado');
 
 const Chat = () => {
   // LOG CRÍTICO: Verificar se o componente Chat está iniciando
@@ -71,74 +53,52 @@ const Chat = () => {
   try {
     console.log('💬 Inicializando hooks básicos...');
     
-    let user, toast, isMobile, messagesEndRef;
+    console.log('💬 Chamando useAuth...');
+    const { user } = useAuth();
+    console.log('✅ useAuth executado, user:', !!user);
     
-    if (useAuth) {
-      console.log('💬 Chamando useAuth...');
-      ({ user } = useAuth());
-      console.log('✅ useAuth executado, user:', !!user);
-    }
+    console.log('💬 Chamando useToast...');
+    const { toast } = useToast();
+    console.log('✅ useToast executado');
     
-    if (useToast) {
-      console.log('💬 Chamando useToast...');
-      ({ toast } = useToast());
-      console.log('✅ useToast executado');
-    }
-    
-    if (useIsMobile) {
-      console.log('💬 Chamando useIsMobile...');
-      isMobile = useIsMobile();
-      console.log('✅ useIsMobile executado:', isMobile);
-    }
+    console.log('💬 Chamando useIsMobile...');
+    const isMobile = useIsMobile();
+    console.log('✅ useIsMobile executado:', isMobile);
     
     console.log('💬 Criando messagesEndRef...');
-    messagesEndRef = useRef(null);
+    const messagesEndRef = useRef(null);
     console.log('✅ messagesEndRef criado');
 
     console.log('💬 Inicializando hooks complexos...');
     
-    let conversations, currentConversation, messages, createAndNavigateToNewConversation;
-    let navigateToConversation, conversationState, setMessages, updateConversationTimestamp;
-    
-    if (useConversations) {
-      console.log('💬 Chamando useConversations...');
-      ({
-        conversations,
-        currentConversation,
-        messages,
-        createAndNavigateToNewConversation,
-        navigateToConversation,
-        conversationState,
-        setMessages,
-        updateConversationTimestamp
-      } = useConversations());
-      console.log('✅ useConversations executado:', {
-        conversations: conversations?.length,
-        currentConversation: !!currentConversation,
-        messages: messages?.length
-      });
-    }
+    console.log('💬 Chamando useConversations...');
+    const {
+      conversations,
+      currentConversation,
+      messages,
+      createAndNavigateToNewConversation,
+      navigateToConversation,
+      conversationState,
+      setMessages,
+      updateConversationTimestamp
+    } = useConversations();
+    console.log('✅ useConversations executado:', {
+      conversations: conversations?.length,
+      currentConversation: !!currentConversation,
+      messages: messages?.length
+    });
 
-    let processing, processMessage;
-    if (useChatProcessor) {
-      console.log('💬 Chamando useChatProcessor...');
-      ({ processing, processMessage } = useChatProcessor());
-      console.log('✅ useChatProcessor executado, processing:', processing);
-    }
+    console.log('💬 Chamando useChatProcessor...');
+    const { processing, processMessage } = useChatProcessor();
+    console.log('✅ useChatProcessor executado, processing:', processing);
 
-    let isActive, activateFocusMode, deactivateFocusMode;
-    if (useFocusMode) {
-      console.log('💬 Chamando useFocusMode...');
-      ({ isActive, activateFocusMode, deactivateFocusMode } = useFocusMode());
-      console.log('✅ useFocusMode executado, isActive:', isActive);
-    }
+    console.log('💬 Chamando useFocusMode...');
+    const { isActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
+    console.log('✅ useFocusMode executado, isActive:', isActive);
     
-    let cognitiveMemory;
-    if (useCognitiveMemoryIntegration) {
-      console.log('💬 Chamando useCognitiveMemoryIntegration...');
-      cognitiveMemory = useCognitiveMemoryIntegration();
-      console.log('✅ useCognitiveMemoryIntegration executado');
-    }
+    console.log('💬 Chamando useCognitiveMemoryIntegration...');
+    const cognitiveMemory = useCognitiveMemoryIntegration();
+    console.log('✅ useCognitiveMemoryIntegration executado');
 
     console.log('💬 Todos os hooks inicializados com sucesso!');
 
