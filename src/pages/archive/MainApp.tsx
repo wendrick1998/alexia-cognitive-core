@@ -1,4 +1,7 @@
 
+// ARQUIVO ARQUIVADO - Foi substituído por Index.tsx como entrada principal
+// Mantido aqui apenas para referência histórica
+
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { PWALayout } from '@/components/layout/PWALayout';
@@ -6,7 +9,7 @@ import PremiumSidebar from '@/components/premium/PremiumSidebar';
 import BottomNavigation from '@/components/navigation/BottomNavigation';
 import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
 
-// Páginas principais
+// Páginas principais (PLACEHOLDERS - NÃO FUNCIONAIS)
 const HomePage = () => (
   <div className="flex items-center justify-center min-h-screen bg-gray-950 text-white p-4">
     <div className="text-center max-w-2xl">

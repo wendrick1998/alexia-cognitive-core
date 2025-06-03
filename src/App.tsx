@@ -8,8 +8,8 @@ import { ThemeProvider } from 'next-themes';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
 
-// Lazy load da página principal
-const MainApp = lazy(() => import('@/pages/MainApp'));
+// Lazy load da página principal unificada
+const IndexPage = lazy(() => import('@/pages/Index'));
 
 // QueryClient otimizado
 const queryClient = new QueryClient({
@@ -46,7 +46,7 @@ function App() {
                   }
                 >
                   <Routes>
-                    <Route path="/*" element={<MainApp />} />
+                    <Route path="/*" element={<IndexPage />} />
                   </Routes>
                 </Suspense>
               </div>
