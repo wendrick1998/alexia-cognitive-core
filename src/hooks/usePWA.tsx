@@ -27,7 +27,7 @@ export function usePWA() {
     isInstalled: false,
     isOnline: navigator.onLine,
     isStandalone: window.matchMedia('(display-mode: standalone)').matches,
-    hasNotificationPermission: typeof Notification !== 'undefined' && Notification.permission === 'granted',
+    hasNotificationPermission: Notification.permission === 'granted',
     supportsPush: 'serviceWorker' in navigator && 'PushManager' in window,
     supportsBackgroundSync: 'serviceWorker' in navigator,
     batteryLevel: undefined,
@@ -183,25 +183,18 @@ export function usePWA() {
 
   // Send test notification
   const sendTestNotification = useCallback(async () => {
-    if (!capabilities.hasNotificationPermission || !('Notification' in window)) return;
+    if (!capabilities.hasNotificationPermission) return;
 
     try {
-      if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.showNotification('Alex iA', {
-          body: 'Sistema funcionando perfeitamente! 🧠✨',
-          icon: '/icon-192x192.png',
-          badge: '/icon-72x72.png',
-          tag: 'test-notification',
-          data: { type: 'test' }
-        });
-      } else {
-        // Fallback to regular notification
-        new Notification('Alex iA', {
-          body: 'Sistema funcionando perfeitamente! 🧠✨',
-          icon: '/icon-192x192.png'
-        });
-      }
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification('Alex iA', {
+        body: 'Sistema funcionando perfeitamente! 🧠✨',
+        icon: '/icon-192x192.png',
+        badge: '/icon-72x72.png',
+        // Remove vibrate property as it's not supported in NotificationOptions
+        tag: 'test-notification',
+        data: { type: 'test' }
+      });
     } catch (error) {
       console.error('Test notification failed:', error);
     }
