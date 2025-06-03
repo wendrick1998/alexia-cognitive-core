@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { usePWAAuth } from '@/hooks/usePWAAuth';
 import { useNavigate } from 'react-router-dom';
@@ -221,6 +220,7 @@ const PWAAuthPage = () => {
                 gradient
                 className="w-full h-12"
                 disabled={loading}
+                aria-label={isLogin ? 'Fazer login na conta' : 'Criar nova conta'}
               >
                 {isLogin ? 'Entrar' : 'Cadastrar'}
               </EnhancedButton>
