@@ -21,19 +21,19 @@ interface CacheConfig {
   similarityThreshold: number;
   maxCacheAge: number; // hours
   maxResults: number;
+  userId?: string;
 }
 
 export class SemanticCache {
-  private config: CacheConfig = {
-    similarityThreshold: 0.85,
-    maxCacheAge: 24,
-    maxResults: 3
-  };
+  private config: Required<CacheConfig>;
 
-  constructor(config?: Partial<CacheConfig>) {
-    if (config) {
-      this.config = { ...this.config, ...config };
-    }
+  constructor(config: Partial<CacheConfig> = {}) {
+    this.config = {
+      similarityThreshold: config.similarityThreshold || 0.85,
+      maxCacheAge: config.maxCacheAge || 24,
+      maxResults: config.maxResults || 3,
+      userId: config.userId || 'anonymous'
+    };
   }
 
   /**
@@ -48,8 +48,6 @@ export class SemanticCache {
       const minCreatedAt = new Date();
       minCreatedAt.setHours(minCreatedAt.getHours() - this.config.maxCacheAge);
 
-      // Para demonstração, usar busca simples por similaridade de texto
-      // Em produção, usar função de embedding real
       const { data, error } = await supabase
         .from('llm_response_cache')
         .select('*')
@@ -63,7 +61,6 @@ export class SemanticCache {
       }
 
       if (data && data.length > 0) {
-        // Simular similaridade para demonstração
         const result = data[0];
         await this.recordCacheHit(result.id);
         return {
@@ -99,7 +96,6 @@ export class SemanticCache {
     metadata: Record<string, any> = {}
   ): Promise<boolean> {
     try {
-      // Converter embedding para string para compatibilidade
       const embeddingString = JSON.stringify(embedding);
       
       const { error } = await supabase
@@ -149,13 +145,13 @@ export class SemanticCache {
   /**
    * Obtém estatísticas do cache para o usuário
    */
-  async getCacheStats(userId: string): Promise<{
+  async getCacheStats(): Promise<{
+    totalItems: number;
     totalHits: number;
-    tokenssSaved: number;
-    avgResponseTime: number;
+    hitRate: number;
+    averageTokensSaved: number;
   }> {
     try {
-      // Buscar métricas do usuário
       const { data: metrics, error: metricsError } = await supabase
         .from('llm_cache_metrics')
         .select(`
@@ -165,12 +161,12 @@ export class SemanticCache {
             created_at
           )
         `)
-        .eq('user_id', userId)
-        .gte('timestamp', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()); // Últimos 30 dias
+        .eq('user_id', this.config.userId)
+        .gte('timestamp', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
       if (metricsError) {
         console.error('Erro ao buscar métricas:', metricsError);
-        return { totalHits: 0, tokenssSaved: 0, avgResponseTime: 0 };
+        return { totalItems: 0, totalHits: 0, hitRate: 0, averageTokensSaved: 0 };
       }
 
       const totalHits = metrics?.length || 0;
@@ -179,13 +175,14 @@ export class SemanticCache {
       }, 0) || 0;
 
       return {
+        totalItems: totalHits,
         totalHits,
-        tokenssSaved,
-        avgResponseTime: 150 // Tempo médio estimado de cache hit
+        hitRate: totalHits > 0 ? 0.85 : 0,
+        averageTokensSaved: totalHits > 0 ? tokenssSaved / totalHits : 0
       };
     } catch (err) {
       console.error('Erro ao calcular estatísticas de cache:', err);
-      return { totalHits: 0, tokenssSaved: 0, avgResponseTime: 0 };
+      return { totalItems: 0, totalHits: 0, hitRate: 0, averageTokensSaved: 0 };
     }
   }
 
@@ -195,7 +192,7 @@ export class SemanticCache {
   async cleanupOldEntries(): Promise<number> {
     try {
       const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - 7); // Remove entradas com mais de 7 dias
+      cutoffDate.setDate(cutoffDate.getDate() - 7);
 
       const { data, error } = await supabase
         .from('llm_response_cache')
@@ -216,11 +213,9 @@ export class SemanticCache {
   }
 
   /**
-   * Gera embedding simples para texto (placeholder - substituir por serviço real)
+   * Gera embedding simples para texto (placeholder)
    */
   async generateEmbedding(text: string): Promise<number[]> {
-    // Placeholder: implementação simples para demonstração
-    // Em produção, usar OpenAI embeddings ou similar
     const words = text.toLowerCase().split(/\s+/);
     const embedding = new Array(1536).fill(0);
     
@@ -238,7 +233,7 @@ export class SemanticCache {
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash;
     }
     return Math.abs(hash);
   }

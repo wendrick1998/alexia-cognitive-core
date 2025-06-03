@@ -4,7 +4,7 @@
  * @created_by Performance Optimization Sprint
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { semanticCache } from '@/services/SemanticCache';
 
 interface PerformanceConfig {
@@ -12,6 +12,14 @@ interface PerformanceConfig {
   enableImageOptimization: boolean;
   enableComponentLazyLoading: boolean;
   cacheThreshold: number;
+}
+
+interface PerformanceMetrics {
+  cacheHits: number;
+  cacheMisses: number;
+  avgResponseTime: number;
+  totalQueries: number;
+  cacheHitRate: number;
 }
 
 export function usePerformanceOptimization(config: Partial<PerformanceConfig> = {}) {
@@ -23,6 +31,14 @@ export function usePerformanceOptimization(config: Partial<PerformanceConfig> = 
   };
 
   const finalConfig = { ...defaultConfig, ...config };
+  const [metrics, setMetrics] = useState<PerformanceMetrics>({
+    cacheHits: 0,
+    cacheMisses: 0,
+    avgResponseTime: 0,
+    totalQueries: 0,
+    cacheHitRate: 0
+  });
+
   const performanceRef = useRef<{
     cacheHits: number;
     cacheMisses: number;
@@ -68,10 +84,7 @@ export function usePerformanceOptimization(config: Partial<PerformanceConfig> = 
     try {
       const startTime = performance.now();
       
-      // Gerar embedding da pergunta
       const embedding = await semanticCache.generateEmbedding(question);
-      
-      // Buscar no cache
       const cachedResponse = await semanticCache.findSimilar(
         question,
         taskType,
@@ -135,13 +148,16 @@ export function usePerformanceOptimization(config: Partial<PerformanceConfig> = 
     const totalQueries = performanceRef.current.cacheHits + performanceRef.current.cacheMisses;
     const cacheHitRate = totalQueries > 0 ? (performanceRef.current.cacheHits / totalQueries) * 100 : 0;
 
-    return {
+    const newMetrics = {
       cacheHits: performanceRef.current.cacheHits,
       cacheMisses: performanceRef.current.cacheMisses,
       cacheHitRate: Math.round(cacheHitRate),
       totalQueries,
       avgResponseTime: performanceRef.current.avgResponseTime,
     };
+
+    setMetrics(newMetrics);
+    return newMetrics;
   }, []);
 
   // Limpeza periódica do cache
@@ -157,10 +173,16 @@ export function usePerformanceOptimization(config: Partial<PerformanceConfig> = 
       } catch (error) {
         console.error('Erro na limpeza do cache:', error);
       }
-    }, 60 * 60 * 1000); // Executar a cada hora
+    }, 60 * 60 * 1000);
 
     return () => clearInterval(cleanupInterval);
   }, [finalConfig.enableSemanticCache]);
+
+  // Atualizar métricas periodicamente
+  useEffect(() => {
+    const interval = setInterval(getPerformanceStats, 5000);
+    return () => clearInterval(interval);
+  }, [getPerformanceStats]);
 
   return {
     measureComponentRender,
@@ -168,5 +190,6 @@ export function usePerformanceOptimization(config: Partial<PerformanceConfig> = 
     cacheResponse,
     getPerformanceStats,
     config: finalConfig,
+    metrics,
   };
 }

@@ -6,8 +6,19 @@
 
 import { useEffect, useState } from 'react';
 
+interface AnimationConfig {
+  reducedMotion: boolean;
+  duration: number;
+  easing: string;
+}
+
 export function useOptimizedAnimation() {
   const [shouldAnimate, setShouldAnimate] = useState(true);
+  const [config] = useState<AnimationConfig>({
+    reducedMotion: false,
+    duration: 300,
+    easing: 'ease-out'
+  });
 
   useEffect(() => {
     // Verificar preferência do usuário para movimento reduzido
@@ -33,6 +44,7 @@ export function useOptimizedAnimation() {
   return {
     shouldAnimate,
     getAnimationDuration,
-    getAnimationDelay
+    getAnimationDelay,
+    config
   };
 }

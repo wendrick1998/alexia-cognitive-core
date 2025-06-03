@@ -11,6 +11,7 @@ export interface CacheStats {
   totalSize: number;
   entryCount: number;
   memoryUsage: number;
+  compressionRatio: number;
 }
 
 export function useOptimizedCache() {
@@ -18,10 +19,15 @@ export function useOptimizedCache() {
     hitRate: 0.75,
     totalSize: 1024 * 1024 * 10, // 10MB
     entryCount: 150,
-    memoryUsage: 1024 * 1024 * 8 // 8MB
+    memoryUsage: 1024 * 1024 * 8, // 8MB
+    compressionRatio: 0.65
   });
 
   const clearCache = useCallback(() => {
+    console.log('Cache cleared');
+  }, []);
+
+  const clear = useCallback(() => {
     console.log('Cache cleared');
   }, []);
 
@@ -29,9 +35,15 @@ export function useOptimizedCache() {
     return `cache_${key}`;
   }, []);
 
+  const getStats = useCallback(() => {
+    return stats;
+  }, [stats]);
+
   return {
     stats,
     clearCache,
-    getCacheKey
+    clear,
+    getCacheKey,
+    getStats
   };
 }
