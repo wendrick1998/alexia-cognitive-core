@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { visualizer } from 'rollup-plugin-visualizer';
-import { compression } from 'vite-plugin-compression';
+import compression from 'vite-plugin-compression';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -128,12 +128,14 @@ export default defineConfig(({ mode }) => ({
         // Configurar nomes de arquivo com hash para cache busting
         chunkFileNames: (chunkInfo) => {
           const facadeModuleId = chunkInfo.facadeModuleId 
-            ? chunkInfo.facadeModuleId.split('/').pop().replace(/\.[^/.]+$/, '') 
+            ? chunkInfo.facadeModuleId.split('/').pop()?.replace(/\.[^/.]+$/, '') 
             : 'chunk';
           return `js/${facadeModuleId}-[hash].js`;
         },
         entryFileNames: 'js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
+          if (!assetInfo.name) return 'assets/[name]-[hash][extname]';
+          
           const info = assetInfo.name.split('.');
           const ext = info[info.length - 1];
           if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {

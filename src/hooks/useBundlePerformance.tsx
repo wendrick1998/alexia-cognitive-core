@@ -110,7 +110,7 @@ export function useBundlePerformance() {
       // Largest Contentful Paint
       lcp: navigation.loadEventEnd - navigation.fetchStart,
       // First Input Delay (aproximado)
-      fid: navigation.domInteractive - navigation.domLoading,
+      fid: navigation.domInteractive - navigation.domContentLoadedEventStart,
       // Cumulative Layout Shift (necessita Observer)
       cls: 0, // Seria calculado com PerformanceObserver
       // First Contentful Paint
