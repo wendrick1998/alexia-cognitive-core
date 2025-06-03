@@ -11,7 +11,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import AuthPage from '@/components/auth/AuthPage';
 
 // Log para verificar se App.tsx está sendo executado
-console.log('🎯 APP.TSX EXECUTANDO - FASE 3: ATIVANDO AUTHGUARD COM ROTA /AUTH');
+console.log('🎯 APP.TSX EXECUTANDO - FASE 4: CORRIGINDO ROTEAMENTO COM REDIRECIONAMENTO AUTOMÁTICO');
 
 // Lazy load dos componentes principais
 const Dashboard = lazy(() => {
@@ -39,10 +39,10 @@ const queryClient = new QueryClient({
   },
 });
 
-console.log('⚙️ QueryClient criado com sucesso - FASE 3');
+console.log('⚙️ QueryClient criado com sucesso - FASE 4');
 
 function App() {
-  console.log('🎯 App component renderizando - FASE 3: ROTAS COM AUTHGUARD + /AUTH');
+  console.log('🎯 App component renderizando - FASE 4: ROTEAMENTO CORRIGIDO COM REDIRECIONAMENTO AUTOMÁTICO');
   
   return (
     <ErrorBoundary>
@@ -60,14 +60,23 @@ function App() {
                     {/* ROTA PÚBLICA - LOGIN/CADASTRO */}
                     <Route path="/auth" element={<AuthPage />} />
                     
-                    {/* ROTAS PROTEGIDAS - DENTRO DO AUTHGUARD */}
-                    <Route path="/*" element={
+                    {/* ROTAS PROTEGIDAS - REDIRECIONAMENTO AUTOMÁTICO PARA /AUTH SE NÃO AUTENTICADO */}
+                    <Route path="/" element={
                       <AuthGuard>
-                        <Routes>
-                          <Route path="/" element={<Dashboard />} />
-                          <Route path="/chat" element={<Chat />} />
-                          <Route path="*" element={<Dashboard />} />
-                        </Routes>
+                        <Dashboard />
+                      </AuthGuard>
+                    } />
+                    
+                    <Route path="/chat" element={
+                      <AuthGuard>
+                        <Chat />
+                      </AuthGuard>
+                    } />
+                    
+                    {/* FALLBACK - QUALQUER ROTA NÃO ENCONTRADA VAI PARA DASHBOARD (PROTEGIDO) */}
+                    <Route path="*" element={
+                      <AuthGuard>
+                        <Dashboard />
                       </AuthGuard>
                     } />
                   </Routes>
@@ -82,5 +91,5 @@ function App() {
   );
 }
 
-console.log('📤 App.tsx configurado para FASE 3 COM AUTHGUARD E ROTA /AUTH - exportando');
+console.log('📤 App.tsx configurado para FASE 4 COM ROTEAMENTO CORRIGIDO - exportando');
 export default App;

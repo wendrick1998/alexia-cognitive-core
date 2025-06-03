@@ -12,10 +12,10 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight, KeyRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // LOG CRÍTICO: Verificar se AuthPage está sendo carregado
-console.log('🔑 AUTHPAGE CARREGANDO - componente de login/cadastro');
+console.log('🔑 AUTHPAGE CARREGANDO - FASE 4 COM REDIRECIONAMENTO CORRIGIDO');
 
 const AuthPage = () => {
-  console.log('🔑 AuthPage: componente inicializando');
+  console.log('🔑 AuthPage: componente inicializando - FASE 4');
   
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -33,11 +33,11 @@ const AuthPage = () => {
     isLogin
   });
 
-  // Redirect authenticated users to home
+  // Redirect authenticated users to dashboard
   useEffect(() => {
     console.log('🔑 AuthPage: verificando autenticação', { isAuthenticated });
     if (isAuthenticated) {
-      console.log('🔑 AuthPage: usuário autenticado - redirecionando para /');
+      console.log('🔑 AuthPage: usuário autenticado - redirecionando para / (dashboard)');
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, navigate]);
@@ -77,11 +77,12 @@ const AuthPage = () => {
             variant: "destructive",
           });
         } else {
-          console.log('🔑 AuthPage: login realizado com sucesso!');
+          console.log('🔑 AuthPage: login realizado com sucesso! Redirecionando para dashboard...');
           toast({
             title: "Login realizado com sucesso!",
             description: "Bem-vindo ao Alex IA",
           });
+          // O redirecionamento será feito pelo useEffect acima quando isAuthenticated mudar
         }
       } else {
         console.log('🔑 AuthPage: tentando fazer cadastro...');
@@ -356,5 +357,5 @@ const AuthPage = () => {
   );
 };
 
-console.log('🔑 AuthPage: componente definido e pronto para export');
+console.log('🔑 AuthPage: componente definido e pronto para export - FASE 4');
 export default AuthPage;
