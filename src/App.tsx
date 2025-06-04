@@ -15,7 +15,7 @@ import PremiumAppLayout from '@/components/layout/PremiumAppLayout';
 const Dashboard = lazy(() => import('@/components/dashboard/Dashboard'));
 const Chat = lazy(() => import('@/components/Chat'));
 
-// Lazy load dos componentes secundários existentes
+// Lazy load dos componentes funcionais existentes
 const SemanticSearch = lazy(() => import('@/components/SemanticSearch'));
 const MemoryManager = lazy(() => import('@/components/MemoryManager'));
 const DocumentsManager = lazy(() => import('@/components/DocumentsManager'));
@@ -82,6 +82,8 @@ const ProtectedApp = () => {
     if (path.startsWith("/privacy")) return "privacy";
     if (path.startsWith("/subscription")) return "subscription";
     if (path.startsWith("/security")) return "security";
+    if (path.startsWith("/validation")) return "validation";
+    if (path.startsWith("/settings")) return "settings";
     return "dashboard";
   };
 
@@ -102,7 +104,9 @@ const ProtectedApp = () => {
       preferences: '/preferences',
       privacy: '/privacy',
       subscription: '/subscription',
-      security: '/security'
+      security: '/security',
+      validation: '/validation',
+      settings: '/settings'
     };
 
     const targetRoute = routeMap[section] || '/';
@@ -117,69 +121,89 @@ const ProtectedApp = () => {
       currentSection={getCurrentSection()} 
       onSectionChange={handleSectionChange}
     >
-      <Routes>
-        {/* Rotas principais funcionais */}
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/chat" element={<Chat />} />
-        
-        {/* Funcionalidades existentes */}
-        <Route path="/memory" element={<MemoryManager />} />
-        <Route path="/documents" element={<DocumentsManager />} />
-        <Route path="/search" element={<SemanticSearch />} />
-        <Route path="/actions" element={<ProjectsManager />} />
-        
-        {/* Páginas cognitivas */}
-        <Route path="/cognitive-graph" element={<CognitiveGraphPage />} />
-        <Route path="/insights" element={<InsightsPage />} />
-        <Route path="/cortex" element={<CortexDashboard />} />
-        
-        {/* Páginas em desenvolvimento */}
-        <Route path="/autonomous" element={
-          <DevelopmentPage 
-            title="Projetos Autônomos" 
-            description="Sistema de automação e execução de tarefas inteligentes está sendo desenvolvido." 
-          />
-        } />
-        
-        <Route path="/performance" element={
-          <DevelopmentPage 
-            title="Dashboard de Performance" 
-            description="Métricas e análises de performance do sistema estão sendo implementadas." 
-          />
-        } />
-        
-        <Route path="/preferences" element={
-          <DevelopmentPage 
-            title="Preferências do Usuário" 
-            description="Configurações personalizadas e preferências do sistema estão sendo desenvolvidas." 
-          />
-        } />
-        
-        <Route path="/privacy" element={
-          <DevelopmentPage 
-            title="Configurações de Privacidade" 
-            description="Controles de privacidade e segurança de dados estão sendo implementados." 
-          />
-        } />
-        
-        <Route path="/subscription" element={
-          <DevelopmentPage 
-            title="Gerenciamento de Assinatura" 
-            description="Controle de planos e funcionalidades premium está sendo desenvolvido." 
-          />
-        } />
-        
-        <Route path="/security" element={
-          <DevelopmentPage 
-            title="Configurações de Segurança" 
-            description="Configurações avançadas de segurança e autenticação estão sendo implementadas." 
-          />
-        } />
-        
-        {/* Fallback para rotas não encontradas */}
-        <Route path="*" element={<Dashboard />} />
-      </Routes>
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-full">
+          <SmartLoadingSpinner size="lg" message="Carregando página..." />
+        </div>
+      }>
+        <Routes>
+          {/* Rotas principais funcionais */}
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/chat" element={<Chat />} />
+          
+          {/* Funcionalidades existentes */}
+          <Route path="/memory" element={<MemoryManager />} />
+          <Route path="/documents" element={<DocumentsManager />} />
+          <Route path="/search" element={<SemanticSearch />} />
+          <Route path="/actions" element={<ProjectsManager />} />
+          
+          {/* Páginas cognitivas */}
+          <Route path="/cognitive-graph" element={<CognitiveGraphPage />} />
+          <Route path="/insights" element={<InsightsPage />} />
+          <Route path="/cortex" element={<CortexDashboard />} />
+          
+          {/* Páginas em desenvolvimento */}
+          <Route path="/autonomous" element={
+            <DevelopmentPage 
+              title="Projetos Autônomos" 
+              description="Sistema de automação e execução de tarefas inteligentes está sendo desenvolvido." 
+            />
+          } />
+          
+          <Route path="/performance" element={
+            <DevelopmentPage 
+              title="Dashboard de Performance" 
+              description="Métricas e análises de performance do sistema estão sendo implementadas." 
+            />
+          } />
+          
+          <Route path="/preferences" element={
+            <DevelopmentPage 
+              title="Preferências do Usuário" 
+              description="Configurações personalizadas e preferências do sistema estão sendo desenvolvidas." 
+            />
+          } />
+          
+          <Route path="/privacy" element={
+            <DevelopmentPage 
+              title="Configurações de Privacidade" 
+              description="Controles de privacidade e segurança de dados estão sendo implementados." 
+            />
+          } />
+          
+          <Route path="/subscription" element={
+            <DevelopmentPage 
+              title="Gerenciamento de Assinatura" 
+              description="Controle de planos e funcionalidades premium está sendo desenvolvido." 
+            />
+          } />
+          
+          <Route path="/security" element={
+            <DevelopmentPage 
+              title="Configurações de Segurança" 
+              description="Configurações avançadas de segurança e autenticação estão sendo implementadas." 
+            />
+          } />
+
+          <Route path="/validation" element={
+            <DevelopmentPage 
+              title="Validação de Dados" 
+              description="Sistema de validação e verificação de dados está sendo desenvolvido." 
+            />
+          } />
+
+          <Route path="/settings" element={
+            <DevelopmentPage 
+              title="Configurações" 
+              description="Painel de configurações gerais do sistema está sendo implementado." 
+            />
+          } />
+          
+          {/* Fallback para rotas não encontradas */}
+          <Route path="*" element={<Dashboard />} />
+        </Routes>
+      </Suspense>
     </PremiumAppLayout>
   );
 };
