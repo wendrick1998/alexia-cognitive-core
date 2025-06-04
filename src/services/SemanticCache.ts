@@ -171,7 +171,8 @@ export class SemanticCache {
 
       const totalHits = metrics?.length || 0;
       const tokenssSaved = metrics?.reduce((acc, metric) => {
-        return acc + (metric.llm_response_cache?.tokens_used || 0);
+        const cacheItem = metric.llm_response_cache as { tokens_used: number };
+        return acc + (cacheItem?.tokens_used || 0);
       }, 0) || 0;
 
       return {
