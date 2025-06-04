@@ -2,245 +2,58 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alex iA - Modo Offline</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alex iA - Offline</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #f8fafc;
+      margin: 0;
+      padding: 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-    }
-
-    .container {
       text-align: center;
-      max-width: 480px;
-      padding: 40px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 20px;
+    }
+    .container {
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 1rem;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
     }
-
-    .logo {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 24px;
-      font-size: 36px;
-    }
-
     h1 {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 2rem;
+      margin-bottom: 1rem;
     }
-
     p {
-      font-size: 18px;
-      color: #cbd5e1;
-      margin-bottom: 32px;
-      line-height: 1.6;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
     }
-
-    .features {
-      list-style: none;
-      margin-bottom: 32px;
-    }
-
-    .features li {
-      padding: 8px 0;
-      color: #94a3b8;
-      font-size: 16px;
-    }
-
-    .features li::before {
-      content: "✓ ";
-      color: #10b981;
-      font-weight: bold;
-      margin-right: 8px;
-    }
-
-    .button {
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      color: white;
+    button {
+      background: white;
+      color: #667eea;
       border: none;
-      padding: 16px 32px;
-      border-radius: 12px;
-      font-size: 16px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-block;
-      margin: 8px;
+      transition: transform 0.2s;
     }
-
-    .button:hover {
+    button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-    }
-
-    .button.secondary {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .status {
-      margin-top: 24px;
-      padding: 12px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 8px;
-      color: #fca5a5;
-      font-size: 14px;
-    }
-
-    .connection-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ef4444;
-      margin-right: 8px;
-      animation: pulse 2s infinite;
-    }
-
-    .connection-indicator.online {
-      background: #10b981;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        padding: 24px;
-        margin: 10px;
-      }
-
-      h1 {
-        font-size: 24px;
-      }
-
-      p {
-        font-size: 16px;
-      }
-
-      .button {
-        padding: 12px 24px;
-        font-size: 14px;
-        display: block;
-        margin: 8px 0;
-      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">🧠</div>
-    <h1>Alex iA</h1>
-    <p>Você está no modo offline. Algumas funcionalidades estão limitadas, mas você ainda pode acessar conteúdo em cache.</p>
-    
-    <ul class="features">
-      <li>Conversas anteriores salvas</li>
-      <li>Memórias cognitivas locais</li>
-      <li>Documentos processados</li>
-      <li>Interface completa disponível</li>
-    </ul>
-
-    <button class="button" onclick="tryReconnect()">
-      <span class="connection-indicator" id="indicator"></span>
-      Tentar Reconectar
-    </button>
-    
-    <button class="button secondary" onclick="goToApp()">
-      Continuar Offline
-    </button>
-
-    <div class="status" id="status">
-      <span class="connection-indicator"></span>
-      Sem conexão com a internet
-    </div>
+    <h1>🔌 Você está offline</h1>
+    <p>Alex iA não consegue se conectar à internet no momento. Verifique sua conexão e tente novamente.</p>
+    <button onclick="window.location.reload()">Tentar Novamente</button>
   </div>
-
-  <script>
-    function updateConnectionStatus() {
-      const indicator = document.getElementById('indicator');
-      const status = document.getElementById('status');
-      
-      if (navigator.onLine) {
-        indicator.classList.add('online');
-        status.innerHTML = '<span class="connection-indicator online"></span>Conectado - Redirecionando...';
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1500);
-      } else {
-        indicator.classList.remove('online');
-        status.innerHTML = '<span class="connection-indicator"></span>Sem conexão com a internet';
-      }
-    }
-
-    function tryReconnect() {
-      updateConnectionStatus();
-      if (navigator.onLine) {
-        window.location.href = '/';
-      } else {
-        // Tentar fazer uma requisição para testar conectividade
-        fetch('/', { method: 'HEAD', cache: 'no-cache' })
-          .then(() => {
-            window.location.href = '/';
-          })
-          .catch(() => {
-            status.innerHTML = '<span class="connection-indicator"></span>Ainda sem conexão - tente novamente';
-          });
-      }
-    }
-
-    function goToApp() {
-      window.location.href = '/';
-    }
-
-    // Monitorar mudanças de conectividade
-    window.addEventListener('online', updateConnectionStatus);
-    window.addEventListener('offline', updateConnectionStatus);
-
-    // Verificar status inicial
-    updateConnectionStatus();
-
-    // Auto-reconectar a cada 30 segundos se offline
-    setInterval(() => {
-      if (!navigator.onLine) {
-        fetch('/', { method: 'HEAD', cache: 'no-cache' })
-          .then(() => {
-            updateConnectionStatus();
-          })
-          .catch(() => {
-            // Continua offline
-          });
-      }
-    }, 30000);
-  </script>
 </body>
 </html>

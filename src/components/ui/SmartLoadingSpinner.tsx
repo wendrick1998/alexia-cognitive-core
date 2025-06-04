@@ -1,73 +1,33 @@
 
-import { cn } from '@/lib/utils';
-import { LoadingSpinner } from './LoadingSpinner';
-import { Brain, Database, FileText, MessageSquare, Search } from 'lucide-react';
+import React from "react";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SmartLoadingSpinnerProps {
-  type?: 'general' | 'database' | 'document' | 'chat' | 'search' | 'brain';
+  size?: "sm" | "md" | "lg";
   message?: string;
-  size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 
-export const SmartLoadingSpinner = ({ 
-  type = 'general',
-  message,
-  size = 'lg',
-  className 
-}: SmartLoadingSpinnerProps) => {
-  const getIcon = () => {
-    switch (type) {
-      case 'database':
-        return <Database className="w-6 h-6 text-primary" />;
-      case 'document':
-        return <FileText className="w-6 h-6 text-primary" />;
-      case 'chat':
-        return <MessageSquare className="w-6 h-6 text-primary" />;
-      case 'search':
-        return <Search className="w-6 h-6 text-primary" />;
-      case 'brain':
-        return <Brain className="w-6 h-6 text-primary" />;
-      default:
-        return null;
-    }
-  };
-
-  const getDefaultMessage = () => {
-    switch (type) {
-      case 'database':
-        return 'Conectando ao banco de dados...';
-      case 'document':
-        return 'Processando documento...';
-      case 'chat':
-        return 'Carregando conversa...';
-      case 'search':
-        return 'Buscando resultados...';
-      case 'brain':
-        return 'Processando sistema cognitivo...';
-      default:
-        return 'Carregando...';
-    }
+export const SmartLoadingSpinner: React.FC<SmartLoadingSpinnerProps> = ({
+  size = "md",
+  message = "Carregando...",
+  className
+}) => {
+  const sizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-6 h-6",
+    lg: "w-8 h-8"
   };
 
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-4 p-8', className)}>
-      <div className="relative">
-        <LoadingSpinner size={size} />
-        {getIcon() && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            {getIcon()}
-          </div>
-        )}
-      </div>
-      <div className="text-center space-y-2">
-        <p className="text-sm font-medium text-foreground">
-          {message || getDefaultMessage()}
+    <div className={cn("flex flex-col items-center justify-center space-y-2", className)}>
+      <Loader2 className={cn("animate-spin text-primary", sizeClasses[size])} />
+      {message && (
+        <p className="text-sm text-muted-foreground animate-pulse">
+          {message}
         </p>
-        <p className="text-xs text-muted-foreground">
-          Aguarde enquanto processamos sua solicitação
-        </p>
-      </div>
+      )}
     </div>
   );
 };

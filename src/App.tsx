@@ -1,19 +1,16 @@
 
-import { Suspense } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import AppRoutes from "@/components/layout/AppRoutes";
-import { SmartLoadingSpinner } from "@/components/ui/SmartLoadingSpinner";
+import "./App.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
-      retry: 1,
+      staleTime: 1000 * 60 * 5, // 5 minutes
       refetchOnWindowFocus: false,
     },
   },
@@ -21,26 +18,13 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <ThemeProvider 
-      attribute="class" 
-      defaultTheme="dark" 
-      enableSystem
-      themes={['light', 'dark', 'oled']}
-    >
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <div className="min-h-screen bg-background text-foreground">
-            <Toaster />
-            <BrowserRouter>
-              <Suspense fallback={
-                <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-                  <SmartLoadingSpinner type="general" message="Carregando sistema..." />
-                </div>
-              }>
-                <AppRoutes />
-              </Suspense>
-            </BrowserRouter>
-          </div>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+          <Toaster />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
