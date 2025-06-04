@@ -1,7 +1,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import PremiumSidebar from "@/components/premium/PremiumSidebar";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
 import ServiceWorkerManager from "@/components/optimization/ServiceWorkerManager";
@@ -17,7 +17,7 @@ export default function PremiumAppLayout({
   currentSection, 
   onSectionChange 
 }: PremiumAppLayoutProps) {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">

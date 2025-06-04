@@ -1,3 +1,4 @@
+
 /**
  * @description Serviço para logging e estatísticas de modelos LLM
  * @created_by Manus AI - System Monitoring
@@ -24,6 +25,16 @@ export interface ModelStats {
   last_used: Date;
 }
 
+export interface LLMMetrics {
+  model_name: string;
+  provider: string;
+  status: 'active' | 'inactive' | 'error';
+  response_time: number;
+  estimated_cost: number;
+  total_calls: number;
+  success_rate: number;
+}
+
 export class LLMLogger {
   private logs: LLMLogEntry[] = [];
 
@@ -42,6 +53,17 @@ export class LLMLogger {
     }
 
     console.log('LLM Request logged:', logEntry);
+  }
+
+  async logCall(model: string, provider: string, tokens: number, responseTime: number, success: boolean, error?: string): Promise<void> {
+    await this.logRequest({
+      model,
+      provider,
+      tokens_used: tokens,
+      response_time: responseTime,
+      success,
+      error
+    });
   }
 
   async getModelStats(): Promise<ModelStats[]> {
@@ -80,6 +102,19 @@ export class LLMLogger {
     });
 
     return Array.from(statsMap.values());
+  }
+
+  async getMetrics(): Promise<LLMMetrics[]> {
+    const stats = await this.getModelStats();
+    return stats.map(stat => ({
+      model_name: stat.model,
+      provider: stat.provider,
+      status: stat.success_rate > 80 ? 'active' : (stat.success_rate > 50 ? 'inactive' : 'error'),
+      response_time: stat.average_response_time,
+      estimated_cost: stat.total_tokens * 0.0001, // Simple cost estimation
+      total_calls: stat.total_calls,
+      success_rate: stat.success_rate
+    }));
   }
 
   async getLogs(limit: number = 50): Promise<LLMLogEntry[]> {

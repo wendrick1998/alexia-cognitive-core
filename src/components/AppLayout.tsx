@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -55,12 +56,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           className="hidden lg:flex w-64 bg-gray-900/50 backdrop-blur-xl border-r border-white/10"
           aria-label="Navegação principal"
         >
-          <PremiumSidebar
-            isOpen={isPremiumSidebarOpen}
-            onClose={() => setIsPremiumSidebarOpen(false)}
-            currentSection={currentSection}
-            onSectionChange={handleSectionChange}
-          />
+          <PremiumSidebar />
         </nav>
 
         {/* Main Content */}
@@ -102,11 +98,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             role="region"
             aria-label="Área de entrada de mensagem"
           >
-            <BottomNavigation
-              currentSection={currentSection}
-              onSectionChange={handleSectionChange}
-              onMenuToggle={togglePremiumSidebar}
-            />
+            <BottomNavigation />
           </section>
         </main>
       </div>

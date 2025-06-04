@@ -7,12 +7,14 @@ interface SmartLoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
   message?: string;
   className?: string;
+  type?: string; // Added to support the type prop
 }
 
 export const SmartLoadingSpinner: React.FC<SmartLoadingSpinnerProps> = ({
   size = "md",
   message = "Carregando...",
-  className
+  className,
+  type
 }) => {
   const sizeClasses = {
     sm: "w-4 h-4",
@@ -26,6 +28,11 @@ export const SmartLoadingSpinner: React.FC<SmartLoadingSpinnerProps> = ({
       {message && (
         <p className="text-sm text-muted-foreground animate-pulse">
           {message}
+        </p>
+      )}
+      {type && (
+        <p className="text-xs text-muted-foreground/70">
+          {type}
         </p>
       )}
     </div>
