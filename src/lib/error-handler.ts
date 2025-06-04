@@ -102,6 +102,41 @@ class ErrorHandler {
     };
   }
 
+  // User-friendly error handler that returns sanitized messages
+  handleUserError(error: Error | unknown, action: string = 'unknown'): string {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    
+    // Log the error for internal tracking
+    this.logSecurityEvent({
+      action: `user_error_${action}`,
+      resource: 'client_error',
+      severity: 'low',
+      details: {
+        message: errorMessage,
+        action
+      }
+    });
+
+    // Return user-friendly message
+    if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+      return 'Erro de conexão. Verifique sua internet e tente novamente.';
+    }
+    
+    if (errorMessage.includes('unauthorized') || errorMessage.includes('authentication')) {
+      return 'Sessão expirada. Faça login novamente.';
+    }
+    
+    if (errorMessage.includes('validation') || errorMessage.includes('invalid')) {
+      return 'Dados inválidos. Verifique as informações e tente novamente.';
+    }
+    
+    if (errorMessage.includes('rate limit') || errorMessage.includes('too many')) {
+      return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+    }
+
+    return 'Ocorreu um erro inesperado. Tente novamente.';
+  }
+
   private generateErrorCode(action: string): string {
     const timestamp = Date.now().toString(36);
     const actionCode = action.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 4);
