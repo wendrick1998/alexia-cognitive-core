@@ -14,5 +14,47 @@
   "common": {
     "inDevelopment": "Em desenvolvimento...",
     "welcome": "Bem-vindo ao Alex iA Premium"
+  },
+  "sidebar": {
+    "alexIA": "Alex iA",
+    "cognitiveSystem": "Sistema Cognitivo v2.0",
+    "premiumAccount": "Premium Account",
+    "synced": "Sincronizado",
+    "syncing": "Sincronizando...",
+    "offline": "Offline",
+    "logout": "Sair"
+  },
+  "navigation": {
+    "home": "Home",
+    "buscar": "Buscar",
+    "docs": "Docs",
+    "memoria": "Memória",
+    "menu": "Menu"
+  },
+  "llmConfig": {
+    "title": "Configuração de Provedores de IA (LLM)",
+    "subtitle": "Gerencie e teste a conectividade com diferentes modelos de Linguagem.",
+    "alert": {
+      "attention": "Atenção!",
+      "noApiKey": "A chave VITE_OPENAI_API_KEY não está configurada. A integração com OpenAI pode estar desabilitada."
+    },
+    "providers": {
+      "title": "Status dos Provedores",
+      "subtitle": "Status atual de conectividade com os provedores de IA",
+      "configured": "Configurado",
+      "notConfigured": "Não configurado",
+      "inDevelopment": "Em desenvolvimento"
+    },
+    "testing": {
+      "title": "Testar Provedores",
+      "subtitle": "Interface para testar a conectividade com provedores de IA",
+      "description": "Interface para testar a conectividade com provedores de IA (OpenAI, Anthropic, Groq, etc.) será implementada aqui.",
+      "configuration": "Permitirá alternar entre provedores e configurar chaves de API."
+    },
+    "advanced": {
+      "title": "Configurações Avançadas",
+      "subtitle": "Configurações de timeout, fallback e balanceamento de carga",
+      "description": "Configurações avançadas de roteamento inteligente em desenvolvimento"
+    }
   }
 }

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from 'react-i18next';
 
 interface BottomNavigationProps {
   currentSection: string;
@@ -19,15 +20,16 @@ interface BottomNavigationProps {
 }
 
 const navigationItems = [
-  { id: 'dashboard', icon: Home, label: 'Home' },
-  { id: 'chat', icon: MessageCircle, label: 'Chat' },
-  { id: 'search', icon: Search, label: 'Buscar' },
-  { id: 'documents', icon: FileText, label: 'Docs' },
-  { id: 'memory', icon: Brain, label: 'Memória' }
+  { id: 'dashboard', icon: Home, labelKey: 'navigation.home' },
+  { id: 'chat', icon: MessageCircle, labelKey: 'chat' },
+  { id: 'search', icon: Search, labelKey: 'navigation.buscar' },
+  { id: 'documents', icon: FileText, labelKey: 'navigation.docs' },
+  { id: 'memory', icon: Brain, labelKey: 'navigation.memoria' }
 ];
 
 const BottomNavigation = ({ currentSection, onSectionChange, onMenuToggle }: BottomNavigationProps) => {
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   if (!isMobile) return null;
 
@@ -56,7 +58,7 @@ const BottomNavigation = ({ currentSection, onSectionChange, onMenuToggle }: Bot
                   )}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="text-xs font-medium leading-none">{item.label}</span>
+                  <span className="text-xs font-medium leading-none">{t(item.labelKey)}</span>
                 </Button>
               );
             })}
@@ -70,7 +72,7 @@ const BottomNavigation = ({ currentSection, onSectionChange, onMenuToggle }: Bot
             className="flex flex-col items-center gap-1 h-12 px-3 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-all duration-200"
           >
             <Menu className="w-5 h-5" />
-            <span className="text-xs font-medium">Menu</span>
+            <span className="text-xs font-medium">{t('navigation.menu')}</span>
           </Button>
         </div>
       </div>

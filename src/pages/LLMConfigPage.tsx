@@ -2,8 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bot, AlertTriangle, Settings, Zap } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const LLMConfigPage = () => {
+  const { t } = useTranslation();
   const [hasOpenAIKey, setHasOpenAIKey] = useState(false);
 
   useEffect(() => {
@@ -20,10 +22,10 @@ const LLMConfigPage = () => {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Configuração de Provedores de IA (LLM)
+          {t('llmConfig.title')}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Gerencie e teste a conectividade com diferentes modelos de Linguagem.
+          {t('llmConfig.subtitle')}
         </p>
       </div>
 
@@ -32,10 +34,10 @@ const LLMConfigPage = () => {
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 text-yellow-700 dark:text-yellow-300 p-4 rounded-lg" role="alert">
           <div className="flex items-center">
             <AlertTriangle className="w-5 h-5 mr-2" />
-            <p className="font-bold">Atenção!</p>
+            <p className="font-bold">{t('llmConfig.alert.attention')}</p>
           </div>
           <p className="mt-1">
-            A chave VITE_OPENAI_API_KEY não está configurada. A integração com OpenAI pode estar desabilitada.
+            {t('llmConfig.alert.noApiKey')}
           </p>
         </div>
       )}
@@ -46,10 +48,10 @@ const LLMConfigPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot className="w-5 h-5" />
-              Status dos Provedores
+              {t('llmConfig.providers.title')}
             </CardTitle>
             <CardDescription>
-              Status atual de conectividade com os provedores de IA
+              {t('llmConfig.providers.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -60,7 +62,7 @@ const LLMConfigPage = () => {
                   <span className="font-medium">OpenAI</span>
                 </div>
                 <span className={`text-sm ${hasOpenAIKey ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {hasOpenAIKey ? 'Configurado' : 'Não configurado'}
+                  {hasOpenAIKey ? t('llmConfig.providers.configured') : t('llmConfig.providers.notConfigured')}
                 </span>
               </div>
               
@@ -69,7 +71,7 @@ const LLMConfigPage = () => {
                   <div className="w-3 h-3 rounded-full bg-gray-400"></div>
                   <span className="font-medium">Anthropic</span>
                 </div>
-                <span className="text-sm text-gray-500">Em desenvolvimento</span>
+                <span className="text-sm text-gray-500">{t('llmConfig.providers.inDevelopment')}</span>
               </div>
 
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -77,7 +79,7 @@ const LLMConfigPage = () => {
                   <div className="w-3 h-3 rounded-full bg-gray-400"></div>
                   <span className="font-medium">Groq</span>
                 </div>
-                <span className="text-sm text-gray-500">Em desenvolvimento</span>
+                <span className="text-sm text-gray-500">{t('llmConfig.providers.inDevelopment')}</span>
               </div>
             </div>
           </CardContent>
@@ -88,20 +90,20 @@ const LLMConfigPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5" />
-              Testar Provedores
+              {t('llmConfig.testing.title')}
             </CardTitle>
             <CardDescription>
-              Interface para testar a conectividade com provedores de IA
+              {t('llmConfig.testing.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center py-8">
               <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400 mb-2">
-                Interface para testar a conectividade com provedores de IA (OpenAI, Anthropic, Groq, etc.) será implementada aqui.
+                {t('llmConfig.testing.description')}
               </p>
               <p className="text-sm text-gray-500">
-                Permitirá alternar entre provedores e configurar chaves de API.
+                {t('llmConfig.testing.configuration')}
               </p>
             </div>
           </CardContent>
@@ -112,17 +114,17 @@ const LLMConfigPage = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="w-5 h-5" />
-              Configurações Avançadas
+              {t('llmConfig.advanced.title')}
             </CardTitle>
             <CardDescription>
-              Configurações de timeout, fallback e balanceamento de carga
+              {t('llmConfig.advanced.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center py-8">
               <Bot className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">
-                Configurações avançadas de roteamento inteligente em desenvolvimento
+                {t('llmConfig.advanced.description')}
               </p>
             </div>
           </CardContent>

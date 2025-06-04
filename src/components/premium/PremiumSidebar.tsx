@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { menuSectionsConfig } from '@/config/navConfig';
+import { useTranslation } from 'react-i18next';
 
 interface PremiumSidebarProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ interface PremiumSidebarProps {
 
 const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: PremiumSidebarProps) => {
   const { user, signOut } = useAuth();
+  const { t } = useTranslation();
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('synced');
 
   const handleItemClick = (itemId: string) => {
@@ -92,9 +94,9 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
                 </div>
                 <div>
                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Alex iA
+                    {t('sidebar.alexIA')}
                   </h1>
-                  <p className="text-xs text-white/60">Sistema Cognitivo v2.0</p>
+                  <p className="text-xs text-white/60">{t('sidebar.cognitiveSystem')}</p>
                 </div>
               </div>
               
@@ -185,7 +187,7 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
                 <p className="text-sm font-medium text-white truncate">
                   {user?.email?.split('@')[0] || 'Usuário'}
                 </p>
-                <p className="text-xs text-white/60">Premium Account</p>
+                <p className="text-xs text-white/60">{t('sidebar.premiumAccount')}</p>
               </div>
             </div>
 
@@ -195,9 +197,9 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
                 {syncStatus === 'synced' && <CheckCircle className="w-3 h-3 text-green-400" aria-hidden="true" />}
                 {syncStatus === 'syncing' && <RotateCcw className="w-3 h-3 animate-spin text-blue-400" aria-hidden="true" />}
                 <span aria-live="polite">
-                  {syncStatus === 'synced' && 'Sincronizado'}
-                  {syncStatus === 'syncing' && 'Sincronizando...'}
-                  {syncStatus === 'offline' && 'Offline'}
+                  {syncStatus === 'synced' && t('sidebar.synced')}
+                  {syncStatus === 'syncing' && t('sidebar.syncing')}
+                  {syncStatus === 'offline' && t('sidebar.offline')}
                 </span>
               </div>
               
@@ -206,7 +208,7 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
                 onKeyDown={(e) => handleKeyDown(e, handleLogout)}
                 variant="ghost"
                 size="sm"
-                aria-label="Fazer logout"
+                aria-label={t('sidebar.logout')}
                 role="button"
                 tabIndex={0}
                 className={cn(
@@ -214,7 +216,7 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
                   "transition-colors rounded-lg btn-accessible focus-ring-enhanced",
                   "touch-target-48"
                 )}
-                title="Sair"
+                title={t('sidebar.logout')}
               >
                 <LogOut className="w-4 h-4" aria-hidden="true" />
               </Button>

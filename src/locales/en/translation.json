@@ -14,5 +14,47 @@
   "common": {
     "inDevelopment": "In development...",
     "welcome": "Welcome to Alex iA Premium"
+  },
+  "sidebar": {
+    "alexIA": "Alex iA",
+    "cognitiveSystem": "Cognitive System v2.0",
+    "premiumAccount": "Premium Account",
+    "synced": "Synced",
+    "syncing": "Syncing...",
+    "offline": "Offline",
+    "logout": "Logout"
+  },
+  "navigation": {
+    "home": "Home",
+    "buscar": "Search",
+    "docs": "Docs",
+    "memoria": "Memory",
+    "menu": "Menu"
+  },
+  "llmConfig": {
+    "title": "AI Provider Configuration (LLM)",
+    "subtitle": "Manage and test connectivity with different Language Models.",
+    "alert": {
+      "attention": "Attention!",
+      "noApiKey": "VITE_OPENAI_API_KEY is not configured. OpenAI integration may be disabled."
+    },
+    "providers": {
+      "title": "Provider Status",
+      "subtitle": "Current connectivity status with AI providers",
+      "configured": "Configured",
+      "notConfigured": "Not configured",
+      "inDevelopment": "In development"
+    },
+    "testing": {
+      "title": "Test Providers",
+      "subtitle": "Interface to test connectivity with AI providers",
+      "description": "Interface to test connectivity with AI providers (OpenAI, Anthropic, Groq, etc.) will be implemented here.",
+      "configuration": "Will allow switching between providers and configuring API keys."
+    },
+    "advanced": {
+      "title": "Advanced Settings",
+      "subtitle": "Timeout, fallback and load balancing settings",
+      "description": "Advanced intelligent routing settings in development"
+    }
   }
 }
