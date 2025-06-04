@@ -1,97 +1,30 @@
 
 import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Home,
-  MessageCircle,
-  Brain,
-  FileText,
-  Target,
-  BarChart3,
-  Network,
-  Palette,
-  Users,
-  Globe,
-  Zap,
-  Settings,
-  User,
-  CreditCard,
-  Lock,
   LogOut,
   X,
   Sparkles,
   RotateCcw,
-  CheckCircle,
-  Search,
-  Play,
-  FolderOpen
+  CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { menuSectionsConfig } from '@/config/navConfig';
 
 interface PremiumSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  currentSection: string;
-  onSectionChange: (section: string) => void;
 }
 
-const menuSections = [
-  {
-    title: "PRINCIPAL",
-    items: [
-      { id: "chat", title: "Chat", icon: MessageCircle },
-      { id: "memory", title: "Memórias", icon: Brain },
-      { id: "documents", title: "Documentos", icon: FileText },
-      { id: "search", title: "Busca Semântica", icon: Search },
-      { id: "actions", title: "Projetos", icon: FolderOpen }
-    ]
-  },
-  {
-    title: "INTELIGÊNCIA", 
-    items: [
-      { id: "deep-thinking", title: "Deep Thinking", icon: Brain },
-      { id: "objectives", title: "Objetivos", icon: Target },
-      { id: "analytics", title: "Analytics", icon: BarChart3 },
-      { id: "connections", title: "Conexões", icon: Network }
-    ]
-  },
-  {
-    title: "FERRAMENTAS",
-    items: [
-      { id: "cognitive-modes", title: "Modos Cognitivos", icon: Palette },
-      { id: "collaboration", title: "Colaboração", icon: Users },
-      { id: "integrations", title: "Integrações", icon: Globe },
-      { id: "api", title: "API & Webhooks", icon: Zap }
-    ]
-  },
-  {
-    title: "EXPERIÊNCIA",
-    items: [
-      { id: "focus-mode", title: "Modo Foco", icon: Target },
-      { id: "voice-mode", title: "Modo Voz", icon: Play },
-      { id: "quick-actions", title: "Ações Rápidas", icon: Zap }
-    ]
-  },
-  {
-    title: "CONFIGURAÇÕES",
-    items: [
-      { id: "preferences", title: "Preferências", icon: Settings },
-      { id: "profile", title: "Perfil", icon: User },
-      { id: "subscription", title: "Assinatura", icon: CreditCard },
-      { id: "privacy", title: "Privacidade", icon: Lock }
-    ]
-  }
-];
-
-const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: PremiumSidebarProps) => {
+const PremiumSidebar = ({ isOpen, onClose }: PremiumSidebarProps) => {
   const { user, signOut } = useAuth();
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('synced');
 
-  const handleItemClick = (itemId: string) => {
-    onSectionChange(itemId);
+  const handleItemClick = () => {
     onClose();
     
     // Haptic feedback
@@ -181,7 +114,7 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
           {/* Menu Content */}
           <ScrollArea className="flex-1 px-6 py-4 h-[calc(100vh-200px)] premium-scrollbar">
             <div className="space-y-6">
-              {menuSections.map((section) => (
+              {menuSectionsConfig.map((section) => (
                 <div key={section.title} className="space-y-2">
                   <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
                     {section.title}
@@ -189,18 +122,13 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
                   <div className="space-y-1" role="group" aria-labelledby={`section-${section.title}`}>
                     {section.items.map((item) => {
                       const Icon = item.icon;
-                      const isActive = currentSection === item.id;
                       
                       return (
-                        <button
+                        <NavLink
                           key={item.id}
-                          onClick={() => handleItemClick(item.id)}
-                          onKeyDown={(e) => handleKeyDown(e, () => handleItemClick(item.id))}
-                          aria-label={`Navegar para ${item.title}`}
-                          aria-current={isActive ? 'page' : undefined}
-                          role="button"
-                          tabIndex={0}
-                          className={cn(
+                          to={item.path}
+                          onClick={handleItemClick}
+                          className={({ isActive }) => cn(
                             "w-full flex items-center space-x-3 px-4 py-3 rounded-xl",
                             "transition-all duration-200 text-left group relative overflow-hidden",
                             "btn-accessible focus-ring-enhanced touch-target-48",
@@ -208,20 +136,32 @@ const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: Pr
                               ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border-l-2 border-blue-400' 
                               : 'text-white/70 hover:text-white hover:bg-white/5'
                           )}
+                          aria-label={`Navegar para ${item.title}`}
                         >
-                          {/* Hover gradient border */}
-                          {!isActive && (
-                            <div className="absolute left-0 top-0 bottom-0 w-0 bg-gradient-to-b from-blue-400 to-purple-400 transition-all duration-200 group-hover:w-0.5" />
+                          {({ isActive }) => (
+                            <>
+                              {/* Hover gradient border */}
+                              {!isActive && (
+                                <div className="absolute left-0 top-0 bottom-0 w-0 bg-gradient-to-b from-blue-400 to-purple-400 transition-all duration-200 group-hover:w-0.5" />
+                              )}
+                              
+                              <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                              <span className="text-sm font-medium mobile-text-sm">{item.title}</span>
+                              
+                              {/* Badge */}
+                              {item.badge && (
+                                <span className="ml-auto px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-md">
+                                  {item.badge}
+                                </span>
+                              )}
+                              
+                              {/* Active indicator */}
+                              {isActive && (
+                                <div className="absolute right-3 w-2 h-2 bg-blue-400 rounded-full animate-pulse" aria-hidden="true" />
+                              )}
+                            </>
                           )}
-                          
-                          <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-                          <span className="text-sm font-medium mobile-text-sm">{item.title}</span>
-                          
-                          {/* Active indicator */}
-                          {isActive && (
-                            <div className="absolute right-3 w-2 h-2 bg-blue-400 rounded-full animate-pulse" aria-hidden="true" />
-                          )}
-                        </button>
+                        </NavLink>
                       );
                     })}
                   </div>
