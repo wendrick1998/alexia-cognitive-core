@@ -1,52 +1,73 @@
 
-/**
- * @description Spinner de carregamento inteligente com tipos específicos
- * @created_by Fase 3 - Polimento Técnico & Resiliência
- */
-
-import React from 'react';
-import { Loader2, Brain, Database, MessageSquare, Activity } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { LoadingSpinner } from './LoadingSpinner';
+import { Brain, Database, FileText, MessageSquare, Search } from 'lucide-react';
 
 interface SmartLoadingSpinnerProps {
-  type?: 'general' | 'chat' | 'cognitive' | 'database';
+  type?: 'general' | 'database' | 'document' | 'chat' | 'search' | 'brain';
   message?: string;
   size?: 'sm' | 'md' | 'lg';
+  className?: string;
 }
 
-export function SmartLoadingSpinner({ 
-  type = 'general', 
-  message = 'Carregando...',
-  size = 'md'
-}: SmartLoadingSpinnerProps) {
-  const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-6 h-6',
-    lg: 'w-8 h-8'
-  };
-
+export const SmartLoadingSpinner = ({ 
+  type = 'general',
+  message,
+  size = 'lg',
+  className 
+}: SmartLoadingSpinnerProps) => {
   const getIcon = () => {
     switch (type) {
-      case 'chat':
-        return <MessageSquare className={`${sizeClasses[size]} animate-pulse`} />;
-      case 'cognitive':
-        return <Brain className={`${sizeClasses[size]} animate-pulse`} />;
       case 'database':
-        return <Database className={`${sizeClasses[size]} animate-pulse`} />;
+        return <Database className="w-6 h-6 text-primary" />;
+      case 'document':
+        return <FileText className="w-6 h-6 text-primary" />;
+      case 'chat':
+        return <MessageSquare className="w-6 h-6 text-primary" />;
+      case 'search':
+        return <Search className="w-6 h-6 text-primary" />;
+      case 'brain':
+        return <Brain className="w-6 h-6 text-primary" />;
       default:
-        return <Loader2 className={`${sizeClasses[size]} animate-spin`} />;
+        return null;
+    }
+  };
+
+  const getDefaultMessage = () => {
+    switch (type) {
+      case 'database':
+        return 'Conectando ao banco de dados...';
+      case 'document':
+        return 'Processando documento...';
+      case 'chat':
+        return 'Carregando conversa...';
+      case 'search':
+        return 'Buscando resultados...';
+      case 'brain':
+        return 'Processando sistema cognitivo...';
+      default:
+        return 'Carregando...';
     }
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="text-blue-600">
-        {getIcon()}
+    <div className={cn('flex flex-col items-center justify-center gap-4 p-8', className)}>
+      <div className="relative">
+        <LoadingSpinner size={size} />
+        {getIcon() && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            {getIcon()}
+          </div>
+        )}
       </div>
-      {message && (
-        <p className="text-sm text-gray-600 text-center">{message}</p>
-      )}
+      <div className="text-center space-y-2">
+        <p className="text-sm font-medium text-foreground">
+          {message || getDefaultMessage()}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Aguarde enquanto processamos sua solicitação
+        </p>
+      </div>
     </div>
   );
-}
-
-export default SmartLoadingSpinner;
+};
