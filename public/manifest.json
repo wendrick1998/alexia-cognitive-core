@@ -86,10 +86,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Nova Conversa",
+      "name": "Abrir Chat",
       "short_name": "Chat",
       "description": "Iniciar nova conversa com Alex iA",
-      "url": "/?action=new-chat&utm_source=pwa_shortcut",
+      "url": "/chat?utm_source=pwa_shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",
@@ -98,10 +98,10 @@
       ]
     },
     {
-      "name": "Memórias",
-      "short_name": "Memórias",
-      "description": "Visualizar memórias cognitivas",
-      "url": "/?action=memories&utm_source=pwa_shortcut",
+      "name": "Nova Memória",
+      "short_name": "Memória",
+      "description": "Criar nova memória cognitiva",
+      "url": "/memory?utm_source=pwa_shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",
@@ -110,10 +110,22 @@
       ]
     },
     {
-      "name": "Sistema Cognitivo",
-      "short_name": "Cognitivo",
-      "description": "Acessar painel cognitivo avançado",
-      "url": "/?action=cognitive&utm_source=pwa_shortcut",
+      "name": "Documentos",
+      "short_name": "Docs",
+      "description": "Acessar gerenciador de documentos",
+      "url": "/documents?utm_source=pwa_shortcut",
+      "icons": [
+        {
+          "src": "/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Painel",
+      "description": "Visualizar painel principal",
+      "url": "/?utm_source=pwa_shortcut",
       "icons": [
         {
           "src": "/icon-96x96.png",
