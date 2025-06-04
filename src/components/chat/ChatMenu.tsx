@@ -21,14 +21,14 @@ import {
 import { MoreVertical, Edit3, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Conversation } from '@/hooks/useConversations';
 
-interface ConversationMenuProps {
+interface ChatMenuProps {
   conversation: Conversation;
   onRename: (conversationId: string, newName: string) => void;
   onTogglePin: (conversationId: string, isPinned: boolean) => void;
   onDelete: (conversationId: string) => void;
 }
 
-const ConversationMenu = ({ conversation, onRename, onTogglePin, onDelete }: ConversationMenuProps) => {
+const ChatMenu = ({ conversation, onRename, onTogglePin, onDelete }: ChatMenuProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [newName, setNewName] = useState(conversation.name || '');
@@ -138,4 +138,4 @@ const ConversationMenu = ({ conversation, onRename, onTogglePin, onDelete }: Con
   );
 };
 
-export default ConversationMenu;
+export default ChatMenu;

@@ -163,16 +163,14 @@ export function useConversations() {
     deleteConversation,
     archiveConversation,
     favoriteConversation,
-    createCategory,
     getCurrentOrCreateConversation,
     updateConversationTimestamp,
     
-    // 🔥 NAVEGAÇÃO PREMIUM
+    // Ações de navegação
     navigateToConversation,
     createAndNavigateToNewConversation,
     
-    // Controles de estado
-    markUnsavedChanges,
-    clearPendingNavigation
+    // Ações de categoria
+    createCategory,
   };
 }
