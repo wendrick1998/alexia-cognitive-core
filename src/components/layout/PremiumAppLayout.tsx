@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import DesktopSidebar from "@/components/premium/DesktopSidebar";
 import ConversationSidebar from "@/components/ConversationSidebar";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
-import ServiceWorkerManager from "@/components/optimization/ServiceWorkerManager";
 import { PWALayout } from "@/components/layout/PWALayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -47,9 +46,6 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
 
   return (
     <PWALayout>
-      {/* Service Worker Manager - Active for all devices to ensure PWA functionality */}
-      <ServiceWorkerManager />
-      
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
         {/* Desktop Sidebar */}
         <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">

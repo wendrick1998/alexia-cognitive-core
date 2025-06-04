@@ -7,6 +7,7 @@ import UserPreferences from '@/components/settings/UserPreferences';
 import AIConfiguration from '@/components/settings/AIConfiguration';
 import SecurityPage from '@/pages/SecurityPage';
 import NotificationsSettings from '@/components/settings/NotificationsSettings';
+import PWASettingsPage from '@/components/settings/PWASettingsPage';
 
 const SettingsPage = () => {
   return (
@@ -21,6 +22,7 @@ const SettingsPage = () => {
           <Route path="ai" element={<AIConfiguration />} />
           <Route path="security" element={<SecurityPage />} />
           <Route path="notifications" element={<NotificationsSettings />} />
+          <Route path="pwa" element={<PWASettingsPage />} />
           {/* Fallback para sub-rotas desconhecidas */}
           <Route path="*" element={<Navigate to="profile" replace />} />
         </Route>

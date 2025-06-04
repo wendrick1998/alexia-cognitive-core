@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { User, Bot, Shield, Bell, Settings, ChevronLeft, Menu } from 'lucide-react';
+import { User, Bot, Shield, Bell, Settings, ChevronLeft, Menu, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SettingsLayout = () => {
@@ -35,19 +35,26 @@ const SettingsLayout = () => {
       path: 'notifications',
       icon: Bell,
       description: 'Alertas e notificações'
+    },
+    {
+      id: 'pwa',
+      title: 'PWA & Cache',
+      path: 'pwa',
+      icon: Smartphone,
+      description: 'Service Worker e funcionalidades PWA'
     }
   ];
 
   return (
     <div className="flex h-screen bg-background text-foreground">
       <aside className={cn(
-        "flex flex-col transition-all duration-300 ease-in-out bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-4",
+        "flex flex-col transition-all duration-300 ease-in-out bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-4",
         isSidebarOpen ? "w-64" : "w-16"
       )}>
         <div className="flex items-center justify-between mb-6">
           {isSidebarOpen && (
             <div className="flex items-center gap-2">
-              <Settings className="w-5 h-5 text-blue-600" />
+              <Settings className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Configurações
               </h2>
@@ -56,7 +63,7 @@ const SettingsLayout = () => {
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className={cn(
-              "p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200",
+              "p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-600 dark:text-gray-400",
               !isSidebarOpen && "mx-auto"
             )}
             aria-label={isSidebarOpen ? "Recolher menu" : "Expandir menu"}
@@ -132,7 +139,7 @@ const SettingsLayout = () => {
         )}
       </aside>
 
-      <main className="flex-1 p-4 overflow-y-auto">
+      <main className="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-950">
         <Outlet />
       </main>
     </div>

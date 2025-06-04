@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -161,7 +162,7 @@ const Chat = () => {
   }
 
   return (
-    <div className="h-full relative">
+    <div className="h-full relative bg-white dark:bg-gray-950">
       <PremiumChatLayout
         conversations={conversations}
         currentConversation={currentConversation}
