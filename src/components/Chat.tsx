@@ -24,7 +24,6 @@ const Chat = () => {
     messages,
     createAndNavigateToNewConversation,
     navigateToConversation,
-    conversationState,
     setMessages,
     updateConversationTimestamp
   } = useConversations();
@@ -48,7 +47,7 @@ const Chat = () => {
         title: "Nova conversa criada",
         description: "Comece uma nova conversa com Alex IA",
       });
-      scrollToBottom();
+      scrollToBottom('smooth');
     } catch (error) {
       console.error('Erro ao criar nova conversa:', error);
       toast({
@@ -63,7 +62,7 @@ const Chat = () => {
     try {
       await navigateToConversation(conversation.id);
       if (isMobile && window.innerWidth < 768) {
-        setTimeout(() => scrollToBottom(), 100);
+        setTimeout(() => scrollToBottom('smooth'), 100);
       }
     } catch (error) {
       console.error('Erro ao selecionar conversa:', error);
@@ -81,7 +80,7 @@ const Chat = () => {
     try {
       await processMessage(message, currentConversation?.id);
       updateConversationTimestamp();
-      scrollToBottom();
+      scrollToBottom('smooth');
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       toast({
@@ -123,12 +122,13 @@ const Chat = () => {
         <div className="message-content">
           {message.content}
         </div>
-        {cognitiveData && (
+        {message.metadata && (
           <ResponseSource
-            memories={cognitiveData.memories || []}
-            documents={cognitiveData.documents || []}
-            searchResults={cognitiveData.searchResults || []}
-            reasoning={cognitiveData.reasoning}
+            fromCache={message.metadata.fromCache}
+            usedFallback={message.metadata.usedFallback}
+            originalModel={message.metadata.originalModel}
+            currentModel={message.metadata.currentModel}
+            responseTime={message.metadata.responseTime}
           />
         )}
       </div>
@@ -153,10 +153,10 @@ const Chat = () => {
   if (isActive) {
     return (
       <FocusMode
+        isActive={isActive}
         onExit={deactivateFocusMode}
-        currentConversation={currentConversation}
         onSendMessage={handleSendMessage}
-        processing={processing}
+        initialText=""
       />
     );
   }
@@ -171,14 +171,15 @@ const Chat = () => {
         onConversationSelect={handleConversationSelect}
         onSendMessage={handleSendMessage}
         processing={processing}
-        conversationState={conversationState}
-        renderMessage={renderMessageWithSource}
+        renderMessageExtras={renderMessageWithSource}
+        memoryDataMap={cognitiveDataMap}
       />
       
       <FloatingActionButton
         onAction={handleFloatingAction}
-        processing={processing}
-        focusMode={isActive}
+        currentSection="chat"
+        hasActiveChat={!!currentConversation}
+        hasDocument={false}
       />
       
       <div ref={messagesEndRef} />
