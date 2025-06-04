@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +40,13 @@ export interface Message {
   created_at: string;
   updated_at: string;
   tokens_used?: number;
+  metadata?: {
+    fromCache?: boolean;
+    usedFallback?: boolean;
+    originalModel?: string;
+    currentModel?: string;
+    responseTime?: number;
+  };
 }
 
 export function useConversationsData() {

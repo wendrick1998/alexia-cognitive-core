@@ -65,7 +65,7 @@ const ChatMessage = ({ message, isLast = false, memoryData }: ChatMessageProps) 
             </p>
           </div>
 
-          {/* Metadados */}
+          {/* Metadados - apenas se existirem e for assistente */}
           {message.metadata && isAssistant && (
             <div className="mt-3 pt-2 border-t border-border/30">
               <div className="flex items-center space-x-2 text-xs text-muted-foreground">
