@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -321,10 +320,7 @@ const AuthPage = () => {
           <div className="text-center space-y-4">
             <button
               type="button"
-              onClick={() => {
-                console.log('🔑 AuthPage: alternando modo de login/cadastro');
-                setIsLogin(!isLogin);
-              }}
+              onClick={() => setIsLogin(!isLogin)}
               className="text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200 underline underline-offset-4"
               disabled={loading}
             >
@@ -339,10 +335,7 @@ const AuthPage = () => {
               <div>
                 <button
                   type="button"
-                  onClick={() => {
-                    console.log('🔑 AuthPage: abrindo recuperação de senha');
-                    setShowForgotPassword(true);
-                  }}
+                  onClick={() => setShowForgotPassword(true)}
                   className="text-sm text-gray-400 hover:text-gray-300 transition-colors duration-200"
                   disabled={loading}
                 >
