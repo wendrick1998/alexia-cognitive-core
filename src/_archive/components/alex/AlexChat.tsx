@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useAlexChatSessions } from '@/hooks/useAlexChatSessions';
+// import { useAlexChatSessions } from '@/hooks/useAlexChatSessions'; // Hook não existe mais
 import { useIsMobile } from '@/hooks/use-mobile';
-import AlexSessionsList from './AlexSessionsList';
-import AlexChatInterface from './AlexChatInterface';
+// import AlexSessionsList from './AlexSessionsList'; // Componente não foi arquivado
+// import AlexChatInterface from './AlexChatInterface'; // Já está arquivado
 import ResponsiveLayout from '@/components/layout/ResponsiveLayout';
 import PageTransition from '@/components/ui/PageTransition';
 import { showNotification } from '@/components/ui/NotificationToast';
@@ -14,21 +14,21 @@ const AlexChat = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
-  const {
-    sessions,
-    currentSession,
-    messages,
-    loading,
-    messagesLoading,
-    createSession,
-    selectSession,
-    sendMessage,
-    renameSession,
-    deleteSession,
-    toggleFavorite,
-    togglePin,
-    resetAllSessions,
-  } = useAlexChatSessions();
+  // Mock data since the hook doesn't exist anymore
+  const sessions = [];
+  const currentSession = null;
+  const messages = [];
+  const loading = false;
+  const messagesLoading = false;
+
+  const createSession = async () => null;
+  const selectSession = async (session: any) => {};
+  const sendMessage = async (content: string): Promise<boolean> => false;
+  const renameSession = async (id: string, title: string) => {};
+  const deleteSession = async (id: string) => {};
+  const toggleFavorite = async (id: string) => {};
+  const togglePin = async (id: string) => {};
+  const resetAllSessions = async () => {};
 
   const handleNewSession = async () => {
     const newSession = await createSession();
@@ -48,7 +48,6 @@ const AlexChat = () => {
 
   const handleSendMessage = async (content: string): Promise<boolean> => {
     if (!currentSession) {
-      // Se não há sessão atual, criar uma nova automaticamente
       const newSession = await createSession();
       if (!newSession) {
         showNotification({
@@ -73,19 +72,12 @@ const AlexChat = () => {
     });
   };
 
+  // Mock sidebar content since AlexSessionsList doesn't exist
   const sidebarContent = (
-    <AlexSessionsList
-      sessions={sessions}
-      currentSession={currentSession}
-      onSessionSelect={handleSessionSelect}
-      onNewSession={handleNewSession}
-      onRenameSession={renameSession}
-      onDeleteSession={deleteSession}
-      onToggleFavorite={toggleFavorite}
-      onTogglePin={togglePin}
-      onResetAll={handleResetAll}
-      loading={loading}
-    />
+    <div className="p-4">
+      <h3 className="text-white">Alex Sessions (Archived)</h3>
+      <p className="text-white/60 text-sm">Component archived - functionality moved to main chat</p>
+    </div>
   );
 
   const headerContent = isMobile ? (
@@ -96,10 +88,20 @@ const AlexChat = () => {
       transition={{ duration: 0.3 }}
     >
       <h1 className="text-lg font-semibold text-white">
-        {currentSession?.title || 'Alex IA - Assistente Premium'}
+        {currentSession?.title || 'Alex IA - Assistente Premium (Archived)'}
       </h1>
     </motion.div>
   ) : null;
+
+  // Mock chat interface since AlexChatInterface is archived
+  const chatInterface = (
+    <div className="h-full flex items-center justify-center">
+      <div className="text-center text-white">
+        <h2 className="text-2xl font-bold mb-4">Alex Chat (Archived)</h2>
+        <p className="text-white/60">Este componente foi arquivado e sua funcionalidade foi movida para o chat principal.</p>
+      </div>
+    </div>
+  );
 
   return (
     <PageTransition className="h-full w-full">
@@ -109,12 +111,7 @@ const AlexChat = () => {
         className="bg-gradient-to-b from-black to-gray-900"
         sidebarWidth="320px"
       >
-        <AlexChatInterface
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          loading={messagesLoading}
-          className="h-full"
-        />
+        {chatInterface}
       </ResponsiveLayout>
     </PageTransition>
   );
