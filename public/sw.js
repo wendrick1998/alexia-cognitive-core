@@ -1,7 +1,7 @@
 
-const CACHE_NAME = 'alex-ia-v1.0.3';
-const STATIC_CACHE = 'alex-ia-static-v1.0.3';
-const DYNAMIC_CACHE = 'alex-ia-dynamic-v1.0.3';
+const CACHE_NAME = 'alex-ia-v1.0.4';
+const STATIC_CACHE = 'alex-ia-static-v1.0.4';
+const DYNAMIC_CACHE = 'alex-ia-dynamic-v1.0.4';
 
 // Recursos críticos que DEVEM ser cacheados - Atualizados para Módulo 2
 const CRITICAL_RESOURCES = [
@@ -27,7 +27,7 @@ const CRITICAL_RESOURCES = [
 
 // Install - Cache recursos críticos
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing v1.0.3');
+  console.log('SW: Installing v1.0.4');
   
   event.waitUntil(
     caches.open(STATIC_CACHE)
@@ -43,18 +43,19 @@ self.addEventListener('install', (event) => {
           )
         );
       })
+      .then(() => {
+        return self.skipWaiting(); // Ativa o SW imediatamente
+      })
       .catch(error => {
         console.error('SW: Install failed:', error);
         return Promise.resolve();
       })
   );
-  
-  self.skipWaiting();
 });
 
 // Activate - Limpar caches antigos
 self.addEventListener('activate', (event) => {
-  console.log('SW: Activating v1.0.3');
+  console.log('SW: Activating v1.0.4');
   
   event.waitUntil(
     Promise.all([
@@ -71,7 +72,7 @@ self.addEventListener('activate', (event) => {
           })
         );
       }),
-      self.clients.claim()
+      clients.claim() // Assume o controle de todos os clientes abertos
     ])
   );
 });
@@ -90,226 +91,133 @@ self.addEventListener('fetch', (event) => {
   if (url.hostname.includes('lovable.dev') || url.pathname.includes('/_lovable/')) {
     return;
   }
-  
-  event.respondWith(handleFetch(request));
+
+  // Skip requests de outros origens
+  if (!request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // Estratégia Network-First para navegação (páginas HTML)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          // Cache a resposta para uso futuro
+          if (response.ok) {
+            caches.open(DYNAMIC_CACHE).then(cache => {
+              cache.put(request, response.clone());
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback para página offline
+          return caches.match('/offline.html') || 
+                 caches.match('/index.html') ||
+                 new Response('Offline', { status: 503 });
+        })
+    );
+    return;
+  }
+
+  // Estratégia Cache-First para assets estáticos (CSS, JS, imagens, fontes, etc.)
+  if (
+    url.pathname.includes('/assets/') || // Pasta onde Vite coloca os assets
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.jpeg') ||
+    url.pathname.endsWith('.svg') ||
+    url.pathname.endsWith('.gif') ||
+    url.pathname.endsWith('.woff') ||
+    url.pathname.endsWith('.woff2') ||
+    url.pathname.endsWith('.ttf') ||
+    url.pathname.endsWith('.eot') ||
+    url.pathname.endsWith('.ico') ||
+    url.pathname.endsWith('.webp') ||
+    url.pathname.startsWith('/icon-')
+  ) {
+    event.respondWith(
+      caches.match(request).then(response => {
+        // Retorna do cache se encontrado
+        if (response) {
+          return response;
+        }
+        // Se não estiver no cache, busca na rede, armazena e retorna
+        return fetch(request).then(networkResponse => {
+          if (networkResponse.ok) {
+            return caches.open(STATIC_CACHE).then(cache => {
+              cache.put(request, networkResponse.clone());
+              return networkResponse;
+            });
+          }
+          return networkResponse;
+        }).catch(error => {
+          console.error('SW: Fetch failed for static asset:', error);
+          // Fallback básico para assets
+          return new Response('Asset not available offline', { status: 404 });
+        });
+      })
+    );
+    return;
+  }
+
+  // Estratégia Network-First para chamadas de API
+  if (
+    url.pathname.includes('/api/') || 
+    url.pathname.includes('/rest/v1/') || // Supabase REST API
+    url.pathname.includes('/functions/v1/') || // Supabase Edge Functions
+    url.pathname.includes('supabase')
+  ) {
+    event.respondWith(
+      fetch(request)
+        .then(networkResponse => {
+          // Cacheia a resposta da rede para uso futuro (apenas GET requests bem-sucedidas)
+          if (networkResponse.ok && request.method === 'GET') {
+            caches.open(DYNAMIC_CACHE).then(cache => {
+              cache.put(request, networkResponse.clone());
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Se a rede falhar, tenta servir do cache
+          return caches.match(request).then(cachedResponse => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Retorna resposta offline para APIs
+            return new Response(JSON.stringify({
+              error: 'Offline - API não disponível',
+              offline: true,
+              timestamp: new Date().toISOString()
+            }), {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          });
+        })
+    );
+    return;
+  }
+
+  // Estratégia padrão Network-First para outras requisições
+  event.respondWith(
+    fetch(request)
+      .then(response => {
+        if (response.ok) {
+          caches.open(DYNAMIC_CACHE).then(cache => {
+            cache.put(request, response.clone());
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(request) || new Response('Offline', { status: 503 });
+      })
+  );
 });
-
-async function handleFetch(request) {
-  const url = new URL(request.url);
-  
-  try {
-    // HTML - Network first com cache fallback
-    if (url.pathname === '/' || url.pathname.endsWith('.html') || !url.pathname.includes('.')) {
-      return await handleHTMLRequest(request);
-    }
-    
-    // Assets estáticos - Cache first
-    if (isStaticAsset(url.pathname)) {
-      return await handleStaticAsset(request);
-    }
-    
-    // API requests - Network first com cache fallback
-    if (url.pathname.startsWith('/api/') || url.pathname.includes('supabase')) {
-      return await handleAPIRequest(request);
-    }
-    
-    // Default - Network first
-    return await handleNetworkFirst(request);
-    
-  } catch (error) {
-    console.error('SW: Fetch error:', error);
-    return createOfflineResponse(request);
-  }
-}
-
-function isStaticAsset(pathname) {
-  return pathname.includes('/assets/') ||
-         pathname.includes('/static/') ||
-         pathname.endsWith('.js') ||
-         pathname.endsWith('.css') ||
-         pathname.endsWith('.png') ||
-         pathname.endsWith('.jpg') ||
-         pathname.endsWith('.jpeg') ||
-         pathname.endsWith('.svg') ||
-         pathname.endsWith('.ico') ||
-         pathname.endsWith('.webp') ||
-         pathname.endsWith('.woff') ||
-         pathname.endsWith('.woff2') ||
-         pathname.endsWith('.ttf') ||
-         pathname.startsWith('/icon-');
-}
-
-async function handleHTMLRequest(request) {
-  try {
-    // Tentar network primeiro
-    const networkResponse = await fetch(request, { 
-      cache: 'no-cache',
-      credentials: 'same-origin'
-    });
-    
-    if (networkResponse.ok) {
-      const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
-    }
-  } catch (error) {
-    console.log('SW: Network failed for HTML');
-  }
-  
-  // Fallback para cache
-  const cache = await caches.open(STATIC_CACHE);
-  const cachedResponse = await cache.match('/index.html') || await cache.match('/');
-  
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  // Último recurso - HTML básico
-  return new Response(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Alex iA</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body { 
-            font-family: system-ui, -apple-system, sans-serif; 
-            background: #111827; 
-            color: white; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-          }
-          .container { text-align: center; max-width: 400px; }
-          .spinner { 
-            border: 3px solid #374151; 
-            border-top: 3px solid #3b82f6; 
-            border-radius: 50%; 
-            width: 40px; 
-            height: 40px; 
-            animation: spin 1s linear infinite; 
-            margin: 0 auto 20px;
-          }
-          @keyframes spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
-          }
-          button {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 16px;
-          }
-          button:hover { background: #2563eb; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="spinner"></div>
-          <h2>Alex iA</h2>
-          <p>Funcionando offline...</p>
-          <button onclick="location.reload()">Tentar Conectar</button>
-        </div>
-      </body>
-    </html>
-  `, {
-    headers: { 'Content-Type': 'text/html' }
-  });
-}
-
-async function handleStaticAsset(request) {
-  const cache = await caches.open(STATIC_CACHE);
-  
-  // Cache first
-  const cachedResponse = await cache.match(request);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  // Network fallback
-  try {
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
-    }
-  } catch (error) {
-    console.log('SW: Network failed for asset:', request.url);
-  }
-  
-  return new Response('Asset not found', { status: 404 });
-}
-
-async function handleAPIRequest(request) {
-  try {
-    // API sempre network first
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      return networkResponse;
-    }
-  } catch (error) {
-    console.log('SW: API request failed:', error);
-  }
-  
-  // Retornar resposta offline para APIs
-  return new Response(JSON.stringify({
-    error: 'Offline - API não disponível',
-    offline: true,
-    timestamp: new Date().toISOString()
-  }), {
-    status: 503,
-    headers: { 'Content-Type': 'application/json' }
-  });
-}
-
-async function handleNetworkFirst(request) {
-  try {
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
-    }
-  } catch (error) {
-    console.log('SW: Network failed for:', request.url);
-  }
-  
-  // Cache fallback
-  const cache = await caches.open(DYNAMIC_CACHE);
-  const cachedResponse = await cache.match(request);
-  
-  return cachedResponse || createOfflineResponse(request);
-}
-
-function createOfflineResponse(request) {
-  const url = new URL(request.url);
-  
-  // Resposta diferenciada por tipo de recurso
-  if (url.pathname.endsWith('.js')) {
-    return new Response('console.log("Offline - JS não disponível");', {
-      headers: { 'Content-Type': 'application/javascript' }
-    });
-  }
-  
-  if (url.pathname.endsWith('.css')) {
-    return new Response('/* Offline - CSS não disponível */', {
-      headers: { 'Content-Type': 'text/css' }
-    });
-  }
-  
-  return new Response('Offline', { 
-    status: 503,
-    statusText: 'Service Unavailable'
-  });
-}
 
 // Message handling
 self.addEventListener('message', (event) => {
