@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -28,6 +27,9 @@ const PerformanceDashboard = lazy(() => import('@/components/PerformanceDashboar
 const CognitiveGraphPage = lazy(() => import('@/components/cognitive/CognitiveGraphPage'));
 const InsightsPage = lazy(() => import('@/components/cognitive/InsightsPage'));
 const CortexDashboard = lazy(() => import('@/components/cognitive/CortexDashboard'));
+
+// Lazy load da nova página de configurações
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 
 // QueryClient otimizado
 const queryClient = new QueryClient({
@@ -149,6 +151,9 @@ const ProtectedApp = () => {
           <Route path="/insights" element={<InsightsPage />} />
           <Route path="/cortex" element={<CortexDashboard />} />
           
+          {/* Nova rota de configurações com subrotas aninhadas */}
+          <Route path="/settings/*" element={<SettingsPage />} />
+          
           {/* Páginas em desenvolvimento */}
           <Route path="/autonomous" element={
             <DevelopmentPage 
@@ -189,13 +194,6 @@ const ProtectedApp = () => {
             <DevelopmentPage 
               title="Validação de Dados" 
               description="Sistema de validação e verificação de dados está sendo desenvolvido." 
-            />
-          } />
-
-          <Route path="/settings" element={
-            <DevelopmentPage 
-              title="Configurações" 
-              description="Painel de configurações gerais do sistema está sendo implementado." 
             />
           } />
           
