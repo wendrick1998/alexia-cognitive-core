@@ -3,6 +3,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import "./i18n"; // Importe e execute a configuração do i18n aqui
 
 // Log crítico para verificar se main.tsx está executando
 console.log('🚀 MAIN.TSX EXECUTANDO - Reativando árvore de componentes');

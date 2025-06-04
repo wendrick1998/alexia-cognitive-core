@@ -1,0 +1,18 @@
+
+{
+  "dashboard": "Painel",
+  "chat": "Chat",
+  "documents": "Documentos",
+  "memory": "Memórias",
+  "search": "Busca Semântica",
+  "actions": "Projetos",
+  "autonomous": "Autônomo",
+  "performance": "Performance",
+  "settings": "Configurações",
+  "llm_config": "Config. IA (LLM)",
+  "auth": "Autenticação",
+  "common": {
+    "inDevelopment": "Em desenvolvimento...",
+    "welcome": "Bem-vindo ao Alex iA Premium"
+  }
+}

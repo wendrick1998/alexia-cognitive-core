@@ -1,0 +1,18 @@
+
+{
+  "dashboard": "Dashboard",
+  "chat": "Chat",
+  "documents": "Documents",
+  "memory": "Memories",
+  "search": "Semantic Search",
+  "actions": "Projects",
+  "autonomous": "Autonomous",
+  "performance": "Performance",
+  "settings": "Settings",
+  "llm_config": "AI Config (LLM)",
+  "auth": "Authentication",
+  "common": {
+    "inDevelopment": "In development...",
+    "welcome": "Welcome to Alex iA Premium"
+  }
+}
