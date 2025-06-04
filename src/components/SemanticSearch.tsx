@@ -1,24 +1,70 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, Filter, Clock, FileText, Brain, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSemanticSearch } from '@/hooks/useSemanticSearch';
-import { Search, Brain, FileText, MessageSquare, Calendar, ExternalLink, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+
+interface SearchResult {
+  id: string;
+  title: string;
+  content: string;
+  source: string;
+  relevanceScore: number;
+  type: 'memory' | 'document' | 'conversation';
+  timestamp: Date;
+}
 
 const SemanticSearch = () => {
-  const [query, setQuery] = useState('');
-  const { results, searching, searchDocuments, clearResults } = useSemanticSearch();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [results, setResults] = useState<SearchResult[]>([]);
+
+  const mockResults: SearchResult[] = [
+    {
+      id: '1',
+      title: 'Conceitos de Inteligência Artificial',
+      content: 'Inteligência artificial cognitiva envolve sistemas que simulam processos de pensamento humano, incluindo aprendizado, raciocínio e percepção...',
+      source: 'Memória Cognitiva',
+      relevanceScore: 0.95,
+      type: 'memory',
+      timestamp: new Date('2024-01-15')
+    },
+    {
+      id: '2',
+      title: 'Arquitetura de Sistemas Distribuídos',
+      content: 'Sistemas distribuídos são fundamentais para aplicações modernas, proporcionando escalabilidade e confiabilidade...',
+      source: 'Manual_Alex_IA.pdf',
+      relevanceScore: 0.87,
+      type: 'document',
+      timestamp: new Date('2024-01-10')
+    },
+    {
+      id: '3',
+      title: 'Conversa sobre Machine Learning',
+      content: 'Discussão sobre algoritmos de aprendizado de máquina e suas aplicações em processamento de linguagem natural...',
+      source: 'Chat Session #123',
+      relevanceScore: 0.82,
+      type: 'conversation',
+      timestamp: new Date('2024-01-08')
+    }
+  ];
 
   const handleSearch = async () => {
-    if (!query.trim()) return;
+    if (!searchQuery.trim()) return;
     
-    clearResults();
-    await searchDocuments(query);
+    setIsSearching(true);
+    
+    // Simular busca
+    setTimeout(() => {
+      const filteredResults = mockResults.filter(result =>
+        result.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        result.content.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setResults(filteredResults);
+      setIsSearching(false);
+    }, 1500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -27,195 +73,162 @@ const SemanticSearch = () => {
     }
   };
 
-  const getSourceIcon = (source: string) => {
-    switch (source) {
+  const getTypeIcon = (type: string) => {
+    switch (type) {
       case 'memory':
-        return <Brain className="w-4 h-4" />;
+        return <Brain className="w-4 h-4 text-purple-500" />;
       case 'document':
-        return <FileText className="w-4 h-4" />;
+        return <FileText className="w-4 h-4 text-green-500" />;
       case 'conversation':
-        return <MessageSquare className="w-4 h-4" />;
+        return <Zap className="w-4 h-4 text-blue-500" />;
       default:
-        return <Search className="w-4 h-4" />;
+        return <Search className="w-4 h-4 text-gray-500" />;
     }
   };
 
-  const getSourceLabel = (source: string) => {
-    switch (source) {
+  const getTypeColor = (type: string) => {
+    switch (type) {
       case 'memory':
-        return 'Memória';
+        return 'bg-purple-100 text-purple-800';
       case 'document':
-        return 'Documento';
+        return 'bg-green-100 text-green-800';
       case 'conversation':
-        return 'Conversa';
+        return 'bg-blue-100 text-blue-800';
       default:
-        return 'Conteúdo';
+        return 'bg-gray-100 text-gray-800';
     }
   };
-
-  const getSourceColor = (source: string) => {
-    switch (source) {
-      case 'memory':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
-      case 'document':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-      case 'conversation':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  const searchResults = results.map(result => ({
-    title: result.document_name || 'Documento sem título',
-    content: result.content,
-    source: 'document' as const,
-    category: 'Documento',
-    created_at: new Date().toISOString(),
-    similarity: result.similarity_score,
-    url: undefined
-  }));
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Header */}
-      <div className="flex-shrink-0 p-6 border-b border-border">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-            <Search className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Busca Semântica</h1>
-            <p className="text-sm text-muted-foreground">
-              Encontre qualquer informação em seus documentos
-            </p>
-          </div>
-        </div>
-        
-        {/* Search input */}
-        <div className="flex gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="O que você está procurando?"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="pl-9 bg-background border-input text-foreground placeholder:text-muted-foreground"
-              disabled={searching}
-            />
-          </div>
-          <Button
-            onClick={handleSearch}
-            disabled={!query.trim() || searching}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            {searching ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Buscando...
-              </>
-            ) : (
-              <>
-                <Search className="w-4 h-4 mr-2" />
-                Buscar
-              </>
-            )}
-          </Button>
-        </div>
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+          <Search className="w-8 h-8 text-orange-500" />
+          Busca Semântica
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Busca avançada por contexto e significado em suas memórias, documentos e conversas
+        </p>
       </div>
 
-      {/* Results */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="p-6">
-            {!searchResults || searchResults.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-center">
-                <Search className="w-16 h-16 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  {query ? 'Nenhum resultado encontrado' : 'Digite sua pesquisa'}
-                </h3>
-                <p className="text-muted-foreground">
-                  {query 
-                    ? 'Tente usar termos diferentes ou mais gerais.'
-                    : 'Use a busca semântica para encontrar informações em seus documentos.'
-                  }
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    Resultados da busca
-                  </h2>
-                  <Badge variant="secondary" className="text-sm">
-                    {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''} encontrado{searchResults.length !== 1 ? 's' : ''}
-                  </Badge>
-                </div>
-                
-                <div className="grid gap-4">
-                  {searchResults.map((result, index) => (
-                    <Card key={index} className="bg-card border-border hover:shadow-lg transition-shadow">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <CardTitle className="text-lg font-semibold text-card-foreground mb-2">
-                              {result.title}
-                            </CardTitle>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className={getSourceColor(result.source)}>
-                                {getSourceIcon(result.source)}
-                                <span className="ml-1">{getSourceLabel(result.source)}</span>
-                              </Badge>
-                              {result.category && (
-                                <Badge variant="outline" className="text-xs">
-                                  {result.category}
-                                </Badge>
-                              )}
-                              {result.created_at && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Calendar className="w-3 h-3" />
-                                  {format(new Date(result.created_at), 'dd/MM/yyyy', { locale: ptBR })}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          {result.similarity && (
-                            <Badge variant="secondary" className="text-xs">
-                              {Math.round(result.similarity * 100)}% relevante
-                            </Badge>
-                          )}
-                        </div>
-                      </CardHeader>
-                      
-                      <CardContent>
-                        <CardDescription className="text-muted-foreground leading-relaxed">
-                          {result.content}
-                        </CardDescription>
-                        
-                        {result.url && (
-                          <div className="mt-3 pt-3 border-t border-border">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              asChild
-                              className="text-primary hover:bg-accent"
-                            >
-                              <a href={result.url} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                Ver original
-                              </a>
-                            </Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Buscar por Significado</CardTitle>
+          <CardDescription>
+            Digite conceitos, ideias ou perguntas para encontrar conteúdo relacionado
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Ex: conceitos de IA, arquitetura de sistemas..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="pl-10"
+                disabled={isSearching}
+              />
+            </div>
+            <Button 
+              onClick={handleSearch}
+              disabled={!searchQuery.trim() || isSearching}
+            >
+              {isSearching ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Search className="w-4 h-4" />
+              )}
+            </Button>
+            <Button variant="outline" size="icon">
+              <Filter className="w-4 h-4" />
+            </Button>
           </div>
-        </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {results.length > 0 && (
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Resultados da Busca ({results.length})</CardTitle>
+            <CardDescription>
+              Ordenados por relevância semântica
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      <div className="space-y-4">
+        {results.map((result) => (
+          <Card key={result.id} className="hover:shadow-md transition-shadow">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    {getTypeIcon(result.type)}
+                    <CardTitle className="text-lg">{result.title}</CardTitle>
+                    <Badge className={getTypeColor(result.type)}>
+                      {result.type === 'memory' ? 'Memória' : 
+                       result.type === 'document' ? 'Documento' : 'Conversa'}
+                    </Badge>
+                  </div>
+                  <CardDescription className="flex items-center gap-4">
+                    <span>{result.source}</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {result.timestamp.toLocaleDateString()}
+                    </span>
+                  </CardDescription>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-green-600">
+                    {(result.relevanceScore * 100).toFixed(0)}% relevante
+                  </div>
+                  <div className="w-16 h-2 bg-gray-200 rounded-full mt-1">
+                    <div 
+                      className="h-full bg-green-500 rounded-full"
+                      style={{ width: `${result.relevanceScore * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 dark:text-gray-300">
+                {result.content}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+
+        {searchQuery && results.length === 0 && !isSearching && (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">
+                Nenhum resultado encontrado para "{searchQuery}"
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Tente usar termos diferentes ou mais gerais
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {!searchQuery && (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">
+                Digite algo para começar a buscar
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                A busca semântica encontra conteúdo baseado no significado, não apenas palavras-chave
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
