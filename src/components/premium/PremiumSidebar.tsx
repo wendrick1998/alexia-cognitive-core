@@ -18,13 +18,18 @@ import { menuSectionsConfig } from '@/config/navConfig';
 interface PremiumSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  currentSection?: string;
+  onSectionChange?: (section: string) => void;
 }
 
-const PremiumSidebar = ({ isOpen, onClose }: PremiumSidebarProps) => {
+const PremiumSidebar = ({ isOpen, onClose, currentSection, onSectionChange }: PremiumSidebarProps) => {
   const { user, signOut } = useAuth();
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('synced');
 
-  const handleItemClick = () => {
+  const handleItemClick = (itemId: string) => {
+    if (onSectionChange) {
+      onSectionChange(itemId);
+    }
     onClose();
     
     // Haptic feedback
@@ -122,13 +127,14 @@ const PremiumSidebar = ({ isOpen, onClose }: PremiumSidebarProps) => {
                   <div className="space-y-1" role="group" aria-labelledby={`section-${section.title}`}>
                     {section.items.map((item) => {
                       const Icon = item.icon;
+                      const isActive = currentSection === item.id;
                       
                       return (
                         <NavLink
                           key={item.id}
                           to={item.path}
-                          onClick={handleItemClick}
-                          className={({ isActive }) => cn(
+                          onClick={() => handleItemClick(item.id)}
+                          className={cn(
                             "w-full flex items-center space-x-3 px-4 py-3 rounded-xl",
                             "transition-all duration-200 text-left group relative overflow-hidden",
                             "btn-accessible focus-ring-enhanced touch-target-48",
@@ -138,28 +144,24 @@ const PremiumSidebar = ({ isOpen, onClose }: PremiumSidebarProps) => {
                           )}
                           aria-label={`Navegar para ${item.title}`}
                         >
-                          {({ isActive }) => (
-                            <>
-                              {/* Hover gradient border */}
-                              {!isActive && (
-                                <div className="absolute left-0 top-0 bottom-0 w-0 bg-gradient-to-b from-blue-400 to-purple-400 transition-all duration-200 group-hover:w-0.5" />
-                              )}
-                              
-                              <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-                              <span className="text-sm font-medium mobile-text-sm">{item.title}</span>
-                              
-                              {/* Badge */}
-                              {item.badge && (
-                                <span className="ml-auto px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-md">
-                                  {item.badge}
-                                </span>
-                              )}
-                              
-                              {/* Active indicator */}
-                              {isActive && (
-                                <div className="absolute right-3 w-2 h-2 bg-blue-400 rounded-full animate-pulse" aria-hidden="true" />
-                              )}
-                            </>
+                          {/* Hover gradient border */}
+                          {!isActive && (
+                            <div className="absolute left-0 top-0 bottom-0 w-0 bg-gradient-to-b from-blue-400 to-purple-400 transition-all duration-200 group-hover:w-0.5" />
+                          )}
+                          
+                          <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                          <span className="text-sm font-medium mobile-text-sm">{item.title}</span>
+                          
+                          {/* Badge */}
+                          {item.badge && (
+                            <span className="ml-auto px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-md">
+                              {item.badge}
+                            </span>
+                          )}
+                          
+                          {/* Active indicator */}
+                          {isActive && (
+                            <div className="absolute right-3 w-2 h-2 bg-blue-400 rounded-full animate-pulse" aria-hidden="true" />
                           )}
                         </NavLink>
                       );
