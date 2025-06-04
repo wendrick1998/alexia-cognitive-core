@@ -25,9 +25,9 @@ const ProjectsManager = lazy(() => import('@/components/ProjectsManager'));
 const PerformanceDashboard = lazy(() => import('@/components/PerformanceDashboard'));
 
 // Lazy load dos componentes cognitivos existentes
-const CognitiveGraphPage = lazy(() => import('@/pages/LazyPages').then(module => ({ default: module.CognitiveGraphPage })));
-const InsightsPage = lazy(() => import('@/pages/LazyPages').then(module => ({ default: module.InsightsPage })));
-const CortexDashboard = lazy(() => import('@/pages/LazyPages').then(module => ({ default: module.CortexDashboard })));
+const CognitiveGraphPage = lazy(() => import('@/components/cognitive/CognitiveGraphPage'));
+const InsightsPage = lazy(() => import('@/components/cognitive/InsightsPage'));
+const CortexDashboard = lazy(() => import('@/components/cognitive/CortexDashboard'));
 
 // QueryClient otimizado
 const queryClient = new QueryClient({
