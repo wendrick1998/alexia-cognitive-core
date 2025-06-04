@@ -53,14 +53,16 @@ export const PWALayout = ({ children, className }: PWALayoutProps) => {
       }}
     >
       {/* Safe area handling */}
-      <style jsx>{`
-        .safe-area-padding-bottom {
-          padding-bottom: env(safe-area-inset-bottom);
-        }
-        .safe-area-padding-top {
-          padding-top: env(safe-area-inset-top);
-        }
-      `}</style>
+      <style>
+        {`
+          .safe-area-padding-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+          }
+          .safe-area-padding-top {
+            padding-top: env(safe-area-inset-top);
+          }
+        `}
+      </style>
       
       {children}
     </div>

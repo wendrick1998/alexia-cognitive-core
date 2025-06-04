@@ -10,7 +10,7 @@ import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
 interface LazyComponentLoaderProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  loadingType?: 'general' | 'chat' | 'cognitive' | 'database';
+  loadingType?: 'general' | 'chat' | 'search' | 'database' | 'document' | 'brain';
   minLoadTime?: number; // Tempo mínimo de loading para evitar flash
 }
 
@@ -49,7 +49,7 @@ export function LazyComponentLoader({
 // Higher-order component para lazy loading
 export function withLazyLoading<P extends Record<string, any>>(
   Component: ComponentType<P>,
-  loadingType?: 'general' | 'chat' | 'cognitive' | 'database'
+  loadingType?: 'general' | 'chat' | 'search' | 'database' | 'document' | 'brain'
 ) {
   const LazyComponent = React.lazy(() => Promise.resolve({ default: Component }));
   
@@ -65,7 +65,7 @@ export function withLazyLoading<P extends Record<string, any>>(
 // Função utilitária para criar imports dinâmicos otimizados
 export function createLazyImport<T extends ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
-  loadingType?: 'general' | 'chat' | 'cognitive' | 'database'
+  loadingType?: 'general' | 'chat' | 'search' | 'database' | 'document' | 'brain'
 ) {
   const LazyComponent = React.lazy(importFn);
   

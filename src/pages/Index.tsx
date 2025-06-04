@@ -1,5 +1,5 @@
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import PremiumAppLayout from '@/components/layout/PremiumAppLayout';
@@ -9,8 +9,10 @@ import DarkModeToggle from '@/components/premium/DarkModeToggle';
 const Chat = lazy(() => import('@/components/Chat'));
 const SemanticSearch = lazy(() => import('@/components/SemanticSearch'));
 const MemoryManager = lazy(() => import('@/components/MemoryManager'));
-const DocumentsList = lazy(() => import('@/components/documents/DocumentsList'));
 const Dashboard = lazy(() => import('@/components/dashboard/Dashboard'));
+
+// Import DocumentsList directly to access its props type
+import DocumentsList from '@/components/documents/DocumentsList';
 
 interface IndexProps {}
 
@@ -53,7 +55,13 @@ const Index: React.FC<IndexProps> = () => {
       case 'documents':
         return (
           <Suspense fallback={<LoadingSpinner size="lg" text="Carregando documentos..." />}>
-            <DocumentsList {...sectionProps} />
+            <DocumentsList 
+              documents={[]}
+              reprocessingIds={new Set()}
+              onReprocess={() => {}}
+              onDelete={() => {}}
+              {...sectionProps} 
+            />
           </Suspense>
         );
       default:
@@ -90,8 +98,5 @@ const Index: React.FC<IndexProps> = () => {
     </>
   );
 };
-
-// Add lazy import after component definition
-import { lazy } from 'react';
 
 export default Index;

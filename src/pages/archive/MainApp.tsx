@@ -1,3 +1,4 @@
+
 // ARQUIVO ARQUIVADO - Foi substituído por Index.tsx como entrada principal
 // Mantido aqui apenas para referência histórica
 
@@ -51,7 +52,7 @@ const DocumentsPage = () => (
 const MemoryPage = () => (
   <div className="flex items-center justify-center min-h-screen bg-gray-950 text-white">
     <div className="text-center">
-      <SmartLoadingSpinner type="cognitive" message="Memória em desenvolvimento..." size="md" />
+      <SmartLoadingSpinner type="brain" message="Memória em desenvolvimento..." size="md" />
     </div>
   </div>
 );

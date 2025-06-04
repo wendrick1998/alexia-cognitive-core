@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { motion } from 'framer-motion';
 
 interface AuthGuardProps {
@@ -33,7 +33,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
         transition={{ duration: 0.3 }}
       >
         <div className="text-center space-y-6">
-          <LoadingSpinner size="large" />
+          <LoadingSpinner size="lg" text="Verificando autenticação..." />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
