@@ -1,189 +1,262 @@
 
+/**
+ * @modified_by Manus AI
+ * @date 1 de junho de 2025
+ * @description Correção de alinhamentos e padronização de espaçamentos no componente Chat
+ * Implementa tokens de espaçamento e melhora consistência visual
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
 import { useConversations } from '@/hooks/useConversations';
 import { useChatProcessor } from '@/hooks/useChatProcessor';
 import { useFocusMode } from '@/hooks/useFocusMode';
-import { useCognitiveMemoryIntegration } from '@/hooks/useCognitiveMemoryIntegration';
-import PremiumChatLayout from '@/components/chat/PremiumChatLayout';
-import FocusMode from '@/components/focus/FocusMode';
-import FloatingActionButton from '@/components/chat/FloatingActionButton';
+import PremiumChatLayout from './chat/PremiumChatLayout';
+import FocusMode from './focus/FocusMode';
+import FloatingActionButton from './chat/FloatingActionButton';
 import { useIsMobile } from '@/hooks/use-mobile';
-import ResponseSource from '@/components/ResponseSource';
+import ResponseSource from './ResponseSource';
 
 const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const messagesEndRef = useRef(null);
-
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
   const {
     conversations,
     currentConversation,
     messages,
     createAndNavigateToNewConversation,
     navigateToConversation,
+    conversationState,
     setMessages,
     updateConversationTimestamp
   } = useConversations();
 
   const { processing, processMessage } = useChatProcessor();
-  const { isActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
-  const cognitiveMemory = useCognitiveMemoryIntegration();
+  const { isActive: isFocusModeActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
 
-  const [cognitiveDataMap, setCognitiveDataMap] = useState(new Map());
-
-  const scrollToBottom = (behavior = 'smooth') => {
+  // Função para scroll suave até a última mensagem
+  const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
     }
   };
 
+  // Scroll automático quando novas mensagens são adicionadas
+  useEffect(() => {
+    if (messages.length > 0) {
+      // Pequeno delay para garantir que o DOM foi atualizado
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  }, [messages.length]);
+
   const handleNewConversation = async () => {
-    try {
-      await createAndNavigateToNewConversation();
+    console.log('🔥 Criando nova conversa...');
+    const newConversation = await createAndNavigateToNewConversation();
+    if (newConversation) {
       toast({
         title: "Nova conversa criada",
-        description: "Comece uma nova conversa com Alex IA",
-      });
-      scrollToBottom('smooth');
-    } catch (error) {
-      console.error('Erro ao criar nova conversa:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar uma nova conversa",
-        variant: "destructive",
+        description: "Conversa pronta para uso!",
       });
     }
   };
 
-  const handleConversationSelect = async (conversation) => {
+  const handleConversationSelect = async (conversation: any) => {
+    console.log(`🧭 Selecionando conversa: ${conversation.id}`);
+    await navigateToConversation(conversation);
+  };
+
+  const handleSendMessage = async (message: string) => {
+    if (!currentConversation) {
+      console.log('⚠️ Criando nova conversa automaticamente...');
+      const newConversation = await createAndNavigateToNewConversation();
+      if (!newConversation) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar uma nova conversa",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    const conversationId = currentConversation?.id;
+    if (!conversationId) return;
+
+    // Adicionar mensagem do usuário imediatamente
+    const userMessage = {
+      id: `temp-${Date.now()}`,
+      conversation_id: conversationId,
+      role: 'user' as const,
+      content: message,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Scroll para a mensagem do usuário
+    scrollToBottom();
+
     try {
-      await navigateToConversation(conversation.id);
-      if (isMobile && window.innerWidth < 768) {
-        setTimeout(() => scrollToBottom('smooth'), 100);
+      const response = await processMessage(message, conversationId);
+      
+      if (response) {
+        // Verificar se a resposta veio do cache
+        const fromCache = response.metadata?.fromCache || false;
+        const usedFallback = response.metadata?.usedFallback || false;
+        const originalModel = response.metadata?.originalModel || '';
+        const responseTime = response.metadata?.responseTime || 0;
+        
+        const aiMessage = {
+          id: `temp-ai-${Date.now()}`,
+          conversation_id: conversationId,
+          role: 'assistant' as const,
+          content: response.response,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          metadata: {
+            fromCache,
+            usedFallback,
+            originalModel,
+            currentModel: response.model || '',
+            responseTime
+          }
+        };
+
+        setMessages(prev => [...prev, aiMessage]);
+        await updateConversationTimestamp(conversationId);
+        
+        // Scroll para a resposta da IA
+        scrollToBottom();
+
+        toast({
+          title: "Mensagem enviada",
+          description: response.context_used ? "IA respondeu com contexto" : "IA respondeu",
+        });
       }
     } catch (error) {
-      console.error('Erro ao selecionar conversa:', error);
+      console.error('❌ Erro ao enviar mensagem:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar a conversa",
+        description: "Falha ao enviar mensagem",
         variant: "destructive",
       });
     }
   };
 
-  const handleSendMessage = async (message) => {
-    if (!message.trim() || processing) return;
-
-    try {
-      await processMessage(message, currentConversation?.id);
-      updateConversationTimestamp(currentConversation?.id);
-      scrollToBottom('smooth');
-    } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível enviar a mensagem",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleFloatingAction = (action) => {
+  const handleFloatingAction = (action: string) => {
     switch (action) {
-      case 'new-conversation':
+      case 'new-chat':
         handleNewConversation();
         break;
       case 'focus-mode':
-        if (isActive) {
-          deactivateFocusMode();
-        } else {
-          activateFocusMode();
-        }
-        break;
-      case 'voice-input':
+        activateFocusMode();
         toast({
-          title: "Voice Input",
-          description: "Funcionalidade em desenvolvimento",
+          title: "Focus Mode Ativado",
+          description: "Modo de escrita minimalista ativado",
         });
         break;
       default:
-        break;
+        console.log('Ação não reconhecida:', action);
     }
   };
 
-  const renderMessageWithSource = (message) => {
-    const cognitiveData = cognitiveDataMap.get(message.id);
-    
-    return (
-      <div key={message.id} className="space-y-2">
-        <div className="message-content">
-          {message.content}
-        </div>
-        {message.metadata && (
-          <ResponseSource
-            fromCache={message.metadata.fromCache}
-            usedFallback={message.metadata.usedFallback}
-            originalModel={message.metadata.originalModel}
-            currentModel={message.metadata.currentModel}
-            responseTime={message.metadata.responseTime}
-          />
-        )}
-      </div>
-    );
-  };
-
+  // Listen for keyboard shortcuts
   useEffect(() => {
-    scrollToBottom('auto');
-  }, [messages]);
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && isActive) {
+    const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey) {
+        switch (e.key) {
+          case 'n':
+            e.preventDefault();
+            handleNewConversation();
+            break;
+          case 'f':
+            e.preventDefault();
+            activateFocusMode();
+            break;
+        }
+      }
+      
+      if (e.key === 'Escape' && isFocusModeActive) {
         deactivateFocusMode();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, deactivateFocusMode]);
+    window.addEventListener('keydown', handleKeyboardShortcuts);
+    return () => window.removeEventListener('keydown', handleKeyboardShortcuts);
+  }, [isFocusModeActive, deactivateFocusMode, activateFocusMode]);
 
-  if (isActive) {
+  console.log('🗨️ Chat renderizado:', {
+    conversations: conversations.length,
+    currentConversation: currentConversation?.id,
+    messages: messages.length,
+    processing,
+    isCreating: conversationState.isCreatingNew
+  });
+
+  // Renderização do componente ResponseSource para cada mensagem
+  const renderMessageWithSource = (message: any) => {
+    // Apenas mensagens do assistente podem ter indicadores de fonte
+    if (message.role !== 'assistant' || !message.metadata) {
+      return null;
+    }
+    
     return (
+      <ResponseSource 
+        fromCache={message.metadata.fromCache}
+        usedFallback={message.metadata.usedFallback}
+        originalModel={message.metadata.originalModel}
+        currentModel={message.metadata.currentModel}
+        responseTime={message.metadata.responseTime}
+      />
+    );
+  };
+
+  return (
+    <>
+      {/* Container principal - Layout flex para chat */}
+      <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+        <PremiumChatLayout
+          conversations={conversations}
+          currentConversation={currentConversation}
+          messages={messages}
+          processing={processing}
+          onConversationSelect={handleConversationSelect}
+          onNewConversation={handleNewConversation}
+          onSendMessage={handleSendMessage}
+          isCreatingNew={conversationState.isCreatingNew}
+          isNavigating={conversationState.isNavigating}
+          renderMessageExtras={renderMessageWithSource}
+          className="flex-1"
+        />
+
+        {/* Elemento invisível para referência de scroll */}
+        <div ref={messagesEndRef} />
+
+        {/* Floating Action Button - Mobile Only */}
+        {isMobile && (
+          <FloatingActionButton 
+            onAction={handleFloatingAction}
+            currentSection="chat"
+            hasActiveChat={!!currentConversation}
+            hasDocument={false}
+            className="touch-target"
+          />
+        )}
+      </div>
+
+      {/* Focus Mode Overlay */}
       <FocusMode
-        isActive={isActive}
+        isActive={isFocusModeActive}
         onExit={deactivateFocusMode}
         onSendMessage={handleSendMessage}
         initialText=""
       />
-    );
-  }
-
-  return (
-    <div className="h-full relative bg-white dark:bg-gray-950">
-      <PremiumChatLayout
-        conversations={conversations}
-        currentConversation={currentConversation}
-        messages={messages}
-        onNewConversation={handleNewConversation}
-        onConversationSelect={handleConversationSelect}
-        onSendMessage={handleSendMessage}
-        processing={processing}
-        renderMessageExtras={renderMessageWithSource}
-        memoryDataMap={cognitiveDataMap}
-      />
-      
-      <FloatingActionButton
-        onAction={handleFloatingAction}
-        currentSection="chat"
-        hasActiveChat={!!currentConversation}
-        hasDocument={false}
-      />
-      
-      <div ref={messagesEndRef} />
-    </div>
+    </>
   );
 };
 

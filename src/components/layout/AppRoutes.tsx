@@ -18,6 +18,7 @@ const ProjectsManager = lazy(() => import('@/components/ProjectsManager'));
 
 // Lazy load dos componentes reais que estavam como placeholders
 const PerformanceDashboard = lazy(() => import('@/components/PerformanceDashboard'));
+const AutonomousProjectsManager = lazy(() => import('@/components/autonomous/AutonomousProjectsManager'));
 
 // Lazy load dos componentes cognitivos existentes
 const CognitiveGraphPage = lazy(() => import('@/components/cognitive/CognitiveGraphPage'));
@@ -129,8 +130,9 @@ const ProtectedApp = () => {
           <Route path="/search" element={<SemanticSearch />} />
           <Route path="/actions" element={<ProjectsManager />} />
           
-          {/* Componente real substituindo placeholder para performance */}
+          {/* Componentes reais */}
           <Route path="/performance" element={<PerformanceDashboard />} />
+          <Route path="/autonomous" element={<AutonomousProjectsManager />} />
           
           {/* Páginas cognitivas */}
           <Route path="/cognitive-graph" element={<CognitiveGraphPage />} />
@@ -144,13 +146,6 @@ const ProtectedApp = () => {
           <Route path="/llm-config" element={<LLMConfigPage />} />
           
           {/* Páginas em desenvolvimento */}
-          <Route path="/autonomous" element={
-            <DevelopmentPage 
-              title="Projetos Autônomos" 
-              description="Sistema de automação e execução de tarefas inteligentes está sendo desenvolvido." 
-            />
-          } />
-          
           <Route path="/preferences" element={
             <DevelopmentPage 
               title="Preferências do Usuário" 

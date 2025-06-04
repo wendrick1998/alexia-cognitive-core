@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ServiceWorkerManager from './ServiceWorkerManager';
 import CompressionManager from './CompressionManager';
 import LazyLoader from './LazyLoader';
 import { usePWA } from '@/hooks/usePWA';
@@ -16,10 +15,13 @@ import {
   Download,
   Battery,
   Bell,
-  Settings
+  Settings,
+  ArrowRight
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const OptimizationDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const {
     capabilities,
     installPWA,
@@ -29,24 +31,24 @@ const OptimizationDashboard: React.FC = () => {
     disableBatterySaving
   } = usePWA();
 
+  const handleNavigateToPWASettings = () => {
+    navigate('/settings/pwa');
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Otimização Avançada</h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-400">
           Gerenciamento de performance, PWA e funcionalidades offline
         </p>
       </div>
 
       <Tabs defaultValue="pwa" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pwa" className="flex items-center gap-2" aria-label="Configurações PWA">
             <Smartphone className="h-4 w-4" />
             PWA
-          </TabsTrigger>
-          <TabsTrigger value="serviceworker" className="flex items-center gap-2" aria-label="Gerenciar Service Worker">
-            <Wifi className="h-4 w-4" />
-            Service Worker
           </TabsTrigger>
           <TabsTrigger value="compression" className="flex items-center gap-2" aria-label="Configurações de compressão">
             <Zap className="h-4 w-4" />
@@ -70,64 +72,87 @@ const OptimizationDashboard: React.FC = () => {
             <CardContent className="space-y-4">
               {/* PWA Status */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-lg font-bold text-blue-600">
+                <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
                     {capabilities.isStandalone ? '✅' : '❌'}
                   </div>
-                  <div className="text-xs text-blue-600">App Mode</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">App Mode</div>
                 </div>
                 
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-lg font-bold text-green-600">
+                <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="text-lg font-bold text-green-600 dark:text-green-400">
                     {capabilities.isOnline ? '🌐' : '📱'}
                   </div>
-                  <div className="text-xs text-green-600">
+                  <div className="text-xs text-green-600 dark:text-green-400">
                     {capabilities.isOnline ? 'Online' : 'Offline'}
                   </div>
                 </div>
                 
-                <div className="text-center p-3 bg-purple-50 rounded-lg">
-                  <div className="text-lg font-bold text-purple-600">
+                <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
                     {capabilities.hasNotificationPermission ? '🔔' : '🔕'}
                   </div>
-                  <div className="text-xs text-purple-600">Notificações</div>
+                  <div className="text-xs text-purple-600 dark:text-purple-400">Notificações</div>
                 </div>
                 
-                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <div className="text-lg font-bold text-orange-600">
+                <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <div className="text-lg font-bold text-orange-600 dark:text-orange-400">
                     {capabilities.batteryLevel || '--'}%
                   </div>
-                  <div className="text-xs text-orange-600">Bateria</div>
+                  <div className="text-xs text-orange-600 dark:text-orange-400">Bateria</div>
                 </div>
               </div>
+
+              {/* Service Worker Link */}
+              <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-blue-700 dark:text-blue-300">Service Worker Manager</h4>
+                      <p className="text-sm text-blue-600 dark:text-blue-400">
+                        Gerencie cache, atualizações e funcionalidades offline
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={handleNavigateToPWASettings}
+                      variant="outline"
+                      className="border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800"
+                    >
+                      <Wifi className="w-4 h-4 mr-2" />
+                      Gerenciar
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Capabilities */}
               <div className="space-y-3">
                 <h4 className="font-medium text-sm">Capacidades PWA</h4>
                 
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
                     <span className="text-sm">Instalação</span>
                     <Badge variant={capabilities.canInstall ? 'default' : 'secondary'}>
                       {capabilities.canInstall ? 'Disponível' : 'Instalado'}
                     </Badge>
                   </div>
                   
-                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
                     <span className="text-sm">Push Notifications</span>
                     <Badge variant={capabilities.supportsPush ? 'default' : 'secondary'}>
                       {capabilities.supportsPush ? 'Suportado' : 'Não Suportado'}
                     </Badge>
                   </div>
                   
-                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
                     <span className="text-sm">Background Sync</span>
                     <Badge variant={capabilities.supportsBackgroundSync ? 'default' : 'secondary'}>
                       {capabilities.supportsBackgroundSync ? 'Suportado' : 'Não Suportado'}
                     </Badge>
                   </div>
                   
-                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
                     <span className="text-sm">Economia Energia</span>
                     <Badge variant={capabilities.isLowBattery ? 'destructive' : 'default'}>
                       {capabilities.isLowBattery ? 'Ativo' : 'Normal'}
@@ -145,7 +170,7 @@ const OptimizationDashboard: React.FC = () => {
                   </div>
                   <Progress value={capabilities.batteryLevel} className="h-2" />
                   {capabilities.isLowBattery && (
-                    <div className="text-xs text-orange-600">
+                    <div className="text-xs text-orange-600 dark:text-orange-400">
                       ⚠️ Modo economia de energia ativado automaticamente
                     </div>
                   )}
@@ -170,7 +195,7 @@ const OptimizationDashboard: React.FC = () => {
                     <Button 
                       onClick={requestNotificationPermission} 
                       variant="outline"
-                      className="transition-all duration-200 hover:bg-gray-50"
+                      className="transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
                       aria-label="Solicitar permissão para notificações"
                     >
                       <Bell className="w-4 h-4 mr-2" />
@@ -182,7 +207,7 @@ const OptimizationDashboard: React.FC = () => {
                     <Button 
                       onClick={sendTestNotification} 
                       variant="outline"
-                      className="transition-all duration-200 hover:bg-gray-50"
+                      className="transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
                       aria-label="Enviar notificação de teste"
                     >
                       <Bell className="w-4 h-4 mr-2" />
@@ -193,7 +218,7 @@ const OptimizationDashboard: React.FC = () => {
                   <Button 
                     onClick={capabilities.isLowBattery ? disableBatterySaving : enableBatterySaving}
                     variant="outline"
-                    className="transition-all duration-200 hover:bg-gray-50"
+                    className="transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
                     aria-label={capabilities.isLowBattery ? 'Desativar modo economia de bateria' : 'Ativar modo economia de bateria'}
                   >
                     <Battery className="w-4 h-4 mr-2" />
@@ -203,11 +228,6 @@ const OptimizationDashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Service Worker Tab */}
-        <TabsContent value="serviceworker">
-          <ServiceWorkerManager />
         </TabsContent>
 
         {/* Compression Tab */}
@@ -226,7 +246,7 @@ const OptimizationDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Demonstração do carregamento lazy de componentes para otimizar performance.
                 </p>
                 
@@ -235,7 +255,7 @@ const OptimizationDashboard: React.FC = () => {
                   fallback={
                     <div className="p-8 text-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                      <p className="text-sm text-gray-500">Carregando Performance Dashboard...</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Carregando Performance Dashboard...</p>
                     </div>
                   }
                 />
