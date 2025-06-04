@@ -34,7 +34,7 @@ const LLMMetricsDashboard = () => {
     metrics, 
     fallbackMetrics, 
     costMetrics, 
-    loading, 
+    isLoading, 
     error, 
     refreshAllMetrics 
   } = useLLMMetrics();
@@ -58,19 +58,19 @@ const LLMMetricsDashboard = () => {
 
   // Preparar dados para gráficos
   const modelPerformanceData = metrics.map(metric => ({
-    name: metric.modelName,
-    successRate: metric.successRate * 100,
-    avgResponseTime: metric.avgResponseTime,
-    totalCalls: metric.totalCalls,
-    cost: metric.totalCost
+    name: metric.model_name,
+    successRate: metric.success_rate * 100,
+    avgResponseTime: metric.response_time,
+    totalCalls: metric.total_calls,
+    cost: metric.estimated_cost
   }));
 
   const costByModelData = metrics.map(metric => ({
-    name: metric.modelName,
-    value: metric.totalCost
+    name: metric.model_name,
+    value: metric.estimated_cost
   }));
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -84,7 +84,7 @@ const LLMMetricsDashboard = () => {
         <CardContent className="pt-6">
           <div className="text-center text-red-500">
             <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
-            <p>Erro ao carregar métricas: {error}</p>
+            <p>Erro ao carregar métricas: {error.message || 'Erro desconhecido'}</p>
             <Button onClick={refreshAllMetrics} className="mt-4">
               Tentar novamente
             </Button>
@@ -117,7 +117,7 @@ const LLMMetricsDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {metrics.reduce((sum, m) => sum + m.totalCalls, 0)}
+              {metrics.reduce((sum, m) => sum + m.total_calls, 0)}
             </div>
           </CardContent>
         </Card>
@@ -129,7 +129,7 @@ const LLMMetricsDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(metrics.reduce((sum, m) => sum + m.totalCost, 0))}
+              {formatCurrency(metrics.reduce((sum, m) => sum + m.estimated_cost, 0))}
             </div>
           </CardContent>
         </Card>
@@ -142,8 +142,8 @@ const LLMMetricsDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatTime(
-                metrics.reduce((sum, m) => sum + m.avgResponseTime * m.totalCalls, 0) /
-                metrics.reduce((sum, m) => sum + m.totalCalls, 0) || 0
+                metrics.reduce((sum, m) => sum + m.response_time * m.total_calls, 0) /
+                metrics.reduce((sum, m) => sum + m.total_calls, 0) || 0
               )}
             </div>
           </CardContent>
@@ -156,7 +156,7 @@ const LLMMetricsDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatPercentage(fallbackMetrics?.totalFallbacks || 0 / metrics.reduce((sum, m) => sum + m.totalCalls, 0) || 0)}
+              {formatPercentage((fallbackMetrics?.totalFallbacks || 0) / (metrics.reduce((sum, m) => sum + m.total_calls, 0) || 1))}
             </div>
           </CardContent>
         </Card>
@@ -186,10 +186,10 @@ const LLMMetricsDashboard = () => {
       {/* Models List */}
       <div className="grid gap-4">
         {metrics.map((metric) => (
-          <Card key={metric.modelName}>
+          <Card key={metric.model_name}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                {metric.modelName}
+                {metric.model_name}
                 <Badge variant="outline">{metric.provider}</Badge>
               </CardTitle>
             </CardHeader>
@@ -197,19 +197,19 @@ const LLMMetricsDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Chamadas</p>
-                  <p className="font-semibold">{metric.totalCalls}</p>
+                  <p className="font-semibold">{metric.total_calls}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Taxa de Sucesso</p>
-                  <p className="font-semibold">{formatPercentage(metric.successRate)}</p>
+                  <p className="font-semibold">{formatPercentage(metric.success_rate)}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Tempo Médio</p>
-                  <p className="font-semibold">{formatTime(metric.avgResponseTime)}</p>
+                  <p className="font-semibold">{formatTime(metric.response_time)}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Custo Total</p>
-                  <p className="font-semibold">{formatCurrency(metric.totalCost)}</p>
+                  <p className="font-semibold">{formatCurrency(metric.estimated_cost)}</p>
                 </div>
               </div>
             </CardContent>

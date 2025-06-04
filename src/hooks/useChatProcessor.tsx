@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -117,24 +116,14 @@ export function useChatProcessor() {
         }
       };
 
-      // Log da operação
-      await llmLogger.logCall({
-        modelName: llmResponse.model,
-        provider: llmResponse.provider.toLowerCase(),
-        taskType: multiLLMTaskType as any, // Type conversion for compatibility
-        question: sanitizedMessage,
-        answer: llmResponse.content,
-        startTime,
-        endTime,
-        tokensInput: Math.ceil(sanitizedMessage.length / 4),
-        tokensOutput: llmResponse.tokensUsed,
-        estimatedCost: llmResponse.cost,
-        userId: user.id,
-        sessionId: conversationId,
-        status: 'success',
-        usedFallback: llmResponse.confidence < 0.9,
-        cacheHit: false
-      });
+      // Log da operação com a assinatura correta
+      await llmLogger.logCall(
+        llmResponse.model,
+        llmResponse.provider.toLowerCase(),
+        llmResponse.tokensUsed,
+        llmResponse.responseTime,
+        true
+      );
 
       console.log('Message processed successfully with Multi-LLM:', {
         provider: llmResponse.provider,
