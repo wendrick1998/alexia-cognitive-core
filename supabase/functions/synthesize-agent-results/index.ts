@@ -1,6 +1,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
 import { corsHeaders } from '../_shared/cors.ts';
+import { callOpenAIWithRetry, CircuitBreaker } from '../_shared/llm-retry.ts';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -15,31 +16,36 @@ interface SynthesisRequest {
   userId: string;
 }
 
+// Circuit breaker for synthesis operations
+const synthesisCircuitBreaker = new CircuitBreaker(3, 30000);
+
 async function callOpenAI(messages: any[], temperature: number = 0.7) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openaiApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages,
-      temperature,
-      max_tokens: 2000
-    }),
+  return synthesisCircuitBreaker.call(async () => {
+    return callOpenAIWithRetry(async () => {
+      return fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages,
+          temperature,
+          max_tokens: 2000
+        }),
+      });
+    }, { 
+      retries: 3, 
+      initialDelay: 1000,
+      maxDelay: 8000 
+    });
   });
-
-  if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data.choices[0].message.content;
 }
 
 async function synthesizeAgentResults(results: any[], intention: any) {
   console.log(`🔄 Sintetizando resultados de ${results.length} agentes...`);
+  console.log(`🔄 Synthesis circuit breaker state: ${synthesisCircuitBreaker.getState()}`);
   
   const successfulResults = results.filter(r => r.success);
   
@@ -79,18 +85,18 @@ INSTRUÇÕES PARA SÍNTESE:
 A resposta deve ser estruturada, clara e mais valiosa que a soma das partes individuais.
 `;
 
-  const synthesis = await callOpenAI([
+  const data = await callOpenAI([
     { role: 'system', content: synthesisPrompt },
     { role: 'user', content: 'Por favor, sintetize os resultados dos agentes.' }
   ], 0.6);
 
-  // Extract insights from all successful results
+  const synthesis = data.choices[0].message.content;
+
   const allInsights = successfulResults.flatMap(r => r.insights || []);
   const uniqueInsights = [...new Set(allInsights)];
 
-  // Calculate overall quality score
   const avgQuality = successfulResults.reduce((acc, r) => acc + r.qualityScore, 0) / successfulResults.length;
-  const synthesisBonus = successfulResults.length > 1 ? 0.1 : 0; // Bonus for multi-agent synthesis
+  const synthesisBonus = successfulResults.length > 1 ? 0.1 : 0;
   const overallQuality = Math.min(1.0, avgQuality + synthesisBonus);
 
   return {
@@ -98,6 +104,7 @@ A resposta deve ser estruturada, clara e mais valiosa que a soma das partes indi
     insights: uniqueInsights,
     agentsUsed: successfulResults.map(r => r.agentUsed),
     qualityScore: overallQuality,
+    circuitBreakerState: synthesisCircuitBreaker.getState(),
     processingStats: {
       totalAgents: results.length,
       successfulAgents: successfulResults.length,

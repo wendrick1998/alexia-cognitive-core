@@ -1,11 +1,14 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
 import { corsHeaders } from '../_shared/cors.ts';
+import { callWithRetry, callOpenAIWithRetry, CircuitBreaker } from '../_shared/llm-retry.ts';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
+
+const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
 interface LLMRoutingRequest {
   task: any;
@@ -16,9 +19,9 @@ interface LLMRoutingRequest {
 interface ModelCapability {
   name: string;
   strengths: string[];
-  speed: number; // 0.0-1.0
-  quality: number; // 0.0-1.0
-  cost: number; // 0.0-1.0 (lower is cheaper)
+  speed: number;
+  quality: number;
+  cost: number;
   contextWindow: number;
   supportedFeatures: string[];
 }
@@ -44,13 +47,14 @@ const availableModels: ModelCapability[] = [
   }
 ];
 
+// Circuit breaker instance for LLM calls
+const llmCircuitBreaker = new CircuitBreaker(5, 60000);
+
 function calculateModelScore(model: ModelCapability, task: any, agentType: string): number {
   let score = 0;
 
-  // Base quality score
   score += model.quality * 0.4;
 
-  // Agent type optimization
   switch (agentType) {
     case 'analytical-agent':
       if (model.strengths.includes('analysis') || model.strengths.includes('complex-reasoning')) {
@@ -74,19 +78,16 @@ function calculateModelScore(model: ModelCapability, task: any, agentType: strin
       break;
   }
 
-  // Task complexity consideration
   if (task.complexity > 0.7 && model.quality > 0.8) {
     score += 0.2;
   } else if (task.complexity < 0.4 && model.speed > 0.8) {
     score += 0.2;
   }
 
-  // Priority consideration
   if (task.priority >= 3 && model.speed > 0.7) {
     score += 0.1;
   }
 
-  // Cost efficiency for routine tasks
   if (task.type === 'routine' && model.cost < 0.5) {
     score += 0.1;
   }
@@ -103,12 +104,28 @@ async function routeToOptimalLLM(task: any, agentType: string) {
     score: calculateModelScore(model, task, agentType)
   }));
 
-  // Sort by score descending
   modelScores.sort((a, b) => b.score - a.score);
-
   const selectedModel = modelScores[0];
 
   console.log(`🎯 Modelo selecionado: ${selectedModel.model.name} (Score: ${selectedModel.score.toFixed(3)})`);
+
+  // Test the selected model with retry logic
+  if (openaiApiKey) {
+    try {
+      await llmCircuitBreaker.call(async () => {
+        return callOpenAIWithRetry(async () => {
+          return fetch('https://api.openai.com/v1/models', {
+            headers: {
+              'Authorization': `Bearer ${openaiApiKey}`,
+            },
+          });
+        }, { retries: 2, initialDelay: 500 });
+      });
+      console.log(`✅ Modelo ${selectedModel.model.name} verificado e disponível`);
+    } catch (error) {
+      console.warn(`⚠️ Falha na verificação do modelo: ${error.message}`);
+    }
+  }
 
   return {
     selectedModel: selectedModel.model.name,
@@ -117,6 +134,7 @@ async function routeToOptimalLLM(task: any, agentType: string) {
     estimatedQuality: selectedModel.model.quality,
     estimatedSpeed: selectedModel.model.speed,
     estimatedCost: selectedModel.model.cost,
+    circuitBreakerState: llmCircuitBreaker.getState(),
     alternatives: modelScores.slice(1, 3).map(m => ({
       model: m.model.name,
       score: m.score
@@ -139,7 +157,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const routingResult = await routeToOptimalLLM(task, agentType);
+    const routingResult = await callWithRetry(
+      () => routeToOptimalLLM(task, agentType),
+      { retries: 2, initialDelay: 500 }
+    );
 
     return new Response(
       JSON.stringify({ success: true, ...routingResult }),

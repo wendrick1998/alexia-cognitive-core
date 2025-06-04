@@ -1,1 +1,26 @@
-project_id = "wmxscmwtaqyduotuectx"
+
+project_id = "placeholder"
+
+[functions]
+verify_jwt = true
+
+[functions.route-optimal-llm]
+verify_jwt = true
+
+[functions.intelligent-llm-execution]
+verify_jwt = true
+
+[functions.semantic-search]
+verify_jwt = true
+
+[functions.synthesize-agent-results]
+verify_jwt = true
+
+[functions.process-chat-message]
+verify_jwt = true
+
+[functions.process-cognitive-embeddings]
+verify_jwt = true
+
+[functions.process-document]
+verify_jwt = true

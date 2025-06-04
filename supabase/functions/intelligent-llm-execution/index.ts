@@ -1,6 +1,6 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
 import { corsHeaders } from '../_shared/cors.ts';
+import { callOpenAIWithRetry, CircuitBreaker } from '../_shared/llm-retry.ts';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -23,6 +23,9 @@ interface ModelConfig {
   headers: Record<string, string>;
   requestFormat: (input: string, systemPrompt?: string, options?: any) => any;
 }
+
+// Circuit breaker for LLM executions
+const executionCircuitBreaker = new CircuitBreaker(3, 30000);
 
 // Configurações para diferentes modelos
 const modelConfigs: Record<string, ModelConfig> = {
@@ -77,45 +80,40 @@ async function executeWithModel(
 
   const startTime = Date.now();
 
-  try {
-    const requestBody = config.requestFormat(input, systemPrompt, options);
-    
-    const response = await fetch(config.apiEndpoint, {
-      method: 'POST',
-      headers: config.headers,
-      body: JSON.stringify(requestBody)
+  const data = await executionCircuitBreaker.call(async () => {
+    return callOpenAIWithRetry(async () => {
+      const requestBody = config.requestFormat(input, systemPrompt, options);
+      
+      return fetch(config.apiEndpoint, {
+        method: 'POST',
+        headers: config.headers,
+        body: JSON.stringify(requestBody)
+      });
+    }, { 
+      retries: 3, 
+      initialDelay: 1000,
+      maxDelay: 8000 
     });
+  });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Erro API ${model}:`, errorText);
-      throw new Error(`${model} API error: ${response.status} - ${errorText}`);
+  const result = data.choices[0].message.content;
+  const latency = Date.now() - startTime;
+  const quality = calculateResponseQuality(result, input, latency);
+
+  console.log(`✅ ${model} executado em ${latency}ms (Qualidade: ${quality.toFixed(2)})`);
+  console.log(`🔄 Circuit breaker state: ${executionCircuitBreaker.getState()}`);
+
+  return {
+    result,
+    quality,
+    metadata: {
+      model,
+      latency,
+      tokensUsed: data.usage?.total_tokens || 0,
+      timestamp: new Date().toISOString(),
+      circuitBreakerState: executionCircuitBreaker.getState()
     }
-
-    const data = await response.json();
-    const result = data.choices[0].message.content;
-    const latency = Date.now() - startTime;
-
-    // Calcular qualidade baseada em características da resposta
-    const quality = calculateResponseQuality(result, input, latency);
-
-    console.log(`✅ ${model} executado em ${latency}ms (Qualidade: ${quality.toFixed(2)})`);
-
-    return {
-      result,
-      quality,
-      metadata: {
-        model,
-        latency,
-        tokensUsed: data.usage?.total_tokens || 0,
-        timestamp: new Date().toISOString()
-      }
-    };
-
-  } catch (error) {
-    console.error(`❌ Erro na execução do ${model}:`, error);
-    throw error;
-  }
+  };
 }
 
 function calculateResponseQuality(
