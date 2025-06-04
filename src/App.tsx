@@ -1,15 +1,12 @@
 
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import Index from "./pages/Index";
+import AppRoutes from "@/components/layout/AppRoutes";
 import { SmartLoadingSpinner } from "@/components/ui/SmartLoadingSpinner";
-
-// Lazy load pages for better performance
-const BackupRestorePage = lazy(() => import("./pages/BackupRestorePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,17 +32,13 @@ function App() {
           <div className="min-h-screen bg-background text-foreground">
             <Toaster />
             <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route 
-                  path="/backup-restore" 
-                  element={
-                    <Suspense fallback={<SmartLoadingSpinner type="database" message="Carregando sistema de backup..." />}>
-                      <BackupRestorePage />
-                    </Suspense>
-                  } 
-                />
-              </Routes>
+              <Suspense fallback={
+                <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+                  <SmartLoadingSpinner type="general" message="Carregando sistema..." />
+                </div>
+              }>
+                <AppRoutes />
+              </Suspense>
             </BrowserRouter>
           </div>
         </TooltipProvider>

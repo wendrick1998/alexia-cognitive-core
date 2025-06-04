@@ -31,6 +31,9 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 // Lazy load da nova página de configuração de LLM
 const LLMConfigPage = lazy(() => import('@/pages/LLMConfigPage'));
 
+// Lazy load da página de backup/restore
+const BackupRestorePage = lazy(() => import('@/pages/BackupRestorePage'));
+
 // Componente placeholder para páginas em desenvolvimento
 const DevelopmentPage = ({ title, description }: { title: string; description: string }) => (
   <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -139,11 +142,14 @@ const ProtectedApp = () => {
           <Route path="/insights" element={<InsightsPage />} />
           <Route path="/cortex" element={<CortexDashboard />} />
           
-          {/* Nova rota de configurações com subrotas aninhadas */}
+          {/* Página de configurações com subrotas aninhadas */}
           <Route path="/settings/*" element={<SettingsPage />} />
           
-          {/* Nova rota de configuração de LLM */}
+          {/* Página de configuração de LLM */}
           <Route path="/llm-config" element={<LLMConfigPage />} />
+          
+          {/* Página de backup/restore */}
+          <Route path="/backup-restore" element={<BackupRestorePage />} />
           
           {/* Páginas em desenvolvimento */}
           <Route path="/preferences" element={
