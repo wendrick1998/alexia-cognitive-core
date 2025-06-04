@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import DesktopSidebar from "@/components/premium/DesktopSidebar";
@@ -32,9 +32,19 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleMenuToggle = () => {
+  const handleMenuToggle = useCallback(() => {
     setIsSidebarOpen(!isSidebarOpen);
-  };
+  }, [isSidebarOpen]);
+
+  const handleSectionChange = useCallback((section: string) => {
+    // Prevent duplicate navigation calls
+    if (section !== currentSection) {
+      onSectionChange(section);
+      if (isMobile) {
+        setIsSidebarOpen(false);
+      }
+    }
+  }, [currentSection, onSectionChange, isMobile]);
 
   if (!isAuthenticated) {
     return (
@@ -51,24 +61,27 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
           <DesktopSidebar 
             currentSection={currentSection} 
-            onSectionChange={(section) => onSectionChange(section)}
+            onSectionChange={handleSectionChange}
           />
         </div>
 
-        {/* Main Content Area Premium */}
+        {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-background via-background to-muted/10">
-          {/* Main Content com padding otimizado para mobile */}
+          {/* Main Content with proper mobile spacing */}
           <main className={cn(
             "flex-1 overflow-y-auto bg-background premium-scrollbar overscroll-contain scroll-smooth",
-            isMobile ? "pb-[calc(88px+env(safe-area-inset-bottom))]" : "pb-4"
-          )}>
+            isMobile ? "pb-[88px]" : "pb-4"
+          )}
+          style={{
+            paddingBottom: isMobile ? 'calc(88px + env(safe-area-inset-bottom))' : '1rem'
+          }}>
             <div className="h-full min-h-0">
               {children}
             </div>
           </main>
         </div>
 
-        {/* Mobile Sidebar Overlay Premium */}
+        {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <div 
@@ -79,7 +92,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
               <DesktopSidebar 
                 currentSection={currentSection} 
                 onSectionChange={(section) => {
-                  onSectionChange(section);
+                  handleSectionChange(section);
                   setIsSidebarOpen(false);
                 }}
               />
@@ -87,16 +100,16 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
           </div>
         )}
 
-        {/* Bottom Navigation Premium - Mobile Only */}
+        {/* Bottom Navigation - Mobile Only */}
         {isMobile && (
           <BottomNavigation 
             currentSection={currentSection}
-            onSectionChange={onSectionChange}
+            onSectionChange={handleSectionChange}
             onMenuToggle={handleMenuToggle}
           />
         )}
 
-        {/* Conversation Sidebar Premium */}
+        {/* Conversation Sidebar */}
         <ConversationSidebar
           isOpen={isConversationSidebarOpen}
           onToggle={() => setIsConversationSidebarOpen(!isConversationSidebarOpen)}

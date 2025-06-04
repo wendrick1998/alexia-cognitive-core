@@ -1,187 +1,182 @@
 
-/* Mobile optimizations for Alex iA */
+/* Mobile-specific optimizations */
 
-/* Minimum touch target sizes for accessibility */
-.touch-target {
-  min-height: 48px;
-  min-width: 48px;
+/* Safe area support for iOS */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
 }
 
-/* Standardized button animations */
-.btn-animated {
-  transition: background-color 200ms ease-in-out, transform 200ms ease-in-out, box-shadow 200ms ease-in-out;
-}
+/* Mobile viewport handling */
+@media (max-width: 768px) {
+  html, body {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
 
-.btn-animated:hover:not(:disabled) {
-  transform: scale(1.02);
-}
+  /* Main container adjustments */
+  .main-container {
+    min-height: 100vh;
+    min-height: 100dvh;
+    position: relative;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
 
-.btn-animated:active:not(:disabled) {
-  transform: scale(0.98);
-}
+  /* Bottom navigation safe area */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 
-.btn-animated:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
-}
+  /* Chat area with proper bottom spacing */
+  .mobile-chat-area {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+    min-height: calc(100vh - 88px - env(safe-area-inset-bottom));
+    min-height: calc(100dvh - 88px - env(safe-area-inset-bottom));
+  }
 
-/* Enhanced mobile styles for very small devices */
-@media (max-width: 375px) {
-  /* App Layout adjustments */
-  .app-layout {
-    margin: 0 4px;
-    padding: 8px;
+  /* Input area positioning */
+  .mobile-input-area {
+    position: fixed;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
   }
-  
-  /* Conversation Sidebar optimizations */
-  .conversation-sidebar {
-    padding: 8px;
-    width: 280px;
+
+  /* Bottom navigation improvements */
+  .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    min-height: 80px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: env(safe-area-inset-bottom);
   }
-  
-  .conversation-sidebar .sidebar-item {
-    padding: 6px 8px;
-    margin-bottom: 4px;
-  }
-  
-  /* Chat Input Area optimizations */
-  .chat-input-area {
-    font-size: 14px;
-    padding: 6px;
-    border-radius: 12px;
-  }
-  
-  .chat-input-area textarea {
-    font-size: 14px;
-    line-height: 1.4;
-    padding: 8px 12px;
-  }
-  
-  /* Message bubbles */
-  .message-bubble {
-    padding: 8px 12px;
-    margin: 4px 8px;
-    font-size: 14px;
-  }
-  
-  /* Navigation elements */
-  .nav-item {
-    padding: 8px 12px;
-    font-size: 14px;
-  }
-  
-  /* Card components */
-  .card-compact {
-    padding: 12px;
-    margin: 4px;
-  }
-  
-  /* Button adjustments */
-  .btn-mobile {
-    padding: 8px 16px;
-    font-size: 14px;
+
+  /* Touch improvements */
+  .touch-target {
     min-height: 44px;
-  }
-  
-  /* Header adjustments */
-  .header-mobile {
-    padding: 8px 12px;
-    height: auto;
-    min-height: 56px;
-  }
-  
-  /* Reduced spacing for compact layout */
-  .spacing-compact {
-    gap: 8px;
-  }
-  
-  .spacing-compact > * {
-    margin-bottom: 8px;
-  }
-  
-  /* Icon size adjustments */
-  .icon-small {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .icon-medium {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-/* Enhanced touch interactions */
-@media (hover: none) and (pointer: coarse) {
-  .interactive-element {
-    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+    min-width: 44px;
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
-  
-  .interactive-element:active {
-    background-color: rgba(59, 130, 246, 0.05);
+
+  /* Sidebar adjustments */
+  .mobile-sidebar {
+    width: min(280px, calc(100vw - 40px));
+    max-width: 320px;
+  }
+
+  /* Prevent zoom on input focus */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* Responsive text sizing */
+  .mobile-text-sm {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .mobile-text-xs {
+    font-size: 0.625rem;
+    line-height: 0.75rem;
+  }
+
+  /* Compact spacing for small screens */
+  .mobile-compact-spacing {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  /* Header adjustments */
+  .mobile-header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Scroll improvements */
+  .mobile-scroll-area {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+  }
+
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .mobile-input-area {
+      background: rgba(0, 0, 0, 0.95);
+      border-top-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-bottom-nav {
+      background: rgba(0, 0, 0, 0.95);
+      border-top-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-header {
+      background: rgba(0, 0, 0, 0.95);
+    }
   }
 }
 
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .btn-animated {
-    border: 2px solid currentColor;
+/* iOS specific adjustments */
+@supports (-webkit-touch-callout: none) {
+  .ios-safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
-  
-  .card-compact {
-    border: 2px solid currentColor;
+
+  /* Prevent bounce scroll */
+  body {
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Input focus zoom prevention */
+  input, textarea, select {
+    font-size: 16px !important;
+    transform: translateZ(0);
   }
 }
 
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  .btn-animated,
-  * {
-    transition: none !important;
-    animation: none !important;
+/* Android specific adjustments */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  .android-bottom-nav {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 }
 
-/* Focus improvements for keyboard navigation */
-.focus-visible:focus-visible {
-  outline: 3px solid #3b82f6;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 6px rgba(59, 130, 246, 0.3);
-}
+/* Landscape mode adjustments */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .mobile-bottom-nav {
+    min-height: 60px;
+  }
 
-/* Loading states */
-.loading-shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
+  .mobile-chat-area {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-/* Enhanced scrolling for mobile */
-.smooth-scroll {
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Safe area handling for notched devices */
-.safe-area-top {
-  padding-top: env(safe-area-inset-top);
-}
-
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.safe-area-left {
-  padding-left: env(safe-area-inset-left);
-}
-
-.safe-area-right {
-  padding-right: env(safe-area-inset-right);
+  .mobile-input-area {
+    bottom: calc(60px + env(safe-area-inset-bottom));
+  }
 }

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import PremiumAppLayout from "../components/layout/PremiumAppLayout";
 import Chat from "../components/Chat";
@@ -14,6 +14,7 @@ import { ConnectionStatus } from "../components/ui/connection-status";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTransition } from "@/components/ui/transitions";
 import { PerformanceDashboard } from "@/components/performance/PerformanceDashboard";
+import LLMConfigPage from "@/pages/LLMConfigPage";
 
 // Debug logs
 console.log('📱 Index.tsx carregando...');
@@ -45,6 +46,7 @@ const Index = () => {
       actions: '/actions',
       autonomous: '/autonomous',
       performance: '/performance',
+      'llm-config': '/llm-config',
       preferences: '/preferences',
       privacy: '/privacy',
       subscription: '/subscription',
@@ -53,6 +55,7 @@ const Index = () => {
 
     const targetRoute = routeMap[section] || '/';
     
+    // Only navigate if we're not already on the target route
     if (location.pathname !== targetRoute) {
       navigate(targetRoute);
     }
@@ -69,6 +72,7 @@ const Index = () => {
     if (path.startsWith("/actions")) return "actions";
     if (path.startsWith("/autonomous")) return "autonomous";
     if (path.startsWith("/performance")) return "performance";
+    if (path.startsWith("/llm-config")) return "llm-config";
     if (path.startsWith("/preferences")) return "preferences";
     if (path.startsWith("/privacy")) return "privacy";
     if (path.startsWith("/subscription")) return "subscription";
@@ -100,6 +104,7 @@ const Index = () => {
                 <Route path="/actions" element={<ProjectsManager />} />
                 <Route path="/autonomous" element={<AutonomousProjectsManager />} />
                 <Route path="/performance" element={<PerformanceDashboard />} />
+                <Route path="/llm-config" element={<LLMConfigPage />} />
                 
                 {/* Páginas em desenvolvimento - Placeholders */}
                 <Route path="/preferences" element={
