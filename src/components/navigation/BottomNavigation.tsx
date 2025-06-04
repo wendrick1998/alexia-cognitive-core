@@ -7,7 +7,8 @@ import {
   Brain, 
   Menu, 
   CheckCircle,
-  Search
+  Search,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -45,11 +46,10 @@ const BottomNavigation = ({
       action: () => onSectionChange("search")
     },
     {
-      id: "validation",
-      label: "Validação",
-      icon: CheckCircle,
-      badge: "Novo",
-      action: () => navigate("/validation")
+      id: "settings",
+      label: "Config",
+      icon: Settings,
+      action: () => navigate("/settings/profile")
     },
     {
       id: "menu",
