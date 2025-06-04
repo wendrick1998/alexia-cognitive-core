@@ -79,7 +79,7 @@ const Chat = () => {
 
     try {
       await processMessage(message, currentConversation?.id);
-      updateConversationTimestamp();
+      updateConversationTimestamp(currentConversation?.id);
       scrollToBottom('smooth');
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
