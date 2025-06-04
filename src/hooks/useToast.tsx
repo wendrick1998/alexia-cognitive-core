@@ -1,85 +1,32 @@
 
-import { useState, useCallback } from 'react';
-import { Toast, ToastType } from '@/components/ui/toast-premium';
+import { toast } from "sonner"
 
-let toastCounter = 0;
-
+// Simple wrapper around sonner for consistent API
 export const useToast = () => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const addToast = useCallback((
-    type: ToastType,
-    title: string,
-    description?: string,
-    options?: {
-      duration?: number;
-      action?: {
-        label: string;
-        onClick: () => void;
-      };
-    }
-  ) => {
-    const id = `toast-${++toastCounter}`;
-    const toast: Toast = {
-      id,
-      type,
-      title,
-      description,
-      duration: options?.duration,
-      action: options?.action,
-    };
-
-    setToasts(prev => [...prev, toast]);
-    return id;
-  }, []);
-
-  const dismissToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  }, []);
-
-  const dismissAll = useCallback(() => {
-    setToasts([]);
-  }, []);
-
-  // Convenience methods
-  const success = useCallback((title: string, description?: string, options?: any) => 
-    addToast('success', title, description, options), [addToast]);
-
-  const error = useCallback((title: string, description?: string, options?: any) => 
-    addToast('error', title, description, options), [addToast]);
-
-  const warning = useCallback((title: string, description?: string, options?: any) => 
-    addToast('warning', title, description, options), [addToast]);
-
-  const info = useCallback((title: string, description?: string, options?: any) => 
-    addToast('info', title, description, options), [addToast]);
-
   return {
-    toasts,
-    addToast,
-    dismissToast,
-    dismissAll,
-    success,
-    error,
-    warning,
-    info,
-  };
-};
+    toast: (options: { title: string; description?: string; variant?: 'default' | 'destructive' }) => {
+      if (options.variant === 'destructive') {
+        toast.error(options.title, {
+          description: options.description,
+        })
+      } else {
+        toast.success(options.title, {
+          description: options.description,
+        })
+      }
+    }
+  }
+}
 
-// Global toast instance for use outside components
-let globalToast: ReturnType<typeof useToast> | null = null;
+// Export individual toast functions for convenience
+export const showSuccess = (title: string, description?: string) => 
+  toast.success(title, { description })
 
-export const setGlobalToast = (toast: ReturnType<typeof useToast>) => {
-  globalToast = toast;
-};
+export const showError = (title: string, description?: string) => 
+  toast.error(title, { description })
 
-export const toast = {
-  success: (title: string, description?: string, options?: any) => 
-    globalToast?.success(title, description, options),
-  error: (title: string, description?: string, options?: any) => 
-    globalToast?.error(title, description, options),
-  warning: (title: string, description?: string, options?: any) => 
-    globalToast?.warning(title, description, options),
-  info: (title: string, description?: string, options?: any) => 
-    globalToast?.info(title, description, options),
-};
+export const showWarning = (title: string, description?: string) => 
+  toast.warning(title, { description })
+
+export const showInfo = (title: string, description?: string) => 
+  toast.info(title, { description })
