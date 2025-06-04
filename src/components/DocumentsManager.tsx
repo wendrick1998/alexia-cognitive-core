@@ -3,14 +3,15 @@ import { useDocuments } from '@/hooks/useDocuments';
 import { useProjects } from '@/hooks/useProjects';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import DocumentsHeader from './documents/DocumentsHeader';
-import RevolutionaryUploadArea from './documents/RevolutionaryUploadArea';
-import SmartFilters from './documents/SmartFilters';
-import ModernDocumentCard from './documents/ModernDocumentCard';
-import DocumentViewer from './documents/DocumentViewer';
-import ProcessingVisualization from './documents/ProcessingVisualization';
-import LoadingSpinner from './documents/LoadingSpinner';
+import DocumentsHeader from '@/components/documents/DocumentsHeader';
+import RevolutionaryUploadArea from '@/components/documents/RevolutionaryUploadArea';
+import SmartFilters from '@/components/documents/SmartFilters';
+import ModernDocumentCard from '@/components/documents/ModernDocumentCard';
+import DocumentViewer from '@/components/documents/DocumentViewer';
+import ProcessingVisualization from '@/components/documents/ProcessingVisualization';
+import LoadingSpinner from '@/components/documents/LoadingSpinner';
 import { Document } from '@/types/document';
+
 const DocumentsManager = () => {
   const {
     documents,

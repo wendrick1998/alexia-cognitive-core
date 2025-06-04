@@ -1,10 +1,11 @@
+
 import { useState } from 'react';
 import { Conversation } from '@/hooks/useConversations';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, MessageSquare, Pin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import ChatMenu from './ChatMenu';
+import ChatMenu from '@/components/chat/ChatMenu';
 import { cn } from '@/lib/utils';
 
 interface ConversationsListProps {

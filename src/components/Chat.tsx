@@ -1,16 +1,15 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks/use-toast';
 import { useConversations } from '@/hooks/useConversations';
 import { useChatProcessor } from '@/hooks/useChatProcessor';
 import { useFocusMode } from '@/hooks/useFocusMode';
 import { useCognitiveMemoryIntegration } from '@/hooks/useCognitiveMemoryIntegration';
-import PremiumChatLayout from './chat/PremiumChatLayout';
-import FocusMode from './focus/FocusMode';
-import FloatingActionButton from './chat/FloatingActionButton';
+import PremiumChatLayout from '@/components/chat/PremiumChatLayout';
+import FocusMode from '@/components/focus/FocusMode';
+import FloatingActionButton from '@/components/chat/FloatingActionButton';
 import { useIsMobile } from '@/hooks/use-mobile';
-import ResponseSource from './ResponseSource';
+import ResponseSource from '@/components/ResponseSource';
 
 const Chat = () => {
   const { user } = useAuth();

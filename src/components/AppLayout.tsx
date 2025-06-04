@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import PremiumSidebar from '@/components/premium/PremiumSidebar';
 import BottomNavigation from '@/components/navigation/BottomNavigation';
-import SkipNavigation from './accessibility/SkipNavigation';
+import SkipNavigation from '@/components/accessibility/SkipNavigation';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
