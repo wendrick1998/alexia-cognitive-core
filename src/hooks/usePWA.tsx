@@ -8,6 +8,9 @@ interface PWACapabilities {
   hasNotificationPermission: boolean;
   batteryLevel?: number;
   isLowBattery?: boolean;
+  supportsPush: boolean;
+  supportsBackgroundSync: boolean;
+  isStandalone: boolean;
 }
 
 export function usePWA() {
@@ -15,7 +18,10 @@ export function usePWA() {
     canInstall: false,
     isInstalled: false,
     isOnline: navigator.onLine,
-    hasNotificationPermission: false
+    hasNotificationPermission: false,
+    supportsPush: 'serviceWorker' in navigator && 'PushManager' in window,
+    supportsBackgroundSync: 'serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype,
+    isStandalone: window.matchMedia('(display-mode: standalone)').matches
   });
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -26,7 +32,7 @@ export function usePWA() {
                        (window.navigator as any).standalone ||
                        document.referrer.includes('android-app://');
     
-    setCapabilities(prev => ({ ...prev, isInstalled }));
+    setCapabilities(prev => ({ ...prev, isInstalled, isStandalone: isInstalled }));
   }, []);
 
   // Check notification permission
@@ -90,6 +96,17 @@ export function usePWA() {
     }
   }, [capabilities.hasNotificationPermission]);
 
+  // Battery saving methods
+  const enableBatterySaving = useCallback(() => {
+    // Implement battery saving mode
+    console.log('Battery saving mode enabled');
+  }, []);
+
+  const disableBatterySaving = useCallback(() => {
+    // Disable battery saving mode
+    console.log('Battery saving mode disabled');
+  }, []);
+
   useEffect(() => {
     // Listen for install prompt
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -130,6 +147,8 @@ export function usePWA() {
     capabilities,
     installPWA,
     requestNotificationPermission,
-    sendTestNotification
+    sendTestNotification,
+    enableBatterySaving,
+    disableBatterySaving
   };
 }
