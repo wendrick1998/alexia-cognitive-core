@@ -110,11 +110,9 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
     await createCategory(name, color, 'folder');
   };
 
-  // Filtrar e ordenar conversas
   const getFilteredAndSortedConversations = () => {
     let filtered = [...conversations];
 
-    // Aplicar filtros
     switch (filterBy) {
       case 'favorites':
         filtered = filtered.filter(conv => conv.is_favorite);
@@ -129,7 +127,6 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         break;
     }
 
-    // Aplicar ordenação
     switch (sortBy) {
       case 'created':
         filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -140,7 +137,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
       case 'messages':
         filtered.sort((a, b) => b.message_count - a.message_count);
         break;
-      default: // 'updated'
+      default:
         filtered.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
         break;
     }
@@ -151,23 +148,21 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
   const filteredConversations = getFilteredAndSortedConversations();
   const recentConversations = conversations.slice(0, 5);
   const favoriteConversations = conversations.filter(conv => conv.is_favorite);
-
-  // Determinar se deve desabilitar interações durante navegação
   const isDisabled = conversationState.isNavigating || conversationState.isCreatingNew;
 
   if (!isOpen) return null;
 
   return (
-    <div className="w-full h-full flex flex-col bg-background/95 backdrop-blur-xl border-r border-border/50">
+    <div className="w-full h-full flex flex-col bg-background/95 backdrop-blur-xl border-r border-border/30 shadow-xl">
       {/* Enhanced Premium Header */}
-      <div className="p-6 border-b border-border/30 bg-gradient-to-r from-background via-background to-muted/20">
-        <div className="flex items-center justify-between mb-6">
+      <div className="flex-shrink-0 p-4 border-b border-border/30 bg-gradient-to-r from-background via-background to-muted/10">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-primary via-primary/80 to-primary/60 rounded-xl flex items-center justify-center shadow-lg">
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">Conversas</h2>
+              <h2 className="text-lg font-bold text-foreground">Conversas</h2>
               <p className="text-xs text-muted-foreground">IA Premium</p>
             </div>
             {conversationState.isNavigating && (
@@ -178,16 +173,16 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all duration-200"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all duration-200 h-8 w-8 p-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </Button>
         </div>
         
         <Button
           onClick={handleNewConversation}
           disabled={isDisabled}
-          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground rounded-xl shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-70"
+          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground rounded-xl shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-70 h-10"
           size="sm"
         >
           {conversationState.isCreatingNew ? (
@@ -204,15 +199,15 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         </Button>
       </div>
 
-      {/* Premium Search and Filters */}
-      <div className="p-4 border-b border-border/30 space-y-3">
+      {/* Compact Search and Filters */}
+      <div className="flex-shrink-0 p-3 border-b border-border/20 space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Buscar conversas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm focus:border-primary/50 focus:bg-background/80 transition-all duration-200"
+            className="pl-10 h-9 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm focus:border-primary/50 focus:bg-background/80 transition-all duration-200 text-sm"
             disabled={isLoadingConversations || isDisabled}
           />
         </div>
@@ -223,10 +218,10 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="rounded-xl border-border/50 bg-background/50 hover:bg-muted/50 transition-all duration-200" 
+                className="h-8 rounded-xl border-border/50 bg-background/50 hover:bg-muted/50 transition-all duration-200 text-xs" 
                 disabled={isLoadingConversations || isDisabled}
               >
-                <Filter className="w-4 h-4 mr-2" />
+                <Filter className="w-3 h-3 mr-2" />
                 Filtrar
               </Button>
             </DropdownMenuTrigger>
@@ -240,7 +235,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilterBy('recent')}>
                 <Clock className="w-4 h-4 mr-2" />
-                Recentes (3 dias)
+                Recentes
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilterBy('active')}>
                 <TrendingUp className="w-4 h-4 mr-2" />
@@ -254,10 +249,10 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="rounded-xl border-border/50 bg-background/50 hover:bg-muted/50 transition-all duration-200" 
+                className="h-8 w-8 p-0 rounded-xl border-border/50 bg-background/50 hover:bg-muted/50 transition-all duration-200" 
                 disabled={isLoadingConversations || isDisabled}
               >
-                <MoreVertical className="w-4 h-4" />
+                <MoreVertical className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-background/95 backdrop-blur-xl border-border/50">
@@ -277,198 +272,202 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
           </DropdownMenu>
         </div>
 
-        {/* Filter Indicators */}
-        <div className="flex flex-wrap gap-2">
-          {filterBy !== 'all' && (
-            <Badge variant="secondary" className="text-xs bg-muted/50 text-muted-foreground">
-              Filtro: {filterBy === 'favorites' ? 'Favoritas' : 
-                     filterBy === 'recent' ? 'Recentes' : 'Ativas'}
-            </Badge>
-          )}
-          {sortBy !== 'updated' && (
-            <Badge variant="outline" className="text-xs border-border/50 bg-background/50">
-              Ordem: {sortBy === 'created' ? 'Criação' : 
-                     sortBy === 'name' ? 'Nome' : 'Atividade'}
-            </Badge>
-          )}
-        </div>
+        {/* Compact Filter Indicators */}
+        {(filterBy !== 'all' || sortBy !== 'updated') && (
+          <div className="flex flex-wrap gap-1">
+            {filterBy !== 'all' && (
+              <Badge variant="secondary" className="text-xs h-5 px-2 bg-muted/50 text-muted-foreground">
+                {filterBy === 'favorites' ? 'Favoritas' : 
+                 filterBy === 'recent' ? 'Recentes' : 'Ativas'}
+              </Badge>
+            )}
+            {sortBy !== 'updated' && (
+              <Badge variant="outline" className="text-xs h-5 px-2 border-border/50 bg-background/50">
+                {sortBy === 'created' ? 'Criação' : 
+                 sortBy === 'name' ? 'Nome' : 'Atividade'}
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Enhanced Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-3 m-4 mb-0 bg-muted/30 backdrop-blur-sm">
-          <TabsTrigger 
-            value="all" 
-            disabled={isLoadingConversations || isDisabled}
-            className="data-[state=active]:bg-background/80 data-[state=active]:shadow-sm"
-          >
-            Todas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="categories" 
-            disabled={isLoadingConversations || isDisabled}
-            className="data-[state=active]:bg-background/80 data-[state=active]:shadow-sm"
-          >
-            Categorias
-          </TabsTrigger>
-          <TabsTrigger 
-            value="recent" 
-            disabled={isLoadingConversations || isDisabled}
-            className="data-[state=active]:bg-background/80 data-[state=active]:shadow-sm"
-          >
-            Recentes
-          </TabsTrigger>
-        </TabsList>
+      {/* Compact Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+        <div className="flex-shrink-0 px-3 pt-2">
+          <TabsList className="grid w-full grid-cols-3 h-8 bg-muted/30 backdrop-blur-sm">
+            <TabsTrigger 
+              value="all" 
+              disabled={isLoadingConversations || isDisabled}
+              className="text-xs data-[state=active]:bg-background/80 data-[state=active]:shadow-sm h-6"
+            >
+              Todas
+            </TabsTrigger>
+            <TabsTrigger 
+              value="categories" 
+              disabled={isLoadingConversations || isDisabled}
+              className="text-xs data-[state=active]:bg-background/80 data-[state=active]:shadow-sm h-6"
+            >
+              Categorias
+            </TabsTrigger>
+            <TabsTrigger 
+              value="recent" 
+              disabled={isLoadingConversations || isDisabled}
+              className="text-xs data-[state=active]:bg-background/80 data-[state=active]:shadow-sm h-6"
+            >
+              Recentes
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        {/* All Conversations Tab */}
-        <TabsContent value="all" className="flex-1 mt-0">
-          <ScrollArea className="flex-1 p-4 premium-scrollbar">
-            <div className="space-y-2">
-              {isLoadingConversations ? (
-                Array.from({ length: 3 }).map((_, index) => (
-                  <ConversationCardSkeleton key={index} />
-                ))
-              ) : filteredConversations.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <div className="w-16 h-16 bg-muted/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    {searchQuery ? (
-                      <Search className="w-8 h-8 opacity-50" />
-                    ) : (
-                      <MessageCircle className="w-8 h-8 opacity-50" />
-                    )}
+        {/* Scrollable Content Area */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <TabsContent value="all" className="h-full mt-2">
+            <ScrollArea className="h-full px-3 pb-3">
+              <div className="space-y-1">
+                {isLoadingConversations ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <ConversationCardSkeleton key={index} />
+                  ))
+                ) : filteredConversations.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="w-12 h-12 bg-muted/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                      {searchQuery ? (
+                        <Search className="w-6 h-6 opacity-50" />
+                      ) : (
+                        <MessageCircle className="w-6 h-6 opacity-50" />
+                      )}
+                    </div>
+                    <p className="text-sm font-medium mb-1">
+                      {searchQuery ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}
+                    </p>
+                    <p className="text-xs">
+                      {searchQuery ? 'Tente outros termos' : 'Comece uma nova conversa'}
+                    </p>
                   </div>
-                  <p className="text-base font-medium mb-2">
-                    {searchQuery ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}
-                  </p>
-                  <p className="text-sm">
-                    {searchQuery ? 'Tente ajustar os filtros de busca' : 'Comece uma nova conversa para começar!'}
-                  </p>
+                ) : (
+                  filteredConversations.map((conversation) => (
+                    <ChatCard
+                      key={conversation.id}
+                      conversation={conversation}
+                      isActive={currentConversation?.id === conversation.id}
+                      onClick={() => handleSelectConversation(conversation)}
+                      onRename={(id, name) => updateConversation(id, { name })}
+                      onFavorite={(id, favorite) => favoriteConversation(id, favorite)}
+                      onArchive={(id) => archiveConversation(id)}
+                      onDelete={(id) => deleteConversation(id)}
+                      disabled={isDisabled}
+                    />
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="categories" className="h-full mt-2">
+            <ScrollArea className="h-full px-3 pb-3">
+              {isLoadingConversations ? (
+                <div className="space-y-1">
+                  {Array.from({ length: 2 }).map((_, index) => (
+                    <ConversationCardSkeleton key={index} />
+                  ))}
                 </div>
               ) : (
-                filteredConversations.map((conversation) => (
-                  <ChatCard
-                    key={conversation.id}
-                    conversation={conversation}
-                    isActive={currentConversation?.id === conversation.id}
-                    onClick={() => handleSelectConversation(conversation)}
-                    onRename={handleRenameConversation}
-                    onFavorite={handleFavoriteConversation}
-                    onArchive={handleArchiveConversation}
-                    onDelete={handleDeleteConversation}
-                    disabled={isDisabled}
-                  />
-                ))
+                <CategoryManager
+                  categories={categories}
+                  conversations={conversations}
+                  currentConversation={currentConversation}
+                  onSelectConversation={handleSelectConversation}
+                  onCreateCategory={(name, color) => createCategory(name, color, 'folder')}
+                  onRenameConversation={(id, name) => updateConversation(id, { name })}
+                  onFavoriteConversation={(id, favorite) => favoriteConversation(id, favorite)}
+                  onArchiveConversation={(id) => archiveConversation(id)}
+                  onDeleteConversation={(id) => deleteConversation(id)}
+                />
               )}
-            </div>
-          </ScrollArea>
-        </TabsContent>
+            </ScrollArea>
+          </TabsContent>
 
-        {/* Categories Tab */}
-        <TabsContent value="categories" className="flex-1 mt-0">
-          <ScrollArea className="flex-1 p-4 premium-scrollbar">
-            {isLoadingConversations ? (
-              <div className="space-y-2">
-                {Array.from({ length: 2 }).map((_, index) => (
-                  <ConversationCardSkeleton key={index} />
-                ))}
-              </div>
-            ) : (
-              <CategoryManager
-                categories={categories}
-                conversations={conversations}
-                currentConversation={currentConversation}
-                onSelectConversation={handleSelectConversation}
-                onCreateCategory={handleCreateCategory}
-                onRenameConversation={handleRenameConversation}
-                onFavoriteConversation={handleFavoriteConversation}
-                onArchiveConversation={handleArchiveConversation}
-                onDeleteConversation={handleDeleteConversation}
-              />
-            )}
-          </ScrollArea>
-        </TabsContent>
+          <TabsContent value="recent" className="h-full mt-2">
+            <ScrollArea className="h-full px-3 pb-3">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xs font-semibold text-foreground mb-2 flex items-center px-1">
+                    <Star className="w-3 h-3 mr-2 text-yellow-500" />
+                    Favoritas ({favoriteConversations.length})
+                  </h3>
+                  <div className="space-y-1">
+                    {isLoadingConversations ? (
+                      Array.from({ length: 2 }).map((_, index) => (
+                        <ConversationCardSkeleton key={index} />
+                      ))
+                    ) : (
+                      favoriteConversations.slice(0, 3).map((conversation) => (
+                        <ChatCard
+                          key={conversation.id}
+                          conversation={conversation}
+                          isActive={currentConversation?.id === conversation.id}
+                          onClick={() => handleSelectConversation(conversation)}
+                          onRename={(id, name) => updateConversation(id, { name })}
+                          onFavorite={(id, favorite) => favoriteConversation(id, favorite)}
+                          onArchive={(id) => archiveConversation(id)}
+                          onDelete={(id) => deleteConversation(id)}
+                          disabled={isDisabled}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
 
-        {/* Recent Tab */}
-        <TabsContent value="recent" className="flex-1 mt-0">
-          <ScrollArea className="flex-1 p-4 premium-scrollbar">
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center">
-                  <Star className="w-4 h-4 mr-2 text-yellow-500" />
-                  Favoritas ({favoriteConversations.length})
-                </h3>
-                <div className="space-y-2">
-                  {isLoadingConversations ? (
-                    Array.from({ length: 2 }).map((_, index) => (
-                      <ConversationCardSkeleton key={index} />
-                    ))
-                  ) : (
-                    favoriteConversations.slice(0, 3).map((conversation) => (
-                      <ChatCard
-                        key={conversation.id}
-                        conversation={conversation}
-                        isActive={currentConversation?.id === conversation.id}
-                        onClick={() => handleSelectConversation(conversation)}
-                        onRename={handleRenameConversation}
-                        onFavorite={handleFavoriteConversation}
-                        onArchive={handleArchiveConversation}
-                        onDelete={handleDeleteConversation}
-                        disabled={isDisabled}
-                      />
-                    ))
-                  )}
+                <div>
+                  <h3 className="text-xs font-semibold text-foreground mb-2 flex items-center px-1">
+                    <Clock className="w-3 h-3 mr-2 text-primary" />
+                    Recentes
+                  </h3>
+                  <div className="space-y-1">
+                    {isLoadingConversations ? (
+                      Array.from({ length: 3 }).map((_, index) => (
+                        <ConversationCardSkeleton key={index} />
+                      ))
+                    ) : (
+                      recentConversations.map((conversation) => (
+                        <ChatCard
+                          key={conversation.id}
+                          conversation={conversation}
+                          isActive={currentConversation?.id === conversation.id}
+                          onClick={() => handleSelectConversation(conversation)}
+                          onRename={(id, name) => updateConversation(id, { name })}
+                          onFavorite={(id, favorite) => favoriteConversation(id, favorite)}
+                          onArchive={(id) => archiveConversation(id)}
+                          onDelete={(id) => deleteConversation(id)}
+                          disabled={isDisabled}
+                        />
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
-
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center">
-                  <Clock className="w-4 h-4 mr-2 text-primary" />
-                  Recentes
-                </h3>
-                <div className="space-y-2">
-                  {isLoadingConversations ? (
-                    Array.from({ length: 3 }).map((_, index) => (
-                      <ConversationCardSkeleton key={index} />
-                    ))
-                  ) : (
-                    recentConversations.map((conversation) => (
-                      <ChatCard
-                        key={conversation.id}
-                        conversation={conversation}
-                        isActive={currentConversation?.id === conversation.id}
-                        onClick={() => handleSelectConversation(conversation)}
-                        onRename={handleRenameConversation}
-                        onFavorite={handleFavoriteConversation}
-                        onArchive={handleArchiveConversation}
-                        onDelete={handleDeleteConversation}
-                        disabled={isDisabled}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
+            </ScrollArea>
+          </TabsContent>
+        </div>
       </Tabs>
 
-      {/* Premium Stats Footer */}
-      <div className="p-4 border-t border-border/30 bg-muted/20 backdrop-blur-sm">
-        <div className="grid grid-cols-3 gap-4 text-center">
+      {/* Compact Stats Footer */}
+      <div className="flex-shrink-0 p-3 border-t border-border/30 bg-muted/10 backdrop-blur-sm">
+        <div className="grid grid-cols-3 gap-3 text-center">
           <div className="space-y-1">
-            <div className="text-lg font-bold text-foreground">
+            <div className="text-sm font-bold text-foreground">
               {isLoadingConversations ? '-' : conversations.length}
             </div>
             <div className="text-xs text-muted-foreground">Conversas</div>
           </div>
           <div className="space-y-1">
-            <div className="text-lg font-bold text-foreground">
+            <div className="text-sm font-bold text-foreground">
               {isLoadingConversations ? '-' : favoriteConversations.length}
             </div>
             <div className="text-xs text-muted-foreground">Favoritas</div>
           </div>
           <div className="space-y-1">
-            <div className="text-lg font-bold text-foreground">
+            <div className="text-sm font-bold text-foreground">
               {isLoadingConversations ? '-' : categories.length}
             </div>
             <div className="text-xs text-muted-foreground">Categorias</div>

@@ -1,9 +1,9 @@
 
-import { useState } from 'react';
-import { PremiumButton } from '@/components/ui/premium-button';
-import { ArrowLeft, Edit3, Share, MoreHorizontal, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, MessageCircle, Menu } from 'lucide-react';
 import { Conversation } from '@/hooks/useConversations';
-import ModelSelector from './ModelSelector';
+import { useConversations } from '@/hooks/useConversations';
+import { useState } from 'react';
 
 interface ChatHeaderProps {
   currentConversation: Conversation | null;
@@ -16,111 +16,98 @@ const ChatHeader = ({
   currentConversation, 
   onBackToConversations, 
   isMobile,
-  isNavigating = false
+  isNavigating = false 
 }: ChatHeaderProps) => {
-  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [title, setTitle] = useState(currentConversation?.name || 'Nova conversa');
+  const [showSidebar, setShowSidebar] = useState(false);
 
-  const handleTitleEdit = () => {
-    setIsEditingTitle(true);
+  const handleToggleSidebar = () => {
+    setShowSidebar(!showSidebar);
   };
-
-  const handleTitleSave = () => {
-    setIsEditingTitle(false);
-    console.log('Saving title:', title);
-  };
-
-  const handleShare = () => {
-    console.log('Sharing conversation');
-  };
-
-  const handleMoreActions = () => {
-    console.log('More actions');
-  };
-
-  if (!currentConversation) return null;
 
   return (
-    <div className="glass-card border-b border-white/5 p-4 backdrop-blur-xl flex-shrink-0">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <>
+      {/* Header Principal */}
+      <div className="h-16 px-4 flex items-center justify-between border-b border-border/30 bg-background/80 backdrop-blur-xl">
+        <div className="flex items-center space-x-3">
+          {/* Botão discreto para abrir conversas */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleToggleSidebar}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all duration-200 h-8 w-8 p-0"
+          >
+            <Menu className="w-4 h-4" />
+          </Button>
+
+          {/* Botão de voltar (mobile) */}
           {isMobile && onBackToConversations && (
-            <PremiumButton
+            <Button
               variant="ghost"
               size="sm"
               onClick={onBackToConversations}
-              icon={<ArrowLeft className="w-4 h-4" />}
-            />
+              className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-all duration-200 h-8 w-8 p-0"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
           )}
-          
-          <div className="flex items-center gap-3">
-            {/* AI Avatar Premium */}
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center shadow-lg animate-premium-glow">
-              <Sparkles className="w-5 h-5 text-white" />
+
+          {/* Informações da conversa */}
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
+              <MessageCircle className="w-4 h-4 text-primary" />
             </div>
-            
-            {/* Title Editable */}
-            <div className="flex flex-col">
-              {isEditingTitle ? (
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onBlur={handleTitleSave}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleTitleSave();
-                    if (e.key === 'Escape') {
-                      setIsEditingTitle(false);
-                      setTitle(currentConversation?.name || 'Nova conversa');
-                    }
-                  }}
-                  className="input-premium text-lg font-semibold bg-transparent border-none p-0 text-white"
-                  autoFocus
-                />
-              ) : (
-                <h1 
-                  className="text-lg font-semibold text-white cursor-pointer hover:text-white/80 transition-colors"
-                  onClick={handleTitleEdit}
-                >
-                  {isNavigating ? 'Carregando...' : (title || 'Nova conversa')}
-                </h1>
-              )}
-              
-              <div className="flex items-center gap-2 text-xs text-white/50">
-                <span>Conversando com</span>
-                <ModelSelector
-                  selectedModel={selectedModel}
-                  onModelChange={setSelectedModel}
-                />
+            <div className="min-w-0">
+              <h1 className="font-semibold text-foreground text-sm truncate">
+                {isNavigating ? 'Carregando...' : currentConversation?.name || 'Nova Conversa'}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                {isNavigating ? 'Aguarde...' : 'IA Premium'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Área direita (pode adicionar mais ações aqui) */}
+        <div className="flex items-center space-x-2">
+          {/* Placeholder para futuras ações */}
+        </div>
+      </div>
+
+      {/* Sidebar de conversas (overlay quando aberta) */}
+      {showSidebar && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowSidebar(false)}
+          />
+          <div className="absolute left-0 top-0 h-full w-80 bg-background/95 backdrop-blur-xl border-r border-border/50 shadow-xl">
+            <div className="h-full overflow-hidden">
+              {/* Importar e usar o ConversationSidebar aqui */}
+              <div className="h-full flex flex-col">
+                <div className="p-4 border-b border-border/30">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-semibold text-foreground">Conversas</h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowSidebar(false)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex-1 p-4 text-center text-muted-foreground">
+                  <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Lista de conversas</p>
+                  <p className="text-xs">Em desenvolvimento</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          <PremiumButton
-            variant="ghost"
-            size="sm"
-            onClick={handleTitleEdit}
-            icon={<Edit3 className="w-4 h-4" />}
-          />
-          <PremiumButton
-            variant="ghost"
-            size="sm"
-            onClick={handleShare}
-            icon={<Share className="w-4 h-4" />}
-          />
-          <PremiumButton
-            variant="ghost"
-            size="sm"
-            onClick={handleMoreActions}
-            icon={<MoreHorizontal className="w-4 h-4" />}
-          />
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 
