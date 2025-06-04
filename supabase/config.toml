@@ -24,3 +24,6 @@ verify_jwt = true
 
 [functions.process-document]
 verify_jwt = true
+
+[functions.database-backup]
+verify_jwt = true
