@@ -4,10 +4,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
 import { useConversations } from '@/hooks/useConversations';
 import { useChatProcessor } from '@/hooks/useChatProcessor';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const useChatState = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const {
@@ -131,6 +133,7 @@ export const useChatState = () => {
     processing,
     conversationState,
     messagesEndRef,
+    isMobile,
     handleNewConversation,
     handleConversationSelect,
     handleSendMessage

@@ -1,10 +1,11 @@
 
-import React from 'react';
-import { Conversation, Message } from '@/hooks/useConversations';
-import { cn } from '@/lib/utils';
-import ConversationSidebar from '../ConversationSidebar';
-import ChatArea from './ChatArea';
+import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import Chat from '@/components/Chat';
+import ConversationSidebar from '@/components/ConversationSidebar';
+import { Conversation, Message } from '@/hooks/useConversations';
+import { IntegratedMemoryResponse } from '@/hooks/useIntegratedMemory';
+import { cn } from '@/lib/utils';
 
 interface PremiumChatLayoutProps {
   conversations: Conversation[];
@@ -17,13 +18,13 @@ interface PremiumChatLayoutProps {
   isCreatingNew?: boolean;
   isNavigating?: boolean;
   renderMessageExtras?: (message: Message) => React.ReactNode;
-  memoryDataMap?: Map<string, any>;
+  memoryDataMap?: Map<string, IntegratedMemoryResponse>;
   className?: string;
 }
 
-const PremiumChatLayout: React.FC<PremiumChatLayoutProps> = ({
+const PremiumChatLayout = ({ 
   conversations,
-  currentConversation,
+  currentConversation, 
   messages,
   processing,
   onConversationSelect,
@@ -32,53 +33,52 @@ const PremiumChatLayout: React.FC<PremiumChatLayoutProps> = ({
   isCreatingNew = false,
   isNavigating = false,
   renderMessageExtras,
-  memoryDataMap,
+  memoryDataMap = new Map(),
   className
-}) => {
+}: PremiumChatLayoutProps) => {
   const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = React.useState(!isMobile);
+  const [showSidebar, setShowSidebar] = useState(!isMobile);
+
+  const handleBackToConversations = () => {
+    setShowSidebar(true);
+  };
+
+  const handleToggleSidebar = () => {
+    setShowSidebar(!showSidebar);
+  };
+
+  useEffect(() => {
+    setShowSidebar(!isMobile);
+  }, [isMobile]);
 
   return (
-    <div className={cn("h-full flex bg-background overscroll-contain", className)}>
-      {/* Premium Sidebar - Integrada sem overlay */}
-      {!isMobile && (
-        <div className="w-80 flex-shrink-0 border-r border-border/50 bg-background/95 backdrop-blur-xl">
+    <div className={cn("h-full flex bg-background", className)}>
+      {/* Desktop Sidebar ou Mobile Overlay */}
+      {(showSidebar || !isMobile) && (
+        <div className={cn(
+          "flex-shrink-0 border-r border-border/30",
+          isMobile 
+            ? "fixed inset-y-0 left-0 z-50 w-80 bg-background/95 backdrop-blur-xl shadow-xl" 
+            : "w-80 relative bg-background/50 backdrop-blur-sm"
+        )}>
           <ConversationSidebar
             isOpen={true}
-            onToggle={() => {}}
+            onToggle={() => setShowSidebar(false)}
           />
         </div>
       )}
 
-      {/* Mobile Sidebar Overlay */}
-      {isMobile && sidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <div className="absolute left-0 top-0 h-full w-80 bg-background/95 backdrop-blur-xl border-r border-border shadow-xl">
-            <ConversationSidebar
-              isOpen={true}
-              onToggle={() => setSidebarOpen(false)}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Área Principal do Chat - Premium Design */}
-      <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-background via-background to-muted/20">
-        <ChatArea
-          currentConversation={currentConversation}
-          messages={messages}
-          processing={processing}
-          onSendMessage={onSendMessage}
-          onBackToConversations={isMobile ? () => setSidebarOpen(true) : undefined}
-          isMobile={isMobile}
-          isNavigating={isNavigating}
-          renderMessageExtras={renderMessageExtras}
-          memoryDataMap={memoryDataMap}
+      {/* Overlay para mobile */}
+      {isMobile && showSidebar && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          onClick={() => setShowSidebar(false)}
         />
+      )}
+
+      {/* Chat Area Principal */}
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <Chat />
       </div>
     </div>
   );
