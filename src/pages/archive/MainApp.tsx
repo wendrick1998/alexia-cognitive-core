@@ -1,12 +1,8 @@
-
 // ARQUIVO ARQUIVADO - Foi substituído por Index.tsx como entrada principal
 // Mantido aqui apenas para referência histórica
 
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { PWALayout } from '@/components/layout/PWALayout';
-import PremiumSidebar from '@/components/premium/PremiumSidebar';
-import BottomNavigation from '@/components/navigation/BottomNavigation';
 import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
 
 // Páginas principais (PLACEHOLDERS - NÃO FUNCIONAIS)
@@ -74,59 +70,32 @@ const MainApp: React.FC = () => {
   };
 
   return (
-    <PWALayout>
-      <div className="flex h-screen bg-gray-950">
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
-          <PremiumSidebar
-            isOpen={true}
-            onClose={() => {}}
-            currentSection={currentSection}
-            onSectionChange={handleSectionChange}
-          />
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <main className="flex-1 overflow-y-auto">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/documents" element={<DocumentsPage />} />
-              <Route path="/memory" element={<MemoryPage />} />
-              <Route path="*" element={<HomePage />} />
-            </Routes>
-          </main>
-        </div>
-
-        {/* Mobile Sidebar Overlay */}
-        {isSidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div 
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => setIsSidebarOpen(false)}
-            />
-            <div className="absolute left-0 top-0 h-full w-64 bg-gray-900 shadow-xl">
-              <PremiumSidebar
-                isOpen={isSidebarOpen}
-                onClose={() => setIsSidebarOpen(false)}
-                currentSection={currentSection}
-                onSectionChange={handleSectionChange}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Navigation - Mobile */}
-        <div className="lg:hidden">
-          <BottomNavigation
-            currentSection={currentSection}
-            onSectionChange={handleSectionChange}
-            onMenuToggle={toggleSidebar}
-          />
-        </div>
+    <div className="flex h-screen bg-gray-950">
+      {/* NOTA: Layout components (PWALayout, PremiumSidebar, BottomNavigation) 
+          foram removidos desta versão arquivada - agora gerenciados pelo fluxo principal */}
+      
+      {/* Main Content Simplificado */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="bg-gray-800 p-4 border-b border-gray-700">
+          <h1 className="text-white text-xl font-bold">
+            Alex iA - MainApp (Arquivo Histórico)
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">
+            Este componente foi substituído pelo sistema de roteamento principal
+          </p>
+        </header>
+        
+        <main className="flex-1 overflow-y-auto">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/documents" element={<DocumentsPage />} />
+            <Route path="/memory" element={<MemoryPage />} />
+            <Route path="*" element={<HomePage />} />
+          </Routes>
+        </main>
       </div>
-    </PWALayout>
+    </div>
   );
 };
 
