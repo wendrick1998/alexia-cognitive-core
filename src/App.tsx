@@ -1,5 +1,5 @@
 
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -20,6 +20,9 @@ const SemanticSearch = lazy(() => import('@/components/SemanticSearch'));
 const MemoryManager = lazy(() => import('@/components/MemoryManager'));
 const DocumentsManager = lazy(() => import('@/components/DocumentsManager'));
 const ProjectsManager = lazy(() => import('@/components/ProjectsManager'));
+
+// Lazy load dos componentes reais que estavam como placeholders
+const PerformanceDashboard = lazy(() => import('@/components/PerformanceDashboard'));
 
 // Lazy load dos componentes cognitivos existentes
 const CognitiveGraphPage = lazy(() => import('@/pages/LazyPages').then(module => ({ default: module.CognitiveGraphPage })));
@@ -138,6 +141,9 @@ const ProtectedApp = () => {
           <Route path="/search" element={<SemanticSearch />} />
           <Route path="/actions" element={<ProjectsManager />} />
           
+          {/* Componente real substituindo placeholder para performance */}
+          <Route path="/performance" element={<PerformanceDashboard />} />
+          
           {/* Páginas cognitivas */}
           <Route path="/cognitive-graph" element={<CognitiveGraphPage />} />
           <Route path="/insights" element={<InsightsPage />} />
@@ -148,13 +154,6 @@ const ProtectedApp = () => {
             <DevelopmentPage 
               title="Projetos Autônomos" 
               description="Sistema de automação e execução de tarefas inteligentes está sendo desenvolvido." 
-            />
-          } />
-          
-          <Route path="/performance" element={
-            <DevelopmentPage 
-              title="Dashboard de Performance" 
-              description="Métricas e análises de performance do sistema estão sendo implementadas." 
             />
           } />
           
