@@ -1,0 +1,157 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light theme */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark theme */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+
+  .oled {
+    /* True black OLED theme */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 4%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 4%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 4%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 6%;
+    --input: 0 0% 4%;
+    --ring: 217.2 91.2% 59.8%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom scrollbar */
+.premium-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted)) transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Focus styles */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fade-in 200ms ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 200ms ease-out;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+  border: 2px solid hsl(var(--border));
+  transition: top 0.2s ease-out;
+}
+
+.skip-link:focus {
+  top: 6px;
+}

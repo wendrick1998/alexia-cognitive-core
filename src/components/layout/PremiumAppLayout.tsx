@@ -37,7 +37,6 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
   }, [isSidebarOpen]);
 
   const handleSectionChange = useCallback((section: string) => {
-    // Prevent duplicate navigation calls
     if (section !== currentSection) {
       onSectionChange(section);
       if (isMobile) {
@@ -48,7 +47,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
 
   if (!isAuthenticated) {
     return (
-      <PWALayout className="flex items-center justify-center">
+      <PWALayout className="flex items-center justify-center bg-background">
         {children}
       </PWALayout>
     );
@@ -58,7 +57,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
     <PWALayout>
       <div className="flex h-screen bg-background overflow-hidden overscroll-contain">
         {/* Desktop Sidebar */}
-        <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
+        <div className="hidden lg:block lg:w-64 lg:flex-shrink-0 border-r border-border">
           <DesktopSidebar 
             currentSection={currentSection} 
             onSectionChange={handleSectionChange}
@@ -66,10 +65,9 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-background via-background to-muted/10">
-          {/* Main Content with proper mobile spacing */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
           <main className={cn(
-            "flex-1 overflow-y-auto bg-background premium-scrollbar overscroll-contain scroll-smooth",
+            "flex-1 overflow-y-auto premium-scrollbar overscroll-contain scroll-smooth",
             isMobile ? "pb-[88px]" : "pb-4"
           )}
           style={{
@@ -88,7 +86,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
               className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300"
               onClick={() => setIsSidebarOpen(false)}
             />
-            <div className="absolute left-0 top-0 h-full w-64 bg-background/95 backdrop-blur-xl shadow-2xl border-r border-border/50 transform transition-transform duration-300">
+            <div className="absolute left-0 top-0 h-full w-64 bg-background/95 backdrop-blur-xl shadow-2xl border-r border-border transform transition-transform duration-300">
               <DesktopSidebar 
                 currentSection={currentSection} 
                 onSectionChange={(section) => {

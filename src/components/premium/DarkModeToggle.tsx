@@ -25,20 +25,13 @@ const DarkModeToggle = () => {
     }
   };
 
-  const getButtonClass = () => {
-    if (isOled) {
-      return "w-9 h-9 rounded-xl transition-all duration-300 hover:bg-white/5 border border-white/10 backdrop-blur-sm";
-    }
-    return "w-9 h-9 rounded-xl transition-all duration-300 hover:bg-slate-100 dark:hover:bg-slate-800";
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
-          className={getButtonClass()}
+          className="w-9 h-9 rounded-xl transition-all duration-300 hover:bg-accent"
         >
           <div className="transition-transform duration-300 hover:scale-110">
             {getIcon()}
@@ -47,32 +40,32 @@ const DarkModeToggle = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="w-44 oled:bg-black oled:border-white/10 oled:backdrop-blur-xl"
+        className="w-44 bg-popover border-border backdrop-blur-xl"
       >
         <DropdownMenuItem 
           onClick={() => setTheme('light')}
-          className="cursor-pointer oled:hover:bg-white/5 oled:text-white/90"
+          className="cursor-pointer hover:bg-accent"
         >
           <Sun className="w-4 h-4 mr-2" />
           Claro
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme('dark')}
-          className="cursor-pointer oled:hover:bg-white/5 oled:text-white/90"
+          className="cursor-pointer hover:bg-accent"
         >
           <Moon className="w-4 h-4 mr-2" />
           Escuro
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme('oled')}
-          className="cursor-pointer oled:hover:bg-white/5 oled:text-white/90"
+          className="cursor-pointer hover:bg-accent"
         >
           <Smartphone className="w-4 h-4 mr-2" />
           OLED (True Black)
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme('system')}
-          className="cursor-pointer oled:hover:bg-white/5 oled:text-white/90"
+          className="cursor-pointer hover:bg-accent"
         >
           <Monitor className="w-4 h-4 mr-2" />
           Sistema
