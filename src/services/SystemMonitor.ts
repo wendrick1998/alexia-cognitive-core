@@ -25,6 +25,20 @@ export interface SystemMetrics {
     bundleSize: number;
     chunksLoaded: number;
   };
+  // Core Web Vitals
+  LCP: number | null;
+  FID: number | null;
+  CLS: number | null;
+  FCP: number | null;
+  TTFB: number | null;
+  // Additional metrics for dashboard
+  memoryUsage: number;
+  jsHeapSize: number;
+  renderTime: number;
+  apiResponseTime: number;
+  cacheHitRate: number;
+  errorRate: number;
+  userSatisfaction: number;
 }
 
 export interface Alert {
@@ -41,7 +55,19 @@ class SystemMonitor {
     memory: { used: 0, total: 0, percentage: 0 },
     performance: { responseTime: 0, requestsPerSecond: 0, errorRate: 0 },
     network: { latency: 0, bandwidth: 0, connectionQuality: 'good' },
-    ui: { renderTime: 0, bundleSize: 0, chunksLoaded: 0 }
+    ui: { renderTime: 0, bundleSize: 0, chunksLoaded: 0 },
+    LCP: null,
+    FID: null,
+    CLS: null,
+    FCP: null,
+    TTFB: null,
+    memoryUsage: 0,
+    jsHeapSize: 0,
+    renderTime: 0,
+    apiResponseTime: 0,
+    cacheHitRate: 0,
+    errorRate: 0,
+    userSatisfaction: 85
   };
 
   private alerts: Alert[] = [];
@@ -86,13 +112,19 @@ class SystemMonitor {
           total: memInfo.totalJSHeapSize,
           percentage: (memInfo.usedJSHeapSize / memInfo.totalJSHeapSize) * 100
         };
+        this.metrics.memoryUsage = memInfo.usedJSHeapSize / (1024 * 1024);
+        this.metrics.jsHeapSize = memInfo.totalJSHeapSize / (1024 * 1024);
       }
 
       // Coletar métricas de performance
       const navigationTiming = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
       if (navigationTiming) {
         this.metrics.performance.responseTime = navigationTiming.responseEnd - navigationTiming.requestStart;
+        this.metrics.apiResponseTime = this.metrics.performance.responseTime;
       }
+
+      // Core Web Vitals
+      this.collectWebVitals();
 
       // Coletar métricas de rede
       await this.measureNetworkQuality();
@@ -107,6 +139,33 @@ class SystemMonitor {
       this.checkAlerts();
     } catch (error) {
       console.error('Erro ao coletar métricas:', error);
+    }
+  }
+
+  private collectWebVitals() {
+    if ('PerformanceObserver' in window) {
+      try {
+        const observer = new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            if (entry.entryType === 'largest-contentful-paint') {
+              this.metrics.LCP = entry.startTime;
+            }
+            if (entry.entryType === 'first-input') {
+              this.metrics.FID = (entry as any).processingStart - entry.startTime;
+            }
+            if (entry.entryType === 'layout-shift' && !(entry as any).hadRecentInput) {
+              this.metrics.CLS = (this.metrics.CLS || 0) + (entry as any).value;
+            }
+            if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
+              this.metrics.FCP = entry.startTime;
+            }
+          }
+        });
+        
+        observer.observe({ entryTypes: ['largest-contentful-paint', 'first-input', 'layout-shift', 'paint'] });
+      } catch (error) {
+        console.warn('Performance observer not supported');
+      }
     }
   }
 
@@ -162,6 +221,7 @@ class SystemMonitor {
     const firstContentfulPaint = paintTiming.find(entry => entry.name === 'first-contentful-paint');
     if (firstContentfulPaint) {
       this.metrics.ui.renderTime = firstContentfulPaint.startTime;
+      this.metrics.renderTime = firstContentfulPaint.startTime;
     }
   }
 
