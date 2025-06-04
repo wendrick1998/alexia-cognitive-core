@@ -2,8 +2,8 @@
 /**
  * @modified_by Manus AI
  * @date 1 de junho de 2025
- * @description Correção de alinhamentos e padronização de espaçamentos no componente Chat
- * Implementa tokens de espaçamento e melhora consistência visual
+ * @description Reestruturação completa para UI premium, harmoniosa e responsiva
+ * Implementa design system unificado e experiência de usuário otimizada
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -38,17 +38,15 @@ const Chat = () => {
   const { processing, processMessage } = useChatProcessor();
   const { isActive: isFocusModeActive, activateFocusMode, deactivateFocusMode } = useFocusMode();
 
-  // Função para scroll suave até a última mensagem
+  // Scroll otimizado para experiência premium
   const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
     }
   };
 
-  // Scroll automático quando novas mensagens são adicionadas
   useEffect(() => {
     if (messages.length > 0) {
-      // Pequeno delay para garantir que o DOM foi atualizado
       setTimeout(() => scrollToBottom(), 100);
     }
   }, [messages.length]);
@@ -86,7 +84,6 @@ const Chat = () => {
     const conversationId = currentConversation?.id;
     if (!conversationId) return;
 
-    // Adicionar mensagem do usuário imediatamente
     const userMessage = {
       id: `temp-${Date.now()}`,
       conversation_id: conversationId,
@@ -97,15 +94,12 @@ const Chat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
-    // Scroll para a mensagem do usuário
     scrollToBottom();
 
     try {
       const response = await processMessage(message, conversationId);
       
       if (response) {
-        // Verificar se a resposta veio do cache
         const fromCache = response.metadata?.fromCache || false;
         const usedFallback = response.metadata?.usedFallback || false;
         const originalModel = response.metadata?.originalModel || '';
@@ -129,8 +123,6 @@ const Chat = () => {
 
         setMessages(prev => [...prev, aiMessage]);
         await updateConversationTimestamp(conversationId);
-        
-        // Scroll para a resposta da IA
         scrollToBottom();
 
         toast({
@@ -165,7 +157,7 @@ const Chat = () => {
     }
   };
 
-  // Listen for keyboard shortcuts
+  // Keyboard shortcuts otimizados
   useEffect(() => {
     const handleKeyboardShortcuts = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) {
@@ -190,17 +182,7 @@ const Chat = () => {
     return () => window.removeEventListener('keydown', handleKeyboardShortcuts);
   }, [isFocusModeActive, deactivateFocusMode, activateFocusMode]);
 
-  console.log('🗨️ Chat renderizado:', {
-    conversations: conversations.length,
-    currentConversation: currentConversation?.id,
-    messages: messages.length,
-    processing,
-    isCreating: conversationState.isCreatingNew
-  });
-
-  // Renderização do componente ResponseSource para cada mensagem
   const renderMessageWithSource = (message: any) => {
-    // Apenas mensagens do assistente podem ter indicadores de fonte
     if (message.role !== 'assistant' || !message.metadata) {
       return null;
     }
@@ -218,7 +200,7 @@ const Chat = () => {
 
   return (
     <>
-      {/* Container principal com layout flexível */}
+      {/* Container premium com overscroll controlado */}
       <div className="h-full flex flex-col bg-background overscroll-contain">
         <PremiumChatLayout
           conversations={conversations}
@@ -234,22 +216,22 @@ const Chat = () => {
           className="flex-1 overflow-hidden"
         />
 
-        {/* Elemento invisível para referência de scroll */}
+        {/* Scroll reference - invisível */}
         <div ref={messagesEndRef} />
 
-        {/* Floating Action Button - Mobile Only */}
+        {/* Floating Action Button - Mobile Premium */}
         {isMobile && (
           <FloatingActionButton 
             onAction={handleFloatingAction}
             currentSection="chat"
             hasActiveChat={!!currentConversation}
             hasDocument={false}
-            className="touch-target z-40"
+            className="fixed bottom-20 right-4 z-40 shadow-xl"
           />
         )}
       </div>
 
-      {/* Focus Mode Overlay */}
+      {/* Focus Mode Premium */}
       <FocusMode
         isActive={isFocusModeActive}
         onExit={deactivateFocusMode}

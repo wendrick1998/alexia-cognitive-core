@@ -28,18 +28,10 @@ const ChatArea = ({
   renderMessageExtras,
   memoryDataMap = new Map()
 }: ChatAreaProps) => {
-  console.log('🎨 ChatArea renderizado com memória:', {
-    conversation: currentConversation?.id,
-    messages: messages.length,
-    memoryEntries: memoryDataMap.size,
-    processing,
-    isNavigating
-  });
-
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-      {/* Header - Fixed at top */}
-      <div className="flex-shrink-0 border-b border-gray-200/50 dark:border-gray-700/50">
+    <div className="h-full flex flex-col bg-transparent relative overscroll-contain">
+      {/* Header Premium - Glassmorphism */}
+      <div className="flex-shrink-0 border-b border-border/30 bg-background/80 backdrop-blur-xl">
         <ChatHeader
           currentConversation={currentConversation}
           onBackToConversations={onBackToConversations}
@@ -48,18 +40,20 @@ const ChatArea = ({
         />
       </div>
 
-      {/* Content Area - Enhanced with memory integration */}
-      <EnhancedChatContent
-        currentConversation={currentConversation}
-        messages={messages}
-        processing={processing}
-        isNavigating={isNavigating}
-        memoryDataMap={memoryDataMap}
-        renderMessageExtras={renderMessageExtras}
-      />
+      {/* Content Area - Flex otimizado para scroll */}
+      <div className="flex-1 min-h-0 relative">
+        <EnhancedChatContent
+          currentConversation={currentConversation}
+          messages={messages}
+          processing={processing}
+          isNavigating={isNavigating}
+          memoryDataMap={memoryDataMap}
+          renderMessageExtras={renderMessageExtras}
+        />
+      </div>
 
-      {/* Input Area - Fixed at bottom */}
-      <div className="flex-shrink-0">
+      {/* Input Area - Sempre visível e fixo */}
+      <div className="flex-shrink-0 bg-background/95 backdrop-blur-xl border-t border-border/30">
         <ChatInputArea
           processing={processing}
           onSendMessage={onSendMessage}

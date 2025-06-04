@@ -60,7 +60,7 @@ const BottomNavigation = ({
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border safe-area-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/50 safe-area-bottom shadow-lg">
       <div className="flex items-center justify-around px-2 py-2">
         {mainNavItems.map((item) => {
           const Icon = item.icon;
@@ -73,16 +73,27 @@ const BottomNavigation = ({
               variant="ghost"
               size="sm"
               className={cn(
-                "flex flex-col items-center gap-1 h-14 px-3 rounded-xl transition-all duration-200 relative touch-manipulation",
+                "flex flex-col items-center gap-1 h-14 px-3 rounded-xl transition-all duration-200 relative touch-manipulation hover:scale-105 active:scale-95",
                 isActive 
-                  ? "bg-primary/10 text-primary" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary/15 text-primary shadow-sm" 
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               )}
             >
               <div className="relative">
-                <Icon className="w-5 h-5" />
+                <Icon className={cn(
+                  "w-5 h-5 transition-all duration-200",
+                  isActive ? "drop-shadow-sm" : ""
+                )} />
+                {isActive && (
+                  <div className="absolute -inset-1 bg-primary/20 rounded-full animate-pulse" />
+                )}
               </div>
-              <span className="text-xs font-medium">{item.label}</span>
+              <span className={cn(
+                "text-xs font-medium transition-all duration-200",
+                isActive ? "font-semibold" : ""
+              )}>
+                {item.label}
+              </span>
             </Button>
           );
         })}

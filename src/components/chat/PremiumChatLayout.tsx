@@ -38,31 +38,36 @@ const PremiumChatLayout: React.FC<PremiumChatLayoutProps> = ({
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = React.useState(!isMobile);
 
-  console.log('🎨 PremiumChatLayout FASE 1 com memória renderizado:', {
-    conversations: conversations.length,
-    currentConversation: currentConversation?.id,
-    messages: messages.length,
-    memoryEntries: memoryDataMap?.size || 0,
-    processing,
-    sidebarOpen
-  });
-
   return (
-    <div className={cn("h-full flex bg-gray-50", className)}>
-      {/* Sidebar de Conversas */}
-      <div className={cn(
-        "flex-shrink-0 border-r border-gray-200 bg-white",
-        isMobile ? (sidebarOpen ? "w-full" : "w-0") : "w-80",
-        isMobile && !sidebarOpen && "hidden"
-      )}>
-        <ConversationSidebar
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
-      </div>
+    <div className={cn("h-full flex bg-background overscroll-contain", className)}>
+      {/* Premium Sidebar - Integrada sem overlay */}
+      {!isMobile && (
+        <div className="w-80 flex-shrink-0 border-r border-border/50 bg-background/95 backdrop-blur-xl">
+          <ConversationSidebar
+            isOpen={true}
+            onToggle={() => {}}
+          />
+        </div>
+      )}
 
-      {/* Área Principal do Chat */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Mobile Sidebar Overlay */}
+      {isMobile && sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div className="absolute left-0 top-0 h-full w-80 bg-background/95 backdrop-blur-xl border-r border-border shadow-xl">
+            <ConversationSidebar
+              isOpen={true}
+              onToggle={() => setSidebarOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Área Principal do Chat - Premium Design */}
+      <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-background via-background to-muted/20">
         <ChatArea
           currentConversation={currentConversation}
           messages={messages}

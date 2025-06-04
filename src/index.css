@@ -66,15 +66,15 @@
     @apply border-border;
   }
   
-  /* Remove elastic overscroll effect and control bounce behavior */
+  /* Sistema de scroll premium otimizado */
   html,
   body {
     height: 100%;
     height: 100dvh;
     overflow: hidden;
-    overscroll-behavior: contain; /* Prevent elastic overscroll */
-    overscroll-behavior-y: contain; /* Specifically control vertical overscroll */
-    -webkit-overflow-scrolling: auto !important;
+    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
     touch-action: manipulation;
     @apply bg-background text-foreground;
     font-family: "Inter", sans-serif;
@@ -87,7 +87,7 @@
     overscroll-behavior: contain;
   }
   
-  /* Container principal com scroll controlado */
+  /* Container premium com controle de scroll */
   .main-container,
   .scrollable-content {
     height: 100dvh;
@@ -97,7 +97,7 @@
   }
 }
 
-/* PWA iOS Specific Styles - Remove bounce scroll */
+/* PWA Premium Styles */
 .ios-pwa {
   overscroll-behavior: contain;
   touch-action: manipulation;
@@ -119,7 +119,7 @@
   user-select: auto;
 }
 
-/* Standalone mode optimizations - No bounce */
+/* Standalone mode premium */
 .standalone-mode {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
@@ -128,7 +128,7 @@
   overscroll-behavior: contain;
 }
 
-/* PWA Splash Screen Support */
+/* PWA Display mode optimizations */
 @media (display-mode: standalone) {
   .browser-only {
     display: none !important;
@@ -148,58 +148,70 @@
   }
 }
 
-/* iOS Status Bar Styling */
+/* iOS Status Bar Premium Styling */
 @supports (-webkit-appearance: none) {
   .ios-pwa {
     background: linear-gradient(
       to bottom,
-      rgba(15, 23, 42, 0.95) 0%,
-      rgba(15, 23, 42, 0.8) 100%
+      hsl(var(--background)) 0%,
+      hsl(var(--background)/0.95) 100%
     );
     overscroll-behavior: contain;
   }
 }
 
-/* Battery saving mode */
+/* Battery saving optimizations */
 .battery-saving-mode * {
   animation-duration: 0s !important;
   transition-duration: 0s !important;
 }
 
-/* Premium scrollbar for better UX - No bounce */
+/* Premium scrollbar design */
 .premium-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 .premium-scrollbar::-webkit-scrollbar-track {
   background: transparent;
+  border-radius: 4px;
 }
 
 .premium-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 3px;
+  background: linear-gradient(180deg, 
+    hsl(var(--muted-foreground)/0.3) 0%, 
+    hsl(var(--muted-foreground)/0.5) 50%,
+    hsl(var(--muted-foreground)/0.3) 100%
+  );
+  border-radius: 4px;
+  border: 1px solid hsl(var(--border)/0.3);
 }
 
 .premium-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: linear-gradient(180deg, 
+    hsl(var(--primary)/0.4) 0%, 
+    hsl(var(--primary)/0.6) 50%,
+    hsl(var(--primary)/0.4) 100%
+  );
 }
 
-/* Momentum scrolling for iOS - Controlled */
+/* Momentum scrolling premium */
 .momentum-scroll {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  scroll-behavior: smooth;
 }
 
-/* Fix scroll behavior - No bounce */
+/* Container de scroll otimizado */
 .scroll-container {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* PWA Install Animation */
+/* Animações premium */
 @keyframes slideUpFadeIn {
   from {
     opacity: 0;
@@ -211,16 +223,54 @@
   }
 }
 
+@keyframes premiumGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(var(--primary)/0.15);
+  }
+  50% {
+    box-shadow: 0 0 30px hsl(var(--primary)/0.25), 
+                0 0 60px hsl(var(--primary)/0.1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .pwa-install-banner {
   animation: slideUpFadeIn 0.3s ease-out;
 }
 
-/* Bottom Navigation Safe Area */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+.premium-glow {
+  animation: premiumGlow 3s ease-in-out infinite;
 }
 
-/* Prevent zoom on iOS form inputs */
+.shimmer-effect {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--primary)/0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Safe area premium */
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+
+.safe-area-top {
+  padding-top: max(env(safe-area-inset-top), 1rem);
+}
+
+/* Zoom prevention premium */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   select,
   textarea,
@@ -239,22 +289,20 @@
   input[type="tel"],
   input[type="color"] {
     font-size: 16px !important;
+    border-radius: 8px;
   }
 }
 
-/* Mobile specific layout adjustments - No bounce */
+/* Mobile layout premium adjustments */
 @media (max-width: 768px) {
-  /* Ensure bottom navigation doesn't interfere with content */
   .mobile-content-container {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 88px);
   }
   
-  /* Fix for PWA standalone mode */
   .ios-pwa .fixed {
     bottom: calc(1rem + env(safe-area-inset-bottom));
   }
   
-  /* Ensure all mobile containers don't have bounce */
   .main-container,
   .scrollable-content,
   .chat-messages-container {
@@ -263,9 +311,9 @@
   }
 }
 
-/* Utility classes for scroll control */
+/* Utility classes premium */
 .overscroll-contain {
-  overscroll-behavior: contain;
+  overscroll-behavior: contain !important;
 }
 
 .touch-manipulation {
@@ -280,7 +328,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Force removal of bounce on any scrollable container */
+/* Force overscroll control */
 [style*="overflow-y: auto"],
 [style*="overflow-y: scroll"],
 .overflow-y-auto,
@@ -288,18 +336,19 @@
   overscroll-behavior: contain !important;
 }
 
-/* Chat input area visibility fix */
+/* Chat input area premium visibility */
 .chat-input-area {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
   height: auto !important;
   min-height: 60px !important;
+  z-index: 10 !important;
 }
 
-/* Ensure proper dark theme color application */
+/* Dark theme premium colors */
 .dark .bg-white {
-  @apply bg-background;
+  @apply bg-card;
 }
 
 .dark .text-gray-900 {
@@ -311,14 +360,54 @@
 }
 
 .dark .bg-gray-50 {
+  @apply bg-muted/30;
+}
+
+.dark .bg-gray-100 {
   @apply bg-muted/50;
 }
 
-/* Fix for any remaining white backgrounds in dark mode */
-.dark [class*="bg-white"]:not(.keep-white) {
-  @apply bg-card;
+.dark .text-gray-600 {
+  @apply text-muted-foreground;
 }
 
-.dark [class*="text-gray-900"]:not(.keep-gray) {
-  @apply text-foreground;
+.dark .text-gray-700 {
+  @apply text-foreground/80;
+}
+
+/* Premium glassmorphism effects */
+.glass-card {
+  background: hsl(var(--background)/0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border)/0.5);
+}
+
+.glass-input {
+  background: hsl(var(--background)/0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid hsl(var(--border)/0.3);
+}
+
+/* Premium hover states */
+.premium-hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px hsl(var(--foreground)/0.1);
+}
+
+/* Touch targets optimization */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+/* Enhanced focus states */
+.focus-premium:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 6px;
 }

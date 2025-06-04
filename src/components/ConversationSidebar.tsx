@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +29,8 @@ import {
   Folder,
   TrendingUp,
   Settings,
-  Loader2
+  Loader2,
+  Sparkles
 } from "lucide-react";
 import { useConversations } from "@/hooks/useConversations";
 import { useAuth } from "@/hooks/useAuth";
@@ -158,24 +158,27 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
   if (!isOpen) return null;
 
   return (
-    <div className="w-96 bg-white/95 backdrop-blur-sm border-r border-slate-200/60 flex flex-col shadow-xl">
-      {/* Enhanced Header */}
-      <div className="p-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="flex items-center justify-between mb-4">
+    <div className="w-full h-full flex flex-col bg-background/95 backdrop-blur-xl border-r border-border/50">
+      {/* Enhanced Premium Header */}
+      <div className="p-6 border-b border-border/30 bg-gradient-to-r from-background via-background to-muted/20">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-primary via-primary/80 to-primary/60 rounded-xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h2 className="text-xl font-bold text-slate-800">Conversas</h2>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Conversas</h2>
+              <p className="text-xs text-muted-foreground">IA Premium</p>
+            </div>
             {conversationState.isNavigating && (
-              <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+              <Loader2 className="w-4 h-4 text-primary animate-spin" />
             )}
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="text-slate-500 hover:text-slate-700 hover:bg-white/60 rounded-xl"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all duration-200"
           >
             <X className="w-5 h-5" />
           </Button>
@@ -184,7 +187,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         <Button
           onClick={handleNewConversation}
           disabled={isDisabled}
-          className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:scale-105 disabled:scale-100 disabled:opacity-70"
+          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground rounded-xl shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-70"
           size="sm"
         >
           {conversationState.isCreatingNew ? (
@@ -201,15 +204,15 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <div className="p-4 border-b border-slate-200/60 space-y-3">
+      {/* Premium Search and Filters */}
+      <div className="p-4 border-b border-border/30 space-y-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Buscar conversas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 rounded-xl border-slate-200 focus:border-blue-500"
+            className="pl-10 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm focus:border-primary/50 focus:bg-background/80 transition-all duration-200"
             disabled={isLoadingConversations || isDisabled}
           />
         </div>
@@ -217,12 +220,17 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         <div className="flex items-center space-x-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-xl" disabled={isLoadingConversations || isDisabled}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-xl border-border/50 bg-background/50 hover:bg-muted/50 transition-all duration-200" 
+                disabled={isLoadingConversations || isDisabled}
+              >
                 <Filter className="w-4 h-4 mr-2" />
                 Filtrar
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent className="bg-background/95 backdrop-blur-xl border-border/50">
               <DropdownMenuItem onClick={() => setFilterBy('all')}>
                 Todas as conversas
               </DropdownMenuItem>
@@ -243,11 +251,16 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-xl" disabled={isLoadingConversations || isDisabled}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-xl border-border/50 bg-background/50 hover:bg-muted/50 transition-all duration-200" 
+                disabled={isLoadingConversations || isDisabled}
+              >
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent className="bg-background/95 backdrop-blur-xl border-border/50">
               <DropdownMenuItem onClick={() => setSortBy('updated')}>
                 Ordenar por atualização
               </DropdownMenuItem>
@@ -264,16 +277,16 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
           </DropdownMenu>
         </div>
 
-        {/* Filter and Sort Indicators */}
+        {/* Filter Indicators */}
         <div className="flex flex-wrap gap-2">
           {filterBy !== 'all' && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs bg-muted/50 text-muted-foreground">
               Filtro: {filterBy === 'favorites' ? 'Favoritas' : 
                      filterBy === 'recent' ? 'Recentes' : 'Ativas'}
             </Badge>
           )}
           {sortBy !== 'updated' && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs border-border/50 bg-background/50">
               Ordem: {sortBy === 'created' ? 'Criação' : 
                      sortBy === 'name' ? 'Nome' : 'Atividade'}
             </Badge>
@@ -281,26 +294,43 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Enhanced Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-3 m-4 mb-0">
-          <TabsTrigger value="all" disabled={isLoadingConversations || isDisabled}>Todas</TabsTrigger>
-          <TabsTrigger value="categories" disabled={isLoadingConversations || isDisabled}>Categorias</TabsTrigger>
-          <TabsTrigger value="recent" disabled={isLoadingConversations || isDisabled}>Recentes</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 m-4 mb-0 bg-muted/30 backdrop-blur-sm">
+          <TabsTrigger 
+            value="all" 
+            disabled={isLoadingConversations || isDisabled}
+            className="data-[state=active]:bg-background/80 data-[state=active]:shadow-sm"
+          >
+            Todas
+          </TabsTrigger>
+          <TabsTrigger 
+            value="categories" 
+            disabled={isLoadingConversations || isDisabled}
+            className="data-[state=active]:bg-background/80 data-[state=active]:shadow-sm"
+          >
+            Categorias
+          </TabsTrigger>
+          <TabsTrigger 
+            value="recent" 
+            disabled={isLoadingConversations || isDisabled}
+            className="data-[state=active]:bg-background/80 data-[state=active]:shadow-sm"
+          >
+            Recentes
+          </TabsTrigger>
         </TabsList>
 
         {/* All Conversations Tab */}
         <TabsContent value="all" className="flex-1 mt-0">
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="flex-1 p-4 premium-scrollbar">
             <div className="space-y-2">
               {isLoadingConversations ? (
-                // Mostrar skeletons durante carregamento
                 Array.from({ length: 3 }).map((_, index) => (
                   <ConversationCardSkeleton key={index} />
                 ))
               ) : filteredConversations.length === 0 ? (
-                <div className="text-center py-12 text-slate-500">
-                  <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="text-center py-12 text-muted-foreground">
+                  <div className="w-16 h-16 bg-muted/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     {searchQuery ? (
                       <Search className="w-8 h-8 opacity-50" />
                     ) : (
@@ -335,7 +365,7 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
 
         {/* Categories Tab */}
         <TabsContent value="categories" className="flex-1 mt-0">
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="flex-1 p-4 premium-scrollbar">
             {isLoadingConversations ? (
               <div className="space-y-2">
                 {Array.from({ length: 2 }).map((_, index) => (
@@ -360,10 +390,10 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
 
         {/* Recent Tab */}
         <TabsContent value="recent" className="flex-1 mt-0">
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
+          <ScrollArea className="flex-1 p-4 premium-scrollbar">
+            <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center">
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center">
                   <Star className="w-4 h-4 mr-2 text-yellow-500" />
                   Favoritas ({favoriteConversations.length})
                 </h3>
@@ -391,8 +421,8 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center">
-                  <Clock className="w-4 h-4 mr-2 text-blue-500" />
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center">
+                  <Clock className="w-4 h-4 mr-2 text-primary" />
                   Recentes
                 </h3>
                 <div className="space-y-2">
@@ -422,26 +452,26 @@ const ConversationSidebar = ({ isOpen, onToggle }: ConversationSidebarProps) => 
         </TabsContent>
       </Tabs>
 
-      {/* Stats Footer */}
-      <div className="p-4 border-t border-slate-200/60 bg-slate-50/50">
+      {/* Premium Stats Footer */}
+      <div className="p-4 border-t border-border/30 bg-muted/20 backdrop-blur-sm">
         <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <div className="text-lg font-bold text-slate-800">
+          <div className="space-y-1">
+            <div className="text-lg font-bold text-foreground">
               {isLoadingConversations ? '-' : conversations.length}
             </div>
-            <div className="text-xs text-slate-500">Conversas</div>
+            <div className="text-xs text-muted-foreground">Conversas</div>
           </div>
-          <div>
-            <div className="text-lg font-bold text-slate-800">
+          <div className="space-y-1">
+            <div className="text-lg font-bold text-foreground">
               {isLoadingConversations ? '-' : favoriteConversations.length}
             </div>
-            <div className="text-xs text-slate-500">Favoritas</div>
+            <div className="text-xs text-muted-foreground">Favoritas</div>
           </div>
-          <div>
-            <div className="text-lg font-bold text-slate-800">
+          <div className="space-y-1">
+            <div className="text-lg font-bold text-foreground">
               {isLoadingConversations ? '-' : categories.length}
             </div>
-            <div className="text-xs text-slate-500">Categorias</div>
+            <div className="text-xs text-muted-foreground">Categorias</div>
           </div>
         </div>
       </div>
