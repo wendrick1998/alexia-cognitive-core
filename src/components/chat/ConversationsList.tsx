@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { Conversation } from '@/hooks/useConversations';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, MessageSquare, Pin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import ConversationMenu from './ConversationMenu';
+import ChatMenu from './ChatMenu';
 import { cn } from '@/lib/utils';
 
 interface ConversationsListProps {
@@ -109,7 +108,7 @@ const ConversationsList = ({
           </div>
 
           <div className="flex-shrink-0">
-            <ConversationMenu
+            <ChatMenu
               conversation={conversation}
               onRename={handleRename}
               onTogglePin={handleTogglePin}
