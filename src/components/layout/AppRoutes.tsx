@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -110,7 +109,7 @@ const ProtectedApp = () => {
       navigate(targetRoute);
     }
   };
-
+  
   return (
     <PremiumAppLayout 
       currentSection={getCurrentSection()} 

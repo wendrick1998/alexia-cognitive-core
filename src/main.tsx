@@ -1,7 +1,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom/client";
-import AppRoutes from "@/components/layout/AppRoutes";
+import App from "./App.tsx";
 import "./index.css";
 import "./i18n"; // Importe e execute a configuração do i18n aqui
 
@@ -21,16 +21,16 @@ try {
   console.log('🔄 Tentando criar root React...');
   const root = ReactDOM.createRoot(rootElement);
   
-  console.log('🔄 Tentando renderizar AppRoutes (sistema completo)...');
+  console.log('🔄 Tentando renderizar App com sistema completo...');
   root.render(
     <React.StrictMode>
-      <AppRoutes />
+      <App />
     </React.StrictMode>
   );
   
   console.log('✅ Sistema de roteamento completo ativado com sucesso!');
 } catch (error) {
-  console.error('❌ ERRO NA RENDERIZAÇÃO DO APPROUTES:', error);
+  console.error('❌ ERRO NA RENDERIZAÇÃO DO APP:', error);
   
   // Fallback direto no DOM
   rootElement.innerHTML = `
