@@ -1,28 +1,52 @@
 
-project_id = "placeholder"
+project_id = "your-project-id"
 
-[functions]
-verify_jwt = true
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "auth", "realtime", "storage"]
+extra_search_path = ["public", "auth"]
+max_rows = 1000
 
-[functions.route-optimal-llm]
-verify_jwt = true
+[db]
+port = 54322
+major_version = 15
 
-[functions.intelligent-llm-execution]
-verify_jwt = true
+[realtime]
+enabled = true
+ip_version = "IPv4"
 
-[functions.semantic-search]
-verify_jwt = true
+[studio]
+enabled = true
+port = 54323
+api_url = "http://localhost"
 
-[functions.synthesize-agent-results]
-verify_jwt = true
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
 
 [functions.process-chat-message]
 verify_jwt = true
 
-[functions.process-cognitive-embeddings]
-verify_jwt = true
-
-[functions.process-document]
+[functions.semantic-search]
 verify_jwt = true
 
 [functions.database-backup]
