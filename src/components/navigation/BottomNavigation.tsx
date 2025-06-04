@@ -1,6 +1,5 @@
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { 
   BarChart3, 
   MessageCircle, 
@@ -8,7 +7,8 @@ import {
   Menu, 
   CheckCircle,
   Search,
-  Settings
+  Settings,
+  Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -46,10 +46,10 @@ const BottomNavigation = ({
       action: () => onSectionChange("search")
     },
     {
-      id: "settings",
-      label: "Config",
-      icon: Settings,
-      action: () => navigate("/settings/profile")
+      id: "llm-config",
+      label: "Config IA",
+      icon: Bot,
+      action: () => navigate("/llm-config")
     },
     {
       id: "menu",

@@ -27,6 +27,9 @@ const CortexDashboard = lazy(() => import('@/components/cognitive/CortexDashboar
 // Lazy load da página de configurações
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 
+// Lazy load da nova página de configuração de LLM
+const LLMConfigPage = lazy(() => import('@/pages/LLMConfigPage'));
+
 // Componente placeholder para páginas em desenvolvimento
 const DevelopmentPage = ({ title, description }: { title: string; description: string }) => (
   <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -70,6 +73,7 @@ const ProtectedApp = () => {
     if (path.startsWith("/security")) return "security";
     if (path.startsWith("/validation")) return "validation";
     if (path.startsWith("/settings")) return "settings";
+    if (path.startsWith("/llm-config")) return "llm-config";
     return "dashboard";
   };
 
@@ -92,7 +96,8 @@ const ProtectedApp = () => {
       subscription: '/subscription',
       security: '/security',
       validation: '/validation',
-      settings: '/settings'
+      settings: '/settings',
+      'llm-config': '/llm-config'
     };
 
     const targetRoute = routeMap[section] || '/';
@@ -134,6 +139,9 @@ const ProtectedApp = () => {
           
           {/* Nova rota de configurações com subrotas aninhadas */}
           <Route path="/settings/*" element={<SettingsPage />} />
+          
+          {/* Nova rota de configuração de LLM */}
+          <Route path="/llm-config" element={<LLMConfigPage />} />
           
           {/* Páginas em desenvolvimento */}
           <Route path="/autonomous" element={
