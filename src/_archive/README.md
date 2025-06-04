@@ -1,17 +1,20 @@
 
-# 📁 Arquivo de Componentes
+# Arquivo de Componentes Obsoletos
 
-Esta pasta contém componentes que foram arquivados durante a refatoração e limpeza do código.
+Esta pasta contém componentes que foram removidos do fluxo principal da aplicação durante a limpeza do Módulo 3.
 
-## Componentes Arquivados
+## Componentes Arquivados:
 
-### `pages/Index.tsx`
-- **Motivo do arquivamento**: Duplicação de lógica de roteamento com App.tsx
-- **Data**: Junho 2025
-- **Observação**: Lógica de roteamento foi consolidada no App.tsx para evitar redundância
+### Chat Components
+- `alex/AlexChat.tsx` - Componente de chat Alex não utilizado no roteamento atual
+- `alex/AlexChatInterface.tsx` - Interface de chat não utilizada no roteamento atual
 
-## Política de Arquivo
+### Pages
+- `SettingsPage.tsx` - Página de configurações redundante (apenas redirecionamento)
+- `LazyPages.tsx` - Páginas lazy não utilizadas no roteamento atual
 
-- Componentes são movidos para arquivo quando se tornam redundantes ou obsoletos
-- Mantemos histórico para referência futura
-- Limpeza periódica pode ser realizada após validação completa do sistema
+## Data do Arquivamento
+Módulo 3 - Etapa 3.1 (06/06/2025)
+
+## Motivo
+Limpeza e otimização do codebase após consolidação do roteamento e PWA.
