@@ -113,8 +113,47 @@ export class LLMLogger {
       response_time: stat.average_response_time,
       estimated_cost: stat.total_tokens * 0.0001, // Simple cost estimation
       total_calls: stat.total_calls,
-      success_rate: stat.success_rate
+      success_rate: stat.success_rate / 100 // Convert to decimal
     }));
+  }
+
+  async getFallbackMetrics(): Promise<{
+    totalFallbacks: number;
+    fallbacksByReason: Record<string, number>;
+    fallbacksByModel: Record<string, number>;
+    avgResponseTimeWithFallback: number;
+    avgResponseTimeWithoutFallback: number;
+  }> {
+    // For now, return mock data since we don't have fallback tracking in the simple logger
+    return {
+      totalFallbacks: 0,
+      fallbacksByReason: {},
+      fallbacksByModel: {},
+      avgResponseTimeWithFallback: 0,
+      avgResponseTimeWithoutFallback: 0
+    };
+  }
+
+  async getCostMetrics(): Promise<{
+    totalCost: number;
+    costByPeriod: Record<string, number>;
+    costByModel: Record<string, number>;
+    costByTask: Record<string, number>;
+  }> {
+    const metrics = await this.getMetrics();
+    const totalCost = metrics.reduce((sum, metric) => sum + metric.estimated_cost, 0);
+    
+    const costByModel: Record<string, number> = {};
+    metrics.forEach(metric => {
+      costByModel[metric.model_name] = metric.estimated_cost;
+    });
+
+    return {
+      totalCost,
+      costByPeriod: {},
+      costByModel,
+      costByTask: {}
+    };
   }
 
   async getLogs(limit: number = 50): Promise<LLMLogEntry[]> {
