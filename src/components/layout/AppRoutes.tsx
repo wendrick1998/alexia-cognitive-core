@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -5,7 +6,7 @@ import AuthPage from '@/components/auth/AuthPage';
 import PremiumAppLayout from '@/components/layout/PremiumAppLayout';
 import { SmartLoadingSpinner } from '@/components/ui/SmartLoadingSpinner';
 
-// Lazy load dos componentes principais
+// Lazy load dos componentes principais que existem
 const Dashboard = lazy(() => import('@/components/dashboard/Dashboard'));
 const Chat = lazy(() => import('@/components/Chat'));
 
@@ -15,23 +16,8 @@ const MemoryManager = lazy(() => import('@/components/MemoryManager'));
 const DocumentsManager = lazy(() => import('@/components/DocumentsManager'));
 const ProjectsManager = lazy(() => import('@/components/ProjectsManager'));
 
-// Lazy load dos componentes reais que estavam como placeholders
+// Lazy load dos componentes que existem
 const PerformanceDashboard = lazy(() => import('@/components/PerformanceDashboard'));
-const AutonomousProjectsManager = lazy(() => import('@/components/autonomous/AutonomousProjectsManager'));
-
-// Lazy load dos componentes cognitivos existentes
-const CognitiveGraphPage = lazy(() => import('@/components/cognitive/CognitiveGraphPage'));
-const InsightsPage = lazy(() => import('@/components/cognitive/InsightsPage'));
-const CortexDashboard = lazy(() => import('@/components/cognitive/CortexDashboard'));
-
-// Lazy load da página de configurações
-const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
-
-// Lazy load da nova página de configuração de LLM
-const LLMConfigPage = lazy(() => import('@/pages/LLMConfigPage'));
-
-// Lazy load da página de backup/restore
-const BackupRestorePage = lazy(() => import('@/pages/BackupRestorePage'));
 
 // Componente placeholder para páginas em desenvolvimento
 const DevelopmentPage = ({ title, description }: { title: string; description: string }) => (
@@ -67,16 +53,7 @@ const ProtectedApp = () => {
     if (path.startsWith("/actions")) return "actions";
     if (path.startsWith("/autonomous")) return "autonomous";
     if (path.startsWith("/performance")) return "performance";
-    if (path.startsWith("/cognitive-graph")) return "cognitive-graph";
-    if (path.startsWith("/insights")) return "insights";
-    if (path.startsWith("/cortex")) return "cortex";
-    if (path.startsWith("/preferences")) return "preferences";
-    if (path.startsWith("/privacy")) return "privacy";
-    if (path.startsWith("/subscription")) return "subscription";
-    if (path.startsWith("/security")) return "security";
-    if (path.startsWith("/validation")) return "validation";
     if (path.startsWith("/settings")) return "settings";
-    if (path.startsWith("/llm-config")) return "llm-config";
     return "dashboard";
   };
 
@@ -91,16 +68,7 @@ const ProtectedApp = () => {
       actions: '/actions',
       autonomous: '/autonomous',
       performance: '/performance',
-      'cognitive-graph': '/cognitive-graph',
-      insights: '/insights',
-      cortex: '/cortex',
-      preferences: '/preferences',
-      privacy: '/privacy',
-      subscription: '/subscription',
-      security: '/security',
-      validation: '/validation',
-      settings: '/settings',
-      'llm-config': '/llm-config'
+      settings: '/settings'
     };
 
     const targetRoute = routeMap[section] || '/';
@@ -134,55 +102,19 @@ const ProtectedApp = () => {
           
           {/* Componentes reais */}
           <Route path="/performance" element={<PerformanceDashboard />} />
-          <Route path="/autonomous" element={<AutonomousProjectsManager />} />
-          
-          {/* Páginas cognitivas */}
-          <Route path="/cognitive-graph" element={<CognitiveGraphPage />} />
-          <Route path="/insights" element={<InsightsPage />} />
-          <Route path="/cortex" element={<CortexDashboard />} />
-          
-          {/* Página de configurações com subrotas aninhadas */}
-          <Route path="/settings/*" element={<SettingsPage />} />
-          
-          {/* Página de configuração de LLM */}
-          <Route path="/llm-config" element={<LLMConfigPage />} />
-          
-          {/* Página de backup/restore */}
-          <Route path="/backup-restore" element={<BackupRestorePage />} />
           
           {/* Páginas em desenvolvimento */}
-          <Route path="/preferences" element={
+          <Route path="/autonomous" element={
             <DevelopmentPage 
-              title="Preferências do Usuário" 
-              description="Configurações personalizadas e preferências do sistema estão sendo desenvolvidas." 
+              title="Projetos Autônomos" 
+              description="Sistema de gerenciamento de projetos autônomos está sendo desenvolvido." 
             />
           } />
           
-          <Route path="/privacy" element={
+          <Route path="/settings" element={
             <DevelopmentPage 
-              title="Configurações de Privacidade" 
-              description="Controles de privacidade e segurança de dados estão sendo implementados." 
-            />
-          } />
-          
-          <Route path="/subscription" element={
-            <DevelopmentPage 
-              title="Gerenciamento de Assinatura" 
-              description="Controle de planos e funcionalidades premium está sendo desenvolvido." 
-            />
-          } />
-          
-          <Route path="/security" element={
-            <DevelopmentPage 
-              title="Configurações de Segurança" 
-              description="Configurações avançadas de segurança e autenticação estão sendo implementadas." 
-            />
-          } />
-
-          <Route path="/validation" element={
-            <DevelopmentPage 
-              title="Validação de Dados" 
-              description="Sistema de validação e verificação de dados está sendo desenvolvido." 
+              title="Configurações" 
+              description="Página de configurações está sendo desenvolvida." 
             />
           } />
           
