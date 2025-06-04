@@ -60,7 +60,7 @@ const BottomNavigation = ({
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50 safe-area-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border safe-area-bottom">
       <div className="flex items-center justify-around px-2 py-2">
         {mainNavItems.map((item) => {
           const Icon = item.icon;
@@ -75,8 +75,8 @@ const BottomNavigation = ({
               className={cn(
                 "flex flex-col items-center gap-1 h-14 px-3 rounded-xl transition-all duration-200 relative touch-manipulation",
                 isActive 
-                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" 
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  ? "bg-primary/10 text-primary" 
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               <div className="relative">

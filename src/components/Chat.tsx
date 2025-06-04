@@ -218,8 +218,8 @@ const Chat = () => {
 
   return (
     <>
-      {/* Container principal - Layout flex para chat */}
-      <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+      {/* Container principal com layout flexível */}
+      <div className="h-full flex flex-col bg-background overscroll-contain">
         <PremiumChatLayout
           conversations={conversations}
           currentConversation={currentConversation}
@@ -231,7 +231,7 @@ const Chat = () => {
           isCreatingNew={conversationState.isCreatingNew}
           isNavigating={conversationState.isNavigating}
           renderMessageExtras={renderMessageWithSource}
-          className="flex-1"
+          className="flex-1 overflow-hidden"
         />
 
         {/* Elemento invisível para referência de scroll */}
@@ -244,7 +244,7 @@ const Chat = () => {
             currentSection="chat"
             hasActiveChat={!!currentConversation}
             hasDocument={false}
-            className="touch-target"
+            className="touch-target z-40"
           />
         )}
       </div>

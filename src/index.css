@@ -177,20 +177,12 @@
 }
 
 .premium-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3);
+  background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 3px;
 }
 
 .premium-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.5);
-}
-
-.dark .premium-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.3);
-}
-
-.dark .premium-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(75, 85, 99, 0.5);
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 /* Momentum scrolling for iOS - Controlled */
@@ -294,4 +286,39 @@
 .overflow-y-auto,
 .overflow-y-scroll {
   overscroll-behavior: contain !important;
+}
+
+/* Chat input area visibility fix */
+.chat-input-area {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  min-height: 60px !important;
+}
+
+/* Ensure proper dark theme color application */
+.dark .bg-white {
+  @apply bg-background;
+}
+
+.dark .text-gray-900 {
+  @apply text-foreground;
+}
+
+.dark .border-gray-200 {
+  @apply border-border;
+}
+
+.dark .bg-gray-50 {
+  @apply bg-muted/50;
+}
+
+/* Fix for any remaining white backgrounds in dark mode */
+.dark [class*="bg-white"]:not(.keep-white) {
+  @apply bg-card;
+}
+
+.dark [class*="text-gray-900"]:not(.keep-gray) {
+  @apply text-foreground;
 }

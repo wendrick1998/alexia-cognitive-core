@@ -46,7 +46,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
 
   return (
     <PWALayout>
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <div className="flex h-screen bg-background overflow-hidden">
         {/* Desktop Sidebar */}
         <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
           <DesktopSidebar 
@@ -59,8 +59,8 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Main Content with Proper Scroll and Bottom Padding for Mobile */}
           <main className={cn(
-            "flex-1 overflow-y-auto bg-white dark:bg-gray-950 premium-scrollbar",
-            isMobile ? "pb-20 safe-area-bottom" : "pb-4" // Add bottom padding for mobile navigation
+            "flex-1 overflow-y-auto bg-background premium-scrollbar overscroll-contain",
+            isMobile ? "pb-[calc(80px+env(safe-area-inset-bottom))]" : "pb-4" // Add bottom padding for mobile navigation
           )}>
             <div className="h-full">
               {children}
@@ -75,7 +75,7 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => setIsSidebarOpen(false)}
             />
-            <div className="absolute left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 shadow-xl">
+            <div className="absolute left-0 top-0 h-full w-64 bg-background shadow-xl">
               <DesktopSidebar 
                 currentSection={currentSection} 
                 onSectionChange={(section) => {
