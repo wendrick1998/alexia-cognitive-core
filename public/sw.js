@@ -97,7 +97,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Estratégia Network-First para navegação (páginas HTML)
+  // Estratégia Network-First para navegação (páginas HTML) - FALLBACK GARANTIDO
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -111,10 +111,22 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Fallback para página offline
-          return caches.match('/offline.html') || 
-                 caches.match('/index.html') ||
-                 new Response('Offline', { status: 503 });
+          // Fallback confiável para página offline
+          return caches.match('/offline.html').then(response => {
+            if (response) {
+              return response;
+            }
+            // Fallback adicional caso /offline.html não esteja em cache
+            return caches.match('/index.html').then(indexResponse => {
+              return indexResponse || new Response(
+                '<html><body><h1>Você está offline</h1><p>Não foi possível carregar a página. Verifique sua conexão.</p></body></html>',
+                { 
+                  status: 503,
+                  headers: { 'Content-Type': 'text/html' } 
+                }
+              );
+            });
+          });
         })
     );
     return;
