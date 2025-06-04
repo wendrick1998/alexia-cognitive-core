@@ -57,10 +57,10 @@ const PremiumAppLayout = ({ children, currentSection, onSectionChange }: Premium
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* Main Content with Proper Scroll */}
+          {/* Main Content with Proper Scroll and Bottom Padding for Mobile */}
           <main className={cn(
-            "flex-1 overflow-y-auto bg-white dark:bg-gray-950 premium-scrollbar momentum-scroll",
-            isMobile && "pb-20" // Add bottom padding for mobile navigation
+            "flex-1 overflow-y-auto bg-white dark:bg-gray-950 premium-scrollbar",
+            isMobile ? "pb-20 safe-area-bottom" : "pb-4" // Add bottom padding for mobile navigation
           )}>
             <div className="h-full">
               {children}

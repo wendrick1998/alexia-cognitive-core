@@ -66,13 +66,14 @@
     @apply border-border;
   }
   
-  /* 🚫 ELIMINAR BOUNCE SCROLL NO IOS */
+  /* Remove elastic overscroll effect and control bounce behavior */
   html,
   body {
     height: 100%;
     height: 100dvh;
     overflow: hidden;
-    overscroll-behavior: contain;
+    overscroll-behavior: contain; /* Prevent elastic overscroll */
+    overscroll-behavior-y: contain; /* Specifically control vertical overscroll */
     -webkit-overflow-scrolling: auto !important;
     touch-action: manipulation;
     @apply bg-background text-foreground;
@@ -96,7 +97,7 @@
   }
 }
 
-/* PWA iOS Specific Styles - SEM BOUNCE SCROLL */
+/* PWA iOS Specific Styles - Remove bounce scroll */
 .ios-pwa {
   overscroll-behavior: contain;
   touch-action: manipulation;
@@ -118,7 +119,7 @@
   user-select: auto;
 }
 
-/* Standalone mode optimizations - SEM BOUNCE */
+/* Standalone mode optimizations - No bounce */
 .standalone-mode {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
@@ -165,7 +166,7 @@
   transition-duration: 0s !important;
 }
 
-/* Premium scrollbar for better UX - SEM BOUNCE */
+/* Premium scrollbar for better UX - No bounce */
 .premium-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -192,13 +193,13 @@
   background: rgba(75, 85, 99, 0.5);
 }
 
-/* Momentum scrolling for iOS - CONTROLADO */
+/* Momentum scrolling for iOS - Controlled */
 .momentum-scroll {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
 
-/* Fix scroll behavior - SEM BOUNCE */
+/* Fix scroll behavior - No bounce */
 .scroll-container {
   height: 100%;
   overflow-y: auto;
@@ -249,10 +250,10 @@
   }
 }
 
-/* Mobile specific layout adjustments - SEM BOUNCE */
+/* Mobile specific layout adjustments - No bounce */
 @media (max-width: 768px) {
-  /* Ensure bottom navigation doesn't interfere with chat input */
-  .chat-input-container {
+  /* Ensure bottom navigation doesn't interfere with content */
+  .mobile-content-container {
     padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
   }
   
@@ -261,7 +262,7 @@
     bottom: calc(1rem + env(safe-area-inset-bottom));
   }
   
-  /* Garantir que todos os containers mobile não tenham bounce */
+  /* Ensure all mobile containers don't have bounce */
   .main-container,
   .scrollable-content,
   .chat-messages-container {
@@ -270,7 +271,7 @@
   }
 }
 
-/* Utility classes para controle de scroll */
+/* Utility classes for scroll control */
 .overscroll-contain {
   overscroll-behavior: contain;
 }
@@ -287,7 +288,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Força remoção do bounce em qualquer container scrollável */
+/* Force removal of bounce on any scrollable container */
 [style*="overflow-y: auto"],
 [style*="overflow-y: scroll"],
 .overflow-y-auto,
