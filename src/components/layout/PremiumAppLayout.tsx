@@ -4,26 +4,16 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import PremiumSidebar from "@/components/premium/PremiumSidebar";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
-import ServiceWorkerManager from "@/components/optimization/ServiceWorkerManager";
 
 interface PremiumAppLayoutProps {
   children: React.ReactNode;
-  currentSection?: string;
-  onSectionChange?: (section: string) => void;
 }
 
-export default function PremiumAppLayout({ 
-  children, 
-  currentSection, 
-  onSectionChange 
-}: PremiumAppLayoutProps) {
+export default function PremiumAppLayout({ children }: PremiumAppLayoutProps) {
   const isMobile = useIsMobile();
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
-      {/* Service Worker Manager */}
-      {typeof window !== "undefined" && <ServiceWorkerManager />}
-      
       {/* Sidebar desktop */}
       {!isMobile && (
         <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
