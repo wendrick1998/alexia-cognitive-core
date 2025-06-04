@@ -81,14 +81,6 @@ const BottomNavigation = ({
             >
               <div className="relative">
                 <Icon className="w-5 h-5" />
-                {item.badge && (
-                  <Badge 
-                    variant="secondary" 
-                    className="absolute -top-2 -right-2 text-xs h-4 px-1 bg-blue-500 text-white border-none"
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
               </div>
               <span className="text-xs font-medium">{item.label}</span>
             </Button>
